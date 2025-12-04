@@ -76,7 +76,7 @@ src/
 
 ## How to Mod / Add Content
 
-OpenIdle is data-driven. You don't need to touch the engine code to make a new game.
+OpenIdle is data-driven. You don't need to touch the engine code to make a new game. For specifics, look at `GAMEDATA_GUIDE.md`.
 
 1. **Define Content**: Create a new `.ts` file in `src/gameData/` (e.g., `necromancy.ts`).
 2. **Export Arrays**: Export arrays for `TASKS`, `RESOURCES`, `ACTIONS`, etc., strictly typed against the interfaces in `types.ts`.
