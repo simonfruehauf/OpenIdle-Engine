@@ -1,0 +1,5 @@
+{
+  "name": "OpenIdle Engine",
+  "description": "A robust, data-driven framework for creating idle/incremental games with a UI inspired by classic incremental RPGs.",
+  "requestFramePermissions": []
+}
