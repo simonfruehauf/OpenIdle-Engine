@@ -83,7 +83,7 @@ export interface ActionConfig {
   effects: Effect[];
   firstCompletionEffects?: Effect[]; // Rewards given ONLY the first time the action is executed
   maxExecutions?: number; 
-  cooldownMs?: number; 
+  cooldownMs?: number; //TODO: Currently not used, will have to be implemented
   prerequisites?: Prerequisite[]; 
   exclusiveWith?: ActionID[]; 
   locks?: string[]; // IDs of tasks/actions/resources to hide & disable upon purchase

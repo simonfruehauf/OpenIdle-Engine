@@ -59,26 +59,27 @@ The output will be in the `dist/` folder.
 The project follows a clear separation between engine logic and game content:
 
 ```table
-src/
+./
 ├── components/       # React UI Components (TaskCard, ResourceRow, etc.)
 ├── context/          # Core Engine Logic (Game Loop, Reducer, Save/Load)
 ├── gameData/         # GAME CONTENT DEFINITIONS
 │   ├── actions.ts    # Instant actions
 │   ├── tasks.ts      # Time-based tasks
 │   ├── resources.ts  # Resource definitions
-│   ├── items.ts      # Item stats and effects
+│   ├── equipment.ts  # Item and Equipment definitions
+│   ├── categories.ts # Category definitions
 │   ├── christmas.ts  # Example of a content module
 │   └── index.ts      # Central registry for loading content
 ├── types.ts          # TypeScript interfaces for the data models
 ├── App.tsx           # Main Layout
-└── main.tsx          # Entry point
+└── index.tsx         # Entry point
 ```
 
 ## How to Mod / Add Content
 
 OpenIdle is data-driven. You don't need to touch the engine code to make a new game. For specifics, look at `GAMEDATA_GUIDE.md`.
 
-1. **Define Content**: Create a new `.ts` file in `src/gameData/` (e.g., `necromancy.ts`).
+1. **Define Content**: Create a new `.ts` file in `gameData/` (e.g., `necromancy.ts`).
 2. **Export Arrays**: Export arrays for `TASKS`, `RESOURCES`, `ACTIONS`, etc., strictly typed against the interfaces in `types.ts`.
 
    ```typescript
@@ -95,7 +96,7 @@ OpenIdle is data-driven. You don't need to touch the engine code to make a new g
    }];
    ```
 
-3. **Register**: Import your file in `src/gameData/index.ts` and add it to the `modules` array.
+3. **Register**: Import your file in `gameData/index.ts` and add it to the `modules` array.
 
    ```typescript
    import * as NecromancyModule from './necromancy';

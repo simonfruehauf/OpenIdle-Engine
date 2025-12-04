@@ -5,11 +5,11 @@ This document explains how to create content for the OpenIdle Engine. It details
 
 ## 1. File Structure & Modularity
 
-The engine uses a modular system. Data is split into logical files (e.g., `christmas.ts`, `necromancy.ts`) or categorized files (`resources.ts`, `tasks.ts`).
+The engine uses a modular system. Data is split into logical files (e.g., `christmas.ts`, `necromancy.ts`) or categorized files (`resources.ts`, `tasks.ts`). You can also organize files into subfolders (e.g., `gameData/questlines/`).
 
 To add new content:
 
-1. Create a `.ts` file in the `gameData/` folder.
+1. Create a `.ts` file in the `gameData/` folder (or a subfolder).
 2. Export arrays named `RESOURCES`, `TASKS`, `ACTIONS`, `CATEGORIES`, `ITEMS`, and `SLOTS`.
 3. Import your file in `gameData/index.ts` and add it to the `modules` array.
 
@@ -54,7 +54,7 @@ interface ResourceConfig {
 
 ### C. Tasks (Loops & Progress)
 
-Activities that take time. They can be infinite loops (grinding) or finite actions (crafting/research).
+Activities that take time. They can be infinite loops (grinding), timed loops (gathering), or finite projects (research).
 
 ```typescript
 interface TaskConfig {
@@ -71,6 +71,7 @@ interface TaskConfig {
   costPerSecond: { 
     resourceId: string; 
     amount: number; 
+    scaleFactor?: number; // Used if cost increases with level (rare for per-second costs)
   }[];
   
   // Resources gained per second.
@@ -84,9 +85,14 @@ interface TaskConfig {
 
   xpPerSecond?: number; // Defaults to 0. Level Up = Level * 100 XP.
 
+  // --- Progress Bar Logic ---
   // If progressRequired is set, the task acts like a progress bar.
-  startCosts?: Cost[];       // One-time cost paid when toggling ON.
-  progressRequired?: number; // Duration in seconds to finish.
+  startCosts?: Cost[];       // One-time cost paid when starting the progress bar.
+  progressRequired?: number; // Duration in seconds to finish one cycle.
+  
+  // If true, the task restarts automatically after filling the bar (Looping).
+  // If false/undefined, the task stops after one completion (One-shot/Crafting).
+  autoRestart?: boolean; 
   
   completionEffects?: Effect[];      // Rewards given when progress reaches 100%.
   firstCompletionEffects?: Effect[]; // Rewards given ONLY the first time it is finished.
@@ -110,11 +116,13 @@ interface ActionConfig {
   firstCompletionEffects?: Effect[]; // Effects applied ONLY the first time the action is used.
   
   maxExecutions?: number; // Limit purchases (e.g., 1 for unlocks).
+  cooldownMs?: number;    // Optional cooldown in milliseconds. CURRENTLY NOT IMPLEMENTED
+  
   prerequisites?: Prerequisite[];
   
   // If set, buying this locks the listed IDs (Action or Task) permanently.
   // Useful for branching paths (Class A vs Class B).
-  exclusiveWith?: ActionID[]; // Old system (mutex)
+  exclusiveWith?: ActionID[]; 
   locks?: string[]; // Explicitly hides/disables these IDs.
 
   logMessage?: string; // Custom text for the game log (e.g. "You tidied up.").
@@ -149,6 +157,17 @@ interface ItemConfig {
 ```
 
 ## 3. Logic & Mechanics
+
+### Costs & Scaling
+
+```typescript
+interface Cost {
+  resourceId: string;
+  amount: number;
+  // If defined, cost = amount * (scaleFactor ^ currentLevelOrExecutions)
+  scaleFactor?: number; 
+}
+```
 
 ### The "Unlock Pattern" (baseMax: 0)
 
@@ -197,6 +216,7 @@ interface Effect {
   amount: number;
   scaleFactor?: number; // For levels/upgrades.
   chance?: number;      // 0.0 - 1.0. Probability this effect triggers.
+  hidden?: boolean;     // If true, effect is applied but not shown in the tooltip.
 }
 ```
 
@@ -231,7 +251,8 @@ export const TASKS = [
     name: "Study Corpse",
     category: "graveyard",
     startCosts: [{ resourceId: "bones", amount: 5 }], // One time cost
-    progressRequired: 10, // Takes 10 seconds
+    progressRequired: 10, // Takes 10 seconds to complete one cycle
+    autoRestart: true,    // Repeats automatically
     costPerSecond: [],
     effectsPerSecond: [],
     completionEffects: [{ type: "add_resource", resourceId: "mana", amount: 10 }],
@@ -246,7 +267,7 @@ export const ACTIONS = [
     name: "Learn Necromancy",
     description: "Unlock Mana.",
     category: "graveyard",
-    costs: [{ resourceId: "bones", amount: 10 }],
+    costs: [{ resourceId: "bones", amount: 10, scaleFactor: 1.5 }], // Cost increases by 50% each time (if maxExecutions > 1)
     effects: [{ type: "modify_max_resource_flat", resourceId: "mana", amount: 20 }],
     firstCompletionEffects: [{ type: "add_resource", resourceId: "mana", amount: 20 }], // Bonus mana on first unlock
     maxExecutions: 1,
