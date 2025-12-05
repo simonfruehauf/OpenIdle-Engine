@@ -5,6 +5,7 @@ export type TaskID = string;
 export type CategoryID = string;
 export type ItemID = string;
 export type SlotID = string;
+export type ConverterID = string;
 
 // --- Configuration Types ---
 export interface PassiveGen {
@@ -136,6 +137,23 @@ export interface CategoryConfig {
   name: string;
 }
 
+export interface ConverterConfig {
+  id: ConverterID;
+  name: string;
+  description: string;
+  cost: Cost[];                    // One-time purchase cost
+  canBeToggled: boolean;           // If false, always runs when owned
+  effectsPerSecond: Effect[];      // What it produces
+  costPerSecond: Cost[];           // Ongoing resource drain
+  prerequisites?: Prerequisite[];
+}
+
+export interface ConverterState {
+  owned: boolean;
+  active: boolean;
+  unlocked: boolean;
+}
+
 // --- Runtime State Types ---
 
 export interface ResourceState {
@@ -173,6 +191,7 @@ export interface GameState {
   resources: Record<ResourceID, ResourceState>;
   actions: Record<ActionID, ActionState>;
   tasks: Record<TaskID, TaskState>;
+  converters: Record<ConverterID, ConverterState>;
   inventory: ItemID[]; // List of owned items
   equipment: Record<SlotID, ItemID>; // Slot -> ItemID
   modifiers: Modifier[]; // Permanent modifiers from upgrades
@@ -193,12 +212,15 @@ export interface GameContextType {
     categories: CategoryConfig[];
     items: ItemConfig[];
     slots: SlotConfig[];
+    converters: ConverterConfig[];
   };
   triggerAction: (actionId: ActionID) => void;
   toggleTask: (taskId: TaskID) => void;
   setRestTask: (taskId: string) => void;
   equipItem: (itemId: ItemID) => void;
   unequipItem: (slotId: SlotID) => void;
+  buyConverter: (converterId: ConverterID) => void;
+  toggleConverter: (converterId: ConverterID) => void;
   getMaxResource: (resourceId: ResourceID) => number;
   addLog: (msg: string) => void;
   checkPrerequisites: (prereqs?: Prerequisite[]) => boolean;

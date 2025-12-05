@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useReducer, useRef } from "react";
-import { ACTIONS, CATEGORIES, RESOURCES, TASKS, SLOTS, ITEMS } from "../gameData/index";
-import { ActionConfig, GameContextType, GameState, Modifier, TaskConfig, ResourceID, Cost, ActionID, TaskID, Prerequisite, SlotID, ItemID, ItemConfig, SlotConfig, CategoryConfig, TaskState, Effect } from "../types";
+import { ACTIONS, CATEGORIES, RESOURCES, TASKS, SLOTS, ITEMS, CONVERTERS } from "../gameData/index";
+import { ActionConfig, GameContextType, GameState, Modifier, TaskConfig, ResourceID, Cost, ActionID, TaskID, Prerequisite, SlotID, ItemID, ItemConfig, SlotConfig, CategoryConfig, TaskState, Effect, ConverterID, ConverterConfig } from "../types";
 
 // --- Helper: Encoding for Unicode Support (Emojis) ---
 function utf8_to_b64(str: string) {
@@ -80,10 +80,17 @@ const createInitialState = (): GameState => {
         tasksState[t.id] = { active: false, level: 1, xp: 0, unlocked: startUnlocked, progress: 0, completions: 0, paid: false };
     });
 
+    const convertersState: GameState["converters"] = {};
+    CONVERTERS.forEach(c => {
+        const startUnlocked = !c.prerequisites || c.prerequisites.length === 0;
+        convertersState[c.id] = { owned: false, active: false, unlocked: startUnlocked };
+    });
+
     return {
         resources,
         actions: actionsState,
         tasks: tasksState,
+        converters: convertersState,
         inventory: [],
         equipment: {},
         modifiers: [],
@@ -104,6 +111,8 @@ type Action =
     | { type: "SET_REST_TASK"; taskId: string }
     | { type: "EQUIP_ITEM"; itemId: string }
     | { type: "UNEQUIP_ITEM"; slotId: string }
+    | { type: "BUY_CONVERTER"; converterId: string }
+    | { type: "TOGGLE_CONVERTER"; converterId: string }
     | { type: "ADD_LOG"; msg: string }
     | { type: "LOAD_GAME"; state: GameState }
     | { type: "RESET_GAME" };
@@ -165,6 +174,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 resources: { ...defaults.resources, ...(action.state.resources || {}) },
                 actions: { ...defaults.actions, ...(action.state.actions || {}) },
                 tasks: { ...defaults.tasks, ...(action.state.tasks || {}) },
+                converters: { ...defaults.converters, ...(action.state.converters || {}) },
                 inventory: action.state.inventory || defaults.inventory,
                 equipment: action.state.equipment || defaults.equipment,
                 modifiers: action.state.modifiers || defaults.modifiers,
@@ -216,6 +226,75 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 inventory: [...state.inventory, itemId],
                 equipment: newEquipment,
                 log: [`Unequipped ${ITEMS.find(i => i.id === itemId)?.name}`, ...state.log].slice(0, 50)
+            };
+        }
+
+        case "BUY_CONVERTER": {
+            const config = CONVERTERS.find(c => c.id === action.converterId);
+            if (!config) return state;
+
+            const converterState = state.converters[action.converterId];
+            if (converterState.owned) {
+                return { ...state, log: [`Already own ${config.name}`, ...state.log].slice(0, 20) };
+            }
+
+            // Check if can afford
+            const canAfford = config.cost.every(c =>
+                (state.resources[c.resourceId]?.current || 0) >= c.amount
+            );
+            if (!canAfford) {
+                return { ...state, log: [`Cannot afford ${config.name}`, ...state.log].slice(0, 20) };
+            }
+
+            // Pay costs
+            const newResources = cloneResources(state.resources);
+            config.cost.forEach(c => {
+                newResources[c.resourceId].current -= c.amount;
+            });
+
+            // Set owned and active (if not toggleable, auto-activate)
+            const newConverters = {
+                ...state.converters,
+                [action.converterId]: {
+                    ...converterState,
+                    owned: true,
+                    active: !config.canBeToggled // Auto-activate if can't be toggled
+                }
+            };
+
+            return {
+                ...state,
+                resources: newResources,
+                converters: newConverters,
+                log: [`Purchased ${config.name}`, ...state.log].slice(0, 20)
+            };
+        }
+
+        case "TOGGLE_CONVERTER": {
+            const config = CONVERTERS.find(c => c.id === action.converterId);
+            if (!config) return state;
+
+            const converterState = state.converters[action.converterId];
+            if (!converterState.owned) {
+                return { ...state, log: [`Don't own ${config.name}`, ...state.log].slice(0, 20) };
+            }
+
+            if (!config.canBeToggled) {
+                return { ...state, log: [`${config.name} cannot be toggled`, ...state.log].slice(0, 20) };
+            }
+
+            const newConverters = {
+                ...state.converters,
+                [action.converterId]: {
+                    ...converterState,
+                    active: !converterState.active
+                }
+            };
+
+            return {
+                ...state,
+                converters: newConverters,
+                log: [`${config.name} ${!converterState.active ? 'activated' : 'deactivated'}`, ...state.log].slice(0, 20)
             };
         }
 
@@ -663,6 +742,51 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 }
             });
 
+            // 4. Process Active Converters
+            let newConverters = { ...state.converters };
+            let convertersChanged = false;
+
+            Object.keys(newConverters).forEach(cid => {
+                const cState = newConverters[cid];
+                if (!cState.owned || !cState.active) return;
+
+                const config = CONVERTERS.find(c => c.id === cid);
+                if (!config) return;
+
+                // Check if can afford per-second costs
+                const canAfford = config.costPerSecond.every(c =>
+                    (newResources[c.resourceId]?.current || 0) >= (c.amount * dtSeconds)
+                );
+
+                if (!canAfford) {
+                    // Deactivate converter if it can be toggled, otherwise just skip
+                    if (config.canBeToggled) {
+                        if (!convertersChanged) {
+                            newConverters = { ...newConverters };
+                            convertersChanged = true;
+                        }
+                        newConverters[cid] = { ...cState, active: false };
+                        logUpdates.unshift(`${config.name} deactivated (insufficient resources)`);
+                    }
+                    return;
+                }
+
+                // Deduct costs
+                config.costPerSecond.forEach(c => {
+                    newResources[c.resourceId].current -= (c.amount * dtSeconds);
+                });
+
+                // Apply effects
+                config.effectsPerSecond.forEach(e => {
+                    if (e.type === 'add_resource' && e.resourceId) {
+                        const current = newResources[e.resourceId].current;
+                        const rConfig = RESOURCES.find(r => r.id === e.resourceId);
+                        const max = calculateMax(e.resourceId, allModifiers, rConfig?.baseMax ?? 100);
+                        newResources[e.resourceId].current = Math.min(current + (e.amount * dtSeconds), max);
+                    }
+                });
+            });
+
             // Cap resources at 0
             Object.keys(newResources).forEach(rid => {
                 if (newResources[rid].current < 0) newResources[rid].current = 0;
@@ -717,6 +841,19 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 }
             });
 
+            // Check Converter Unlocks
+            CONVERTERS.forEach(c => {
+                if (!newConverters[c.id].unlocked) {
+                    if (checkPrereqsInternal(c.prerequisites)) {
+                        if (!convertersChanged) {
+                            newConverters = { ...newConverters };
+                            convertersChanged = true;
+                        }
+                        newConverters[c.id] = { ...newConverters[c.id], unlocked: true };
+                    }
+                }
+            });
+
             // Reconstruct activeTaskIds preserving order
             let nextActiveTaskIds = state.activeTaskIds.filter(id => newTasks[id]?.active);
             // Append any new active tasks (e.g. from auto-rest) that weren't tracked yet
@@ -731,6 +868,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 resources: newResources,
                 tasks: newTasks,
                 actions: actionsChanged ? newActions : state.actions,
+                converters: convertersChanged ? newConverters : state.converters,
                 modifiers: newModifiers,
                 inventory: newInventory,
                 log: logUpdates.slice(0, 50),
@@ -858,6 +996,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const setRestTask = (taskId: string) => dispatch({ type: "SET_REST_TASK", taskId });
     const equipItem = (itemId: string) => dispatch({ type: "EQUIP_ITEM", itemId });
     const unequipItem = (slotId: string) => dispatch({ type: "UNEQUIP_ITEM", slotId });
+    const buyConverter = (converterId: string) => dispatch({ type: "BUY_CONVERTER", converterId });
+    const toggleConverter = (converterId: string) => dispatch({ type: "TOGGLE_CONVERTER", converterId });
     const addLog = (msg: string) => dispatch({ type: "ADD_LOG", msg });
 
     const activeModifiers = getActiveModifiers(state);
@@ -996,6 +1136,27 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
         });
 
+        // Converter Rates
+        Object.entries(state.converters).forEach(([cid, cState]: [string, { owned: boolean; active: boolean }]) => {
+            if (!cState.owned || !cState.active) return;
+            const converter = CONVERTERS.find(c => c.id === cid);
+            if (!converter) return;
+
+            // Converter costs
+            converter.costPerSecond.forEach(c => {
+                if (c.resourceId === resourceId) {
+                    rates.push({ source: converter.name, amount: -c.amount });
+                }
+            });
+
+            // Converter effects
+            converter.effectsPerSecond.forEach(e => {
+                if (e.resourceId === resourceId && e.type === 'add_resource') {
+                    rates.push({ source: converter.name, amount: e.amount });
+                }
+            });
+        });
+
         const totalRate = rates.reduce((sum, r) => sum + r.amount, 0);
         return { maxModifiers, rates, totalRate };
     };
@@ -1004,12 +1165,14 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         <GameContext.Provider
             value={{
                 state,
-                config: { resources: RESOURCES, actions: ACTIONS, tasks: TASKS, categories: CATEGORIES, items: ITEMS, slots: SLOTS },
+                config: { resources: RESOURCES, actions: ACTIONS, tasks: TASKS, categories: CATEGORIES, items: ITEMS, slots: SLOTS, converters: CONVERTERS },
                 triggerAction,
                 toggleTask,
                 setRestTask,
                 equipItem,
                 unequipItem,
+                buyConverter,
+                toggleConverter,
                 getMaxResource,
                 addLog,
                 checkPrerequisites,
