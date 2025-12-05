@@ -44,10 +44,11 @@ export interface Cost {
 }
 
 export interface Effect {
-  type: 'add_resource' | 'modify_max_resource_flat' | 'modify_max_resource_pct' | 'modify_task_yield_pct' | 'add_item' | 'modify_passive_gen' | 'increase_max_tasks';
+  type: 'add_resource' | 'modify_max_resource_flat' | 'modify_max_resource_pct' | 'modify_task_yield_pct' | 'add_item' | 'modify_passive_gen' | 'increase_max_tasks' | 'increase_max_executions';
   amount: number;
   resourceId?: ResourceID;
   taskId?: TaskID;
+  actionId?: ActionID;
   itemId?: ItemID;
   scaleType?: 'exponential' | 'fixed' | 'percentage';
   scaleFactor?: number;
@@ -104,6 +105,7 @@ export interface ActionConfig {
   locks?: string[]; // IDs of tasks/actions/resources to hide & disable upon purchase
   lockDescription?: string; // Text to display in UI about what is locked
   logMessage?: string; // Custom message to display in log when triggered
+  hideWhenComplete?: boolean; // If true, action is hidden when maxExecutions reached (default: show in Completed tab)
 }
 
 export interface TaskConfig {
@@ -127,9 +129,12 @@ export interface TaskConfig {
   completionEffects?: Effect[]; // Rewards given when progress reaches max
   firstCompletionEffects?: Effect[]; // Rewards given ONLY the first time the task is completed
 
+  maxExecutions?: number; // If set, task can only be completed this many times
+
   prerequisites?: Prerequisite[];
   locks?: string[]; // IDs of tasks/actions/resources to hide & disable
   lockDescription?: string; // Text to display in UI about what is locked
+  hideWhenComplete?: boolean; // If true, task is hidden when maxExecutions reached (default: show in Completed tab)
 }
 
 export interface CategoryConfig {
@@ -168,7 +173,8 @@ export interface Modifier {
   // Targets 
   resourceId?: ResourceID;
   taskId?: TaskID;
-  property?: 'max' | 'gen'; // 'max' (default) affects capacity, 'gen' affects passive generation
+  actionId?: ActionID;
+  property?: 'max' | 'gen' | 'max_exec'; // 'max' (default) affects capacity, 'gen' affects passive generation, 'max_exec' affects execution limit
 }
 
 export interface ActionState {

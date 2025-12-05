@@ -46,11 +46,11 @@ export const ACTIONS: ActionConfig[] = [
     category: "mundane",
     costs: [{ resourceId: 'reputation', amount: 1 }], // Requires some social standing
     effects: [
-      { type: 'modify_max_resource_flat', resourceId: 'money', amount: 50 },
-      { type: 'add_resource', resourceId: 'money', amount: 100 }
+      { type: 'modify_max_resource_flat', resourceId: 'money', amount: 10 },
+      { type: 'add_resource', resourceId: 'money', amount: 25 }
     ],
     maxExecutions: 1,
-    prerequisites: [{ taskId: 'grind_9to5', minLevel: 2 }], // Must be level 10 at 9to5
+    prerequisites: [{ taskId: 'grind_9to5', minLevel: 5 }],
     locks: ['grind_9to5'], // Replaces the old job
     logMessage: "Promotion granted. Welcome to middle management."
   },
@@ -61,26 +61,30 @@ export const ACTIONS: ActionConfig[] = [
     category: "mundane",
     costs: [{ resourceId: 'money', amount: 50 }],
     effects: [{ type: 'add_resource', resourceId: 'sanity', amount: 5 }],
-    prerequisites: [{ actionId: 'doom_scroll', minExecutions: 10 }]
+    prerequisites: [{ taskId: 'doom_scroll', minExecutions: 50 }],
+    firstCompletionEffects: [{ type: 'modify_max_resource_flat', resourceId: 'sanity', amount: 2 }],
+    locks: ['doom_scroll'],
+    lockDescription: "No more doomscrolling."
   },
   {
     id: "buy_occult_book",
     name: "Visit Antique Bookstore",
     description: "Cozy, quaint and home to a plethora of occult books.",
     category: "mundane",
-    costs: [{ resourceId: 'money', amount: 8, scaleFactor: 1.25 }],
-    effects: [{ type: 'modify_max_resource_flat', resourceId: 'lore', amount: 5 }],
+    costs: [{ resourceId: 'money', amount: 25, scaleFactor: 1.25 }],
+    effects: [{ type: 'modify_max_resource_flat', resourceId: 'lore', amount: 1 }],
     firstCompletionEffects: [{ type: 'modify_max_resource_flat', resourceId: 'occult_book', amount: 1 }],
-    maxExecutions: 20
+    maxExecutions: 5,
+    prerequisites: [{ resourceId: 'money', minAmount: 10 }],
   },
   {
     id: "training_gym",
-    name: "Physical Conditioning",
+    name: "Go the the Gym",
     description: "Increase Max Stamina and Health.",
     category: "mundane",
     costs: [
-      { resourceId: 'money', amount: 15, scaleFactor: 1.2 },
-      { resourceId: 'stamina', amount: 5 }
+      { resourceId: 'money', amount: 15, scaleFactor: 1.5 },
+      { resourceId: 'stamina', amount: 10, scaleFactor: 2, scaleType: 'fixed' }
     ],
     effects: [
       { type: 'modify_max_resource_flat', resourceId: 'stamina', amount: 2 },
@@ -94,8 +98,8 @@ export const ACTIONS: ActionConfig[] = [
     name: "Mindfulness Course",
     description: "Increase Max Sanity.",
     category: "mundane",
-    costs: [{ resourceId: 'money', amount: 20, scaleFactor: 1.5 }],
-    effects: [{ type: 'modify_max_resource_flat', resourceId: 'sanity', amount: 2 }],
+    costs: [{ resourceId: 'money', amount: 40, scaleFactor: 1.5 }],
+    effects: [{ type: 'modify_max_resource_flat', resourceId: 'sanity', amount: 1 }],
     prerequisites: [{ resourceId: 'money', minAmount: 20 }],
     maxExecutions: 5
   },
@@ -105,14 +109,14 @@ export const ACTIONS: ActionConfig[] = [
     description: "Train your brain to handle more concurrent threads.",
     category: "mundane",
     costs: [
-      { resourceId: 'insight', amount: 5 },
-      { resourceId: 'stamina', amount: 10 }
+      { resourceId: 'insight', amount: 10 },
+      { resourceId: 'stamina', amount: 20 }
     ],
     effects: [
       { type: 'increase_max_tasks', amount: 1 }
     ],
     maxExecutions: 1,
-    prerequisites: [{ resourceId: 'insight', minAmount: 2 }]
+    prerequisites: [{ resourceId: 'insight', minAmount: 5 }]
   },
   // --- RESEARCH & UNLOCKS ---
   {
@@ -212,7 +216,6 @@ export const ACTIONS: ActionConfig[] = [
       { resourceId: 'insight', amount: 4 }
     ],
     effects: [
-      { type: 'modify_max_resource_flat', resourceId: 'unlock_third_eye', amount: 1 },
       { type: 'add_item', itemId: 'void_lens', amount: 1 }
     ],
     maxExecutions: 1,
@@ -227,7 +230,7 @@ export const ACTIONS: ActionConfig[] = [
       { resourceId: 'biomass', amount: 50 },
       { resourceId: 'mana', amount: 50 }
     ],
-    effects: [{ type: 'modify_max_resource_flat', resourceId: 'unlock_tentacles', amount: 1 }],
+    effects: [{ type: 'modify_max_resource_flat', resourceId: 'biomass', amount: 5 }],
     maxExecutions: 1,
     prerequisites: [{ resourceId: 'biomass', minAmount: 20 }]
   },
@@ -238,11 +241,11 @@ export const ACTIONS: ActionConfig[] = [
     category: "mutations",
     costs: [
       { resourceId: 'insight', amount: 5 },
-      { resourceId: 'sanity', amount: 9 } // Extremely dangerous
+      { resourceId: 'sanity', amount: 9 }
     ],
-    effects: [{ type: 'modify_max_resource_flat', resourceId: 'unlock_cortex', amount: 1 }],
+    effects: [],
     maxExecutions: 1,
-    prerequisites: [{ resourceId: 'unlock_third_eye', minAmount: 1 }]
+    prerequisites: [{ actionId: 'surgery_eye', minExecutions: 1 }]
   },
 
   // --- CLASS PATHS (EXCLUSIVE) ---
@@ -257,12 +260,11 @@ export const ACTIONS: ActionConfig[] = [
     ],
     effects: [
       { type: 'modify_max_resource_pct', resourceId: 'mana', amount: 2.0 },
-      { type: 'modify_max_resource_pct', resourceId: 'health', amount: -0.2 },
-      { type: 'modify_max_resource_flat', resourceId: 'path_weaver_active', amount: 1 }
-    ],
+      { type: 'modify_max_resource_pct', resourceId: 'health', amount: -0.2 }],
     maxExecutions: 1,
-    exclusiveWith: ["path_architect"],
-    prerequisites: [{ resourceId: 'unlock_third_eye', minMax: 1 }]
+    locks: ["path_architect"],
+    lockDescription: "You may not take another path of this level... Choose wisely.",
+    prerequisites: [{ actionId: 'surgery_eye', minExecutions: 1 }]
   },
   {
     id: "path_architect",
@@ -275,12 +277,12 @@ export const ACTIONS: ActionConfig[] = [
     ],
     effects: [
       { type: 'modify_max_resource_pct', resourceId: 'health', amount: 2.0 },
-      { type: 'modify_max_resource_pct', resourceId: 'sanity', amount: -0.5 },
-      { type: 'modify_max_resource_flat', resourceId: 'path_architect_active', amount: 1 }
+      { type: 'modify_max_resource_pct', resourceId: 'sanity', amount: -0.5 }
     ],
     maxExecutions: 1,
-    exclusiveWith: ["path_weaver"],
-    prerequisites: [{ resourceId: 'unlock_tentacles', minMax: 1 }]
+    locks: ["path_weaver"],
+    lockDescription: "You may not take another path of this level... Choose wisely.",
+    prerequisites: [{ actionId: 'surgery_tentacle', minExecutions: 1 }]
   },
 
   // --- POST-CLASS PROGRESSION ---
@@ -292,7 +294,7 @@ export const ACTIONS: ActionConfig[] = [
     costs: [{ resourceId: 'mana', amount: 400 }],
     effects: [{ type: 'modify_max_resource_flat', resourceId: 'void_matter', amount: 5 }],
     maxExecutions: 1,
-    prerequisites: [{ resourceId: 'path_weaver_active', minAmount: 1 }]
+    prerequisites: [{ actionId: 'path_weaver', minExecutions: 1 }]
   },
   {
     id: "unlock_living_flesh",
@@ -302,7 +304,7 @@ export const ACTIONS: ActionConfig[] = [
     costs: [{ resourceId: 'biomass', amount: 400 }],
     effects: [{ type: 'modify_max_resource_flat', resourceId: 'living_flesh', amount: 5 }],
     maxExecutions: 1,
-    prerequisites: [{ resourceId: 'path_architect_active', minAmount: 1 }]
+    prerequisites: [{ actionId: 'path_architect', minExecutions: 1 }]
   },
   {
     id: "create_sanctum",
@@ -361,5 +363,132 @@ export const ACTIONS: ActionConfig[] = [
     ],
     maxExecutions: 1,
     prerequisites: [{ resourceId: 'soul_fragments', minAmount: 1 }]
+  },
+
+  // --- EARLY BRANCHING PATHS (Tier 1.5) ---
+  {
+    id: "path_scholar",
+    name: "Path: The Scholar",
+    description: "Dedicate yourself to knowledge.",
+    category: "patresearchhs",
+    costs: [
+      { resourceId: 'lore', amount: 20 },
+      { resourceId: 'money', amount: 50 }
+    ],
+    effects: [
+      { type: 'modify_max_resource_pct', resourceId: 'lore', amount: 0.5 },
+      { type: 'modify_passive_gen', resourceId: 'money', amount: 0.1 }
+    ],
+    maxExecutions: 1,
+    locks: ['path_predator', 'path_cultist'],
+    lockDescription: "You may not take another path of this level... Choose wisely.",
+    prerequisites: [{ resourceId: 'lore', minAmount: 10 }]
+  },
+  {
+    id: "path_predator",
+    name: "Path: The Predator",
+    description: "Embrace your primal nature.",
+    category: "research",
+    costs: [
+      { resourceId: 'stamina', amount: 15 },
+      { resourceId: 'health', amount: 5 }
+    ],
+    effects: [
+      { type: 'modify_max_resource_pct', resourceId: 'health', amount: 0.25 },
+      { type: 'modify_max_resource_pct', resourceId: 'stamina', amount: 0.25 }],
+    maxExecutions: 1,
+    locks: ['path_cultist', 'path_scholar'],
+    lockDescription: "You may not take another path of this level... Choose wisely.",
+    prerequisites: [{ taskId: 'grind_9to5', minLevel: 5 }, { resourceId: 'stamina', minAmount: 11 }]
+  },
+  {
+    id: "path_cultist",
+    name: "Path: The Cultist",
+    description: "Manipulate the masses.",
+    category: "research",
+    costs: [
+      { resourceId: 'reputation', amount: 1 },
+      { resourceId: 'sanity', amount: 3 }
+    ],
+    effects: [
+      { type: 'modify_max_resource_pct', resourceId: 'reputation', amount: 0.5 },
+      { type: 'modify_max_resource_flat', resourceId: 'acolytes', amount: 1 }
+    ],
+    maxExecutions: 1,
+    locks: ['path_predator', 'path_scholar'],
+    lockDescription: "You may not take another path of this level... Choose wisely.",
+    prerequisites: [{ resourceId: 'reputation', minAmount: 1 }]
+  },
+
+  // --- ADDITIONAL MUTATIONS ---
+  {
+    id: "surgery_skin",
+    name: "Dermal Metamorphosis",
+    description: "Your skin hardens and shifts. Unlocks the Dermis mutation slot.",
+    category: "mutations",
+    costs: [
+      { resourceId: 'biomass', amount: 75 },
+      { resourceId: 'health', amount: 8 }
+    ],
+    effects: [
+      { type: 'modify_max_resource_flat', resourceId: 'health', amount: 10 }
+    ],
+    maxExecutions: 1,
+    prerequisites: [{ resourceId: 'biomass', minAmount: 30 }]
+  },
+
+  // --- NEW UPGRADES ---
+  {
+    id: "mind_partition",
+    name: "Mind Partitioning",
+    description: "Split your consciousness to handle more simultaneously.",
+    category: "research",
+    costs: [
+      { resourceId: 'insight', amount: 20 },
+      { resourceId: 'sanity', amount: 20 }
+    ],
+    effects: [
+      { type: 'increase_max_tasks', amount: 1 }
+    ],
+    maxExecutions: 1,
+    prerequisites: [{ resourceId: 'insight', minAmount: 15 }]
+  },
+  {
+    id: "forbidden_pact",
+    name: "Forbidden Pact",
+    description: "Sign away part of your sanity for immense magical potential.",
+    category: "rituals",
+    costs: [
+      { resourceId: 'sanity', amount: 8 },
+      { resourceId: 'mana', amount: 100 }
+    ],
+    effects: [
+      { type: 'modify_max_resource_pct', resourceId: 'mana', amount: 1.0 },
+      { type: 'modify_max_resource_pct', resourceId: 'sanity', amount: -0.25 }
+    ],
+    maxExecutions: 1,
+    prerequisites: [{ resourceId: 'mana', minAmount: 50 }]
+  },
+  {
+    id: "sacrifice_humanity",
+    name: "Sacrifice Your Humanity",
+    description: "There is no going back. Lock mundane life for immense power.",
+    category: "ascension",
+    costs: [
+      { resourceId: 'insight', amount: 15 },
+      { resourceId: 'biomass', amount: 100 },
+      { resourceId: 'mana', amount: 200 }
+    ],
+    effects: [
+      { type: 'modify_max_resource_pct', resourceId: 'health', amount: 1.0 },
+      { type: 'modify_max_resource_pct', resourceId: 'mana', amount: 1.0 },
+      { type: 'modify_max_resource_pct', resourceId: 'stamina', amount: 0.5 }
+    ],
+    locks: ['grind_9to5', 'manager_job', 'attend_gala', 'visit_therapist'],
+    lockDescription: "You can no longer pretend to be human.",
+    maxExecutions: 1,
+    prerequisites: [{ resourceId: 'biomass', minAmount: 50 }, { resourceId: 'mana', minAmount: 100 }],
+    logMessage: "Your humanity slips away like a forgotten dream."
   }
 ];
+

@@ -2,20 +2,25 @@
 import { ActionConfig, CategoryConfig, ItemConfig, ResourceConfig, TaskConfig } from "../types";
 
 export const CATEGORIES: CategoryConfig[] = [
-    { id: "christmas", name: "Event: Yuletide" }
+    { id: "christmas", name: "Yuletide" }
 ];
 
 export const RESOURCES: ResourceConfig[] = [
-    { 
-        id: "snowflakes", 
-        name: "Snowflakes", 
-        type: "basic", 
-        baseMax: 20, 
-        initialAmount: 0 
+    {
+        id: "snowflakes",
+        name: "Snowflakes",
+        category: "christmas",
+        type: "basic",
+        baseMax: 20,
+        initialAmount: 0,
+        passiveGen: [
+            { targetResourceId: "holiday_cheer", ratePerUnit: 0.01 }
+        ]
     },
     {
         id: "holiday_cheer",
         name: "Holiday Cheer",
+        category: "christmas",
         type: "stat",
         baseMax: 10,
         initialAmount: 0,
@@ -52,9 +57,9 @@ export const TASKS: TaskConfig[] = [
         startCosts: [{ resourceId: "snowflakes", amount: 1 }],
         costPerSecond: [
             { resourceId: "stamina", amount: 0.5 },
-            { resourceId: "sanity", amount: 0.5 } 
+            { resourceId: "sanity", amount: 0.5 }
         ],
-        effectsPerSecond: [ { type: "add_resource", resourceId: "holiday_cheer", amount: 0.1 },],
+        effectsPerSecond: [{ type: "add_resource", resourceId: "holiday_cheer", amount: 0.1 },],
         completionEffects: [
             { type: "add_resource", resourceId: "reputation", amount: 0.5 }
         ],

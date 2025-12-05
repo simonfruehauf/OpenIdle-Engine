@@ -48,14 +48,38 @@ const GameLayout: React.FC = () => {
 
     const hasItems = state.inventory.length > 0 || Object.keys(state.equipment).length > 0;
     const hasConverters = config.converters.some(c => state.converters[c.id]?.unlocked);
-    const isActionCompleted = (actionId: string) => {
+
+    // Check if action has reached its limit
+    const isActionAtLimit = (actionId: string) => {
         const aConfig = config.actions.find(a => a.id === actionId);
         const aState = state.actions[actionId];
         if (!aConfig || !aState) return false;
         return aConfig.maxExecutions !== undefined && aState.executions >= aConfig.maxExecutions;
     };
 
-    const hasCompletedUpgrades = config.actions.some(a => isActionCompleted(a.id));
+    // Check if action should show in Completed tab (at limit AND not hidden)
+    const isActionCompleted = (actionId: string) => {
+        const aConfig = config.actions.find(a => a.id === actionId);
+        if (!aConfig) return false;
+        return isActionAtLimit(actionId) && !aConfig.hideWhenComplete;
+    };
+
+    // Check if task has reached its limit
+    const isTaskAtLimit = (taskId: string) => {
+        const tConfig = config.tasks.find(t => t.id === taskId);
+        const tState = state.tasks[taskId];
+        if (!tConfig || !tState) return false;
+        return tConfig.maxExecutions !== undefined && (tState.completions || 0) >= tConfig.maxExecutions;
+    };
+
+    // Check if task should show in Completed tab (at limit AND not hidden)
+    const isTaskCompleted = (taskId: string) => {
+        const tConfig = config.tasks.find(t => t.id === taskId);
+        if (!tConfig) return false;
+        return isTaskAtLimit(taskId) && !tConfig.hideWhenComplete;
+    };
+
+    const hasCompletedUpgrades = config.actions.some(a => isActionCompleted(a.id)) || config.tasks.some(t => isTaskCompleted(t.id));
 
     // Get unlocked rest tasks for dropdown
     const restTasks = config.tasks.filter(t =>
@@ -346,11 +370,11 @@ const GameLayout: React.FC = () => {
 
                             <div className="flex-grow overflow-y-auto p-4 max-w-4xl mx-auto w-full">
                                 {config.categories.map(cat => {
-                                    const tasks = config.tasks.filter(t => t.category === cat.id && checkIsVisible(t.id, t.prerequisites));
+                                    const tasks = config.tasks.filter(t => t.category === cat.id && checkIsVisible(t.id, t.prerequisites) && !isTaskAtLimit(t.id));
                                     const actions = config.actions.filter(a =>
                                         a.category === cat.id &&
                                         checkIsVisible(a.id, a.prerequisites) &&
-                                        !isActionCompleted(a.id)
+                                        !isActionAtLimit(a.id)
                                     );
 
                                     if (tasks.length === 0 && actions.length === 0) return null;
@@ -443,11 +467,14 @@ const GameLayout: React.FC = () => {
                     {activeTab === 'completed' && (
                         <div className="flex-grow overflow-y-auto p-4 max-w-2xl mx-auto w-full">
                             <h3 className="text-xs font-bold text-gray-400 uppercase border-b border-gray-200 mb-4 pb-1">
-                                Completed Upgrades
+                                Completed
                             </h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 opacity-75 grayscale hover:grayscale-0 transition-all">
                                 {config.actions.filter(a => isActionCompleted(a.id)).map(a => (
                                     <ActionCard key={a.id} action={a} />
+                                ))}
+                                {config.tasks.filter(t => isTaskCompleted(t.id)).map(t => (
+                                    <TaskCard key={t.id} task={t} />
                                 ))}
                             </div>
                         </div>

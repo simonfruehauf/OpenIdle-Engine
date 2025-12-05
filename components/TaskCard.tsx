@@ -70,8 +70,11 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, isLocked = false }) =>
     const isLoop = task.autoRestart === true;
     const isProject = !isLoop;
 
+    // Check if task has reached max executions
+    const isCompleted = task.maxExecutions !== undefined && (taskState.completions || 0) >= task.maxExecutions;
+
     const canStart = taskState.paid || canAffordStart;
-    const isDisabled = isLocked || (!isActive && !canStart);
+    const isDisabled = isLocked || (!isActive && !canStart) || isCompleted;
 
     // Progress bar for all tasks
     const progressPercentage = Math.min(100, ((taskState.progress || 0) / (task.progressRequired || 1)) * 100);
@@ -139,7 +142,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, isLocked = false }) =>
                 <div className="flex justify-between items-start mb-1">
                     <span className="font-bold text-sm text-black mr-2 leading-tight">{task.name}</span>
                     <div className="text-right text-gray-600 whitespace-nowrap">
-                        <span>Completed: {taskState.completions || 0}</span>
+                        <span>Completed: {taskState.completions || 0}{task.maxExecutions ? `/${task.maxExecutions}` : ''}</span>
                         {isLocked && <div className="text-red-600 font-bold text-[10px] uppercase">Locked</div>}
                     </div>
                 </div>
@@ -212,12 +215,15 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, isLocked = false }) =>
                     <>
                         <div className="border-t border-gray-400 my-2"></div>
                         <div className="font-semibold text-gray-600 italic mb-1">Progress Cost</div>
-                        {task.costPerSecond.map(c => (
-                            <div key={c.resourceId} className="flex justify-between text-gray-800">
-                                <span>{getName(c.resourceId)}</span>
-                                <span className="font-mono text-red-700">{c.amount}/s</span>
-                            </div>
-                        ))}
+                        {task.costPerSecond.map(c => {
+                            const scaledAmount = getScaledCost(c, taskState.level, taskState.completions || 0);
+                            return (
+                                <div key={c.resourceId} className="flex justify-between text-gray-800">
+                                    <span>{getName(c.resourceId)}</span>
+                                    <span className="font-mono text-red-700">{Number.isInteger(scaledAmount) ? scaledAmount : scaledAmount.toFixed(1)}/s</span>
+                                </div>
+                            );
+                        })}
                     </>
                 )}
 
@@ -369,7 +375,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, isLocked = false }) =>
 
                                 {!isLocked && (
                                     <span className="text-[9px] text-gray-500 mt-0.5">
-                                        Completed: {taskState.completions || 0}
+                                        {task.maxExecutions ? `${taskState.completions || 0}/${task.maxExecutions}` : `Completed: ${taskState.completions || 0}`}
                                     </span>
                                 )}
                             </div>

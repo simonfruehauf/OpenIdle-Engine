@@ -7,6 +7,13 @@ import * as ActionsModule from './actions';
 import * as EquipmentModule from './equipment';
 import * as ConvertersModule from './converters';
 
+// Questlines
+import * as QuestCatModule from './questlines/quest_cat';
+import * as QuestMirrorModule from './questlines/quest_mirror';
+import * as QuestLibraryModule from './questlines/quest_library';
+
+// Seasonal content
+import * as ChristmasModule from './christmas';
 
 const modules: any[] = [
     CategoriesModule,
@@ -17,8 +24,16 @@ const modules: any[] = [
     ConvertersModule
 ];
 
-// import and add quest modules
-//modules.push(QuestModule1);
+// Add quest modules
+modules.push(QuestCatModule);
+modules.push(QuestMirrorModule);
+modules.push(QuestLibraryModule);
+
+// Conditional Christmas loading (December only)
+const currentMonth = new Date().getMonth();
+if (currentMonth === 11) { // December
+    modules.push(ChristmasModule);
+}
 
 
 const allCategories: CategoryConfig[] = [];

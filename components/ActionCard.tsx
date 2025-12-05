@@ -156,6 +156,14 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
                 </div>
             );
         }
+        if (e.type === 'increase_max_executions') {
+            const targetName = e.taskId ? getName(e.taskId) : e.actionId ? getName(e.actionId) : 'target';
+            return (
+                <div key={idx} className="text-purple-700">
+                    {chanceStr}+{e.amount} max completions for {targetName}
+                </div>
+            );
+        }
         return null;
     };
 

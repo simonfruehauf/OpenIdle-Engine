@@ -154,13 +154,5 @@ export const RESOURCES: ResourceConfig[] = [
     baseMax: 0,
     initialAmount: 0,
     description: "The ultimate realization that undoes reality."
-  },
-  // --- HIDDEN GATES (Progression Flags) ---
-  { id: "unlock_third_eye", name: "Gate: Eye", type: "basic", baseMax: 0 },
-  { id: "unlock_tentacles", name: "Gate: Tentacle", type: "basic", baseMax: 0 },
-  { id: "unlock_cortex", name: "Gate: Cortex", type: "basic", baseMax: 0 },
-  { id: "unlock_skin", name: "Gate: Skin", type: "basic", baseMax: 0 },
-
-  { id: "path_weaver_active", name: "Path: Weaver", type: "basic", baseMax: 0 },
-  { id: "path_architect_active", name: "Path: Architect", type: "basic", baseMax: 0 },
+  }
 ];

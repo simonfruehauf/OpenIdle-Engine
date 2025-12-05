@@ -7,7 +7,9 @@ export const ACTIONS: ActionConfig[] = [
         category: "quests",
         costs: [{ resourceId: 'money', amount: 50 }],
         effects: [
-            { type: 'add_item', itemId: 'haunted_mirror', amount: 1 }
+            { type: 'add_item', itemId: 'haunted_mirror', amount: 1 },
+            { type: 'modify_max_resource_flat', resourceId: 'reflections', amount: 1 },
+            { type: 'modify_max_resource_flat', resourceId: 'quest_mirror_active', amount: 1 }
         ],
         maxExecutions: 1,
         prerequisites: [{ resourceId: 'insight', minAmount: 1 }]
@@ -57,5 +59,19 @@ export const TASKS: TaskConfig[] = [
 
 import { ResourceConfig } from "../../types";
 export const RESOURCES: ResourceConfig[] = [
-    { id: "reflections", name: "Warped Reflections", type: "basic", baseMax: 0, initialAmount: 0, description: "Distorted images from beyond the veil." }
+    {
+        id: "reflections",
+        name: "Warped Reflections",
+        type: "basic",
+        baseMax: 0,
+        initialAmount: 0,
+        description: "Distorted images from beyond the veil."
+    },
+    {
+        id: "quest_mirror_active",
+        name: "Mirror Quest Active",
+        type: "basic",
+        baseMax: 0,
+        description: "The mirror's curse is upon you."
+    }
 ];

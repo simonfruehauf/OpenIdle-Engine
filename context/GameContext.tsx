@@ -352,6 +352,13 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                     }
                 } else if (e.type === 'increase_max_tasks') {
                     newMaxTasks += e.amount;
+                } else if (e.type === 'increase_max_executions') {
+                    // Increase max executions for a task or action
+                    if (e.taskId) {
+                        newModifiers.push({ sourceId: config.name, taskId: e.taskId, type: 'flat', value: e.amount, property: 'max_exec' });
+                    } else if (e.actionId) {
+                        newModifiers.push({ sourceId: config.name, actionId: e.actionId, type: 'flat', value: e.amount, property: 'max_exec' });
+                    }
                 }
             };
 
@@ -385,6 +392,11 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             const tState = state.tasks[action.taskId];
             const config = TASKS.find(t => t.id === action.taskId);
             if (!config) return state;
+
+            // Check maxExecutions limit
+            if (config.maxExecutions && (tState.completions || 0) >= config.maxExecutions) {
+                return { ...state, log: [`${config.name} limit reached.`, ...state.log].slice(0, 20) };
+            }
 
             const nowActive = !tState.active;
             const newResources = cloneResources(state.resources);
@@ -598,9 +610,10 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 }
 
                 // Check Costs (Continuous)
-                const canAfford = config.costPerSecond.every(c =>
-                    (newResources[c.resourceId]?.current || 0) >= (c.amount * dtSeconds)
-                );
+                const canAfford = config.costPerSecond.every(c => {
+                    const scaledAmount = getScaledCost(c, 0, tState.level, tState.completions || 0);
+                    return (newResources[c.resourceId]?.current || 0) >= (scaledAmount * dtSeconds);
+                });
 
                 if (!canAfford) {
                     tState.active = false;
@@ -624,7 +637,8 @@ const gameReducer = (state: GameState, action: Action): GameState => {
 
                 // Deduct Costs
                 config.costPerSecond.forEach(c => {
-                    newResources[c.resourceId].current -= (c.amount * dtSeconds);
+                    const scaledAmount = getScaledCost(c, 0, tState.level, tState.completions || 0);
+                    newResources[c.resourceId].current -= (scaledAmount * dtSeconds);
                 });
 
                 // Timed/Progress Logic
@@ -666,6 +680,13 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                         // Reset Paid Status for next run
                         newTasks[tid] = { ...tState, progress: 0, paid: false };
                         tState = newTasks[tid];
+
+                        // Check maxExecutions limit
+                        if (config.maxExecutions && tState.completions >= config.maxExecutions) {
+                            tState.active = false;
+                            logUpdates.unshift(`${config.name} max completions reached.`);
+                            return;
+                        }
 
                         if (!config.autoRestart) {
                             return; // Task stops, no per-second effects for this tick if stopped
@@ -799,9 +820,20 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 });
             });
 
-            // Cap resources at 0
+            // Cap resources at 0 and enforce max limits
             Object.keys(newResources).forEach(rid => {
                 if (newResources[rid].current < 0) newResources[rid].current = 0;
+
+                // If max is 0, set current to 0 as well
+                const rConfig = RESOURCES.find(r => r.id === rid);
+                if (rConfig) {
+                    const max = calculateMax(rid, allModifiers, rConfig.baseMax);
+                    if (max <= 0) {
+                        newResources[rid].current = 0;
+                    } else if (newResources[rid].current > max) {
+                        newResources[rid].current = max;
+                    }
+                }
             });
 
             // --- 4. Process Unlocks (Latch Mechanism) ---
@@ -829,8 +861,10 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                         if (!task) return false;
                         // minLevel checks task level
                         if (p.minLevel !== undefined && task.level < p.minLevel) return false;
-                        // minAmount checks task completions
+                        // minAmount checks task completions (legacy)
                         if (p.minAmount !== undefined && (task.completions || 0) < p.minAmount) return false;
+                        // minExecutions checks task completions
+                        if (p.minExecutions !== undefined && (task.completions || 0) < p.minExecutions) return false;
                     }
                     return true;
                 });
