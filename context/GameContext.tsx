@@ -257,7 +257,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             if (e.type === 'add_resource' && e.resourceId) {
                 const current = newResources[e.resourceId].current;
                 const rConfig = RESOURCES.find(r => r.id === e.resourceId);
-                const max = calculateMax(e.resourceId, allModifiers, rConfig?.baseMax || 100);
+                const max = calculateMax(e.resourceId, allModifiers, rConfig?.baseMax ?? 100);
                 newResources[e.resourceId].current = Math.min(current + e.amount, max);
             } else if (e.type === 'modify_max_resource_flat' && e.resourceId) {
                 newModifiers.push({ sourceId: config.name, resourceId: e.resourceId, type: 'flat', value: e.amount, property: 'max' });
@@ -397,7 +397,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 const amount = e.amount * scale * yieldMulti;
                 const current = newResources[e.resourceId].current;
                 const rConfig = RESOURCES.find(r => r.id === e.resourceId);
-                const max = calculateMax(e.resourceId, allModifiers, rConfig?.baseMax || 100);
+                const max = calculateMax(e.resourceId, allModifiers, rConfig?.baseMax ?? 100);
                 newResources[e.resourceId].current = Math.min(current + amount, max);
             } else if (e.type === 'modify_max_resource_flat' && e.resourceId) {
                 newModifiers.push({ sourceId: TASKS.find(t=>t.id === e.taskId)?.name || "Task", resourceId: e.resourceId, type: 'flat', value: e.amount, property: 'max' });
@@ -416,8 +416,13 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         };
 
         // 1. Process Active Tasks
-        Object.entries(newTasks).forEach(([tid, tState]) => {
+        Object.keys(newTasks).forEach((tid) => {
+            let tState = newTasks[tid]; // Get latest reference (potentially updated by other logic?)
+            // Actually, we want to work with a local mutable copy or handle updates carefully.
+            // But since we are iterating keys, we can re-fetch.
+            
             if (!tState.active) return;
+            // if (tid === 'fester') logUpdates.unshift(`DEBUG: Fester Active. Progress: ${tState.progress?.toFixed(2)}`);
 
             const config = TASKS.find(t => t.id === tid);
             if (!config) return;
@@ -428,34 +433,45 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             if (config.type === 'rest' && newLastActiveTaskId && state.selectedRestTaskId === tid) {
                  const oldTask = TASKS.find(t => t.id === newLastActiveTaskId);
                  if (oldTask) {
-                    // Check if resources needed by oldTask are full (or close enough, to account for passive drains/floating point)
-                    const oldTaskNeededResourcesFull = oldTask.costPerSecond
-                        .every(c => {
-                            const res = newResources[c.resourceId!];
-                            const max = getTickMax(c.resourceId!);
-                            // 90% threshold prevents getting stuck due to passive drains or tick ordering
-                            return res.current >= max * 0.9;
-                        });
-                     
-                     if (oldTaskNeededResourcesFull) {
-                        // Check affordability of old task (this was already there and is good)
-                        const canAffordOld = oldTask.costPerSecond.every(c => 
-                            (newResources[c.resourceId]?.current || 0) >= (c.amount * dtSeconds)
-                        );
+                     // Determine if the old task can now afford to resume
+                     let oldTaskCanAffordResume = true;
+                     const oldTaskState = newTasks[newLastActiveTaskId];
 
-                        if (canAffordOld) {
-                             tState.active = false; // Stop rest
-                             newTasks[newLastActiveTaskId].active = true;
-                             logUpdates.unshift(`Rest complete. Resuming ${oldTask.name}.`);
-                             newLastActiveTaskId = undefined;
-                             return; // Stop processing this rest task
-                        }
+                     // Check Start Costs (if not already paid for the current cycle)
+                     if (oldTask.startCosts && !oldTaskState.paid) {
+                         const canAffordStart = oldTask.startCosts.every(c => {
+                             const costAmount = getScaledCost(c, 0, oldTaskState.level, oldTaskState.completions || 0);
+                             return (newResources[c.resourceId]?.current || 0) >= costAmount;
+                         });
+                         if (!canAffordStart) {
+                             oldTaskCanAffordResume = false;
+                         }
+                     }
+
+                     // Check Continuous Costs
+                     if (oldTaskCanAffordResume && oldTask.costPerSecond) {
+                         const canAffordPerSecond = oldTask.costPerSecond.every(c => {
+                             const costAmount = getScaledCost(c, 0, oldTaskState.level, oldTaskState.completions || 0); // Scale factor for tasks uses Level
+                             return (newResources[c.resourceId]?.current || 0) >= (costAmount * dtSeconds);
+                         });
+                         if (!canAffordPerSecond) {
+                             oldTaskCanAffordResume = false;
+                         }
+                     }
+                     
+                     if (oldTaskCanAffordResume) {
+                        tState.active = false; // Stop rest
+                        newTasks[newLastActiveTaskId].active = true;
+                        logUpdates.unshift(`Rest complete. Resuming ${oldTask.name}.`);
+                        newLastActiveTaskId = undefined;
+                        return; // Stop processing this rest task
                      }
                  }
             }
             
             // Check Start Costs (If not paid, e.g. auto-restart)
             if (!tState.paid && config.startCosts) {
+                 if (tid === 'fester') logUpdates.unshift("DEBUG: Fester !paid -> Paying Start Cost");
                  const canAffordStart = config.startCosts.every(c => {
                      const costAmount = getScaledCost(c, 0, tState.level, tState.completions || 0);
                      return (newResources[c.resourceId]?.current || 0) >= costAmount;
@@ -468,6 +484,8 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                      if (state.selectedRestTaskId && state.selectedRestTaskId !== tid) {
                         newTasks[state.selectedRestTaskId].active = true;
                         newLastActiveTaskId = tid;
+                        logUpdates.unshift(`Switched to ${TASKS.find(t => t.id === state.selectedRestTaskId)?.name} (low resources)`);
+                        return; 
                      }
                      return;
                  }
@@ -477,7 +495,10 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                      const costAmount = getScaledCost(c, 0, tState.level, tState.completions || 0);
                      newResources[c.resourceId].current -= costAmount;
                  });
-                 tState.paid = true;
+                 newTasks[tid] = { ...tState, paid: true };
+                 tState = newTasks[tid];
+            } else if (tid === 'fester' && config.startCosts) {
+                 // Removed: logUpdates.unshift(`DEBUG: Fester already paid (${tState.paid})`);
             }
 
             // Check Costs (Continuous)
@@ -512,9 +533,23 @@ const gameReducer = (state: GameState, action: Action): GameState => {
 
             // Timed/Progress Logic
             if (config.progressRequired) {
-                tState.progress = (tState.progress || 0) + dtSeconds;
-                if (tState.progress >= config.progressRequired) {
+                const oldProgress = tState.progress || 0;
+                const newProgress = oldProgress + dtSeconds;
+                
+                // IMMUTABLE UPDATE
+                newTasks[tid] = { ...tState, progress: newProgress };
+                tState = newTasks[tid]; // Update local reference
+                
+                // Heartbeat Log Removed
+                // if (tid === 'fester' && Math.floor(newProgress) > Math.floor(oldProgress)) {
+                //     logUpdates.unshift(`DEBUG: Fester Heartbeat ${Math.floor(newProgress)}s`);
+                // }
+                
+                // Use epsilon for float comparison
+                if (newProgress >= config.progressRequired - 0.0001) {
                     // --- TASK COMPLETED ---
+                    // Completion Log Removed
+                    // if (tid === 'fester') logUpdates.unshift(`DEBUG: Fester ENTERING COMPLETION BLOCK.`);
                     tState.progress = 0;
                     
                     const completions = tState.completions || 0;
@@ -527,7 +562,11 @@ const gameReducer = (state: GameState, action: Action): GameState => {
 
                     // 1. Completion Effects (Standard)
                     if (config.completionEffects) {
-                        config.completionEffects.forEach(e => applyTaskEffect(e, tState.level, yieldMulti));
+                        config.completionEffects.forEach(e => {
+                            applyTaskEffect(e, tState.level, yieldMulti);
+                            // Applied Effect Log Removed
+                            // if (tid === 'fester') logUpdates.unshift(`DEBUG: Applied ${e.type} ${e.amount}`);
+                        });
                     }
 
                     // 2. First Time Effects
@@ -536,7 +575,8 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                     }
 
                     // Reset Paid Status for next run
-                    tState.paid = false;
+                    newTasks[tid] = { ...tState, progress: 0, paid: false };
+                    tState = newTasks[tid]; 
                     
                     if (!config.autoRestart) {
                          return; // Task stops, no per-second effects for this tick if stopped
@@ -556,7 +596,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                     if (e.type === 'add_resource' && e.resourceId) {
                          const current = newResources[e.resourceId].current;
                          const rConfig = RESOURCES.find(r => r.id === e.resourceId);
-                         const max = calculateMax(e.resourceId, allModifiers, rConfig?.baseMax || 100);
+                         const max = calculateMax(e.resourceId, allModifiers, rConfig?.baseMax ?? 100);
                          newResources[e.resourceId].current = Math.min(current + e.amount, max);
                     }
                 } else {
@@ -567,7 +607,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
 
                         const current = newResources[e.resourceId].current;
                         const rConfig = RESOURCES.find(r => r.id === e.resourceId);
-                        const max = calculateMax(e.resourceId, allModifiers, rConfig?.baseMax || 100);
+                        const max = calculateMax(e.resourceId, allModifiers, rConfig?.baseMax ?? 100);
                         
                         newResources[e.resourceId].current = Math.min(current + amount, max);
                     }
@@ -611,7 +651,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 const targetConfig = RESOURCES.find(r => r.id === gen.targetResourceId);
                 
                 if (targetConfig) {
-                    const max = calculateMax(gen.targetResourceId, allModifiers, targetConfig.baseMax || 0);
+                    const max = calculateMax(gen.targetResourceId, allModifiers, targetConfig.baseMax ?? 0);
                     const currentTarget = newResources[gen.targetResourceId].current;
                     newResources[gen.targetResourceId].current = Math.min(currentTarget + delta, max);
                 }
@@ -624,7 +664,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 const rConfig = RESOURCES.find(r => r.id === m.resourceId);
                 if (rConfig) {
                      const current = newResources[m.resourceId]?.current || 0;
-                     const max = calculateMax(m.resourceId, allModifiers, rConfig.baseMax || 0);
+                     const max = calculateMax(m.resourceId, allModifiers, rConfig.baseMax ?? 0);
                      const delta = m.value * dtSeconds;
                      newResources[m.resourceId].current = Math.min(current + delta, max);
                 }
