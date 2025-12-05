@@ -195,6 +195,13 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
 
                 <p className="text-gray-700 mb-2 leading-snug">{action.description}</p>
 
+                {action.lockDescription && actionState.executions === 0 && (
+                    <div className="mb-2 p-1 bg-red-100 border border-red-300 text-red-700 rounded text-center">
+                        {action.lockDescription}
+                    </div>
+                )}
+
+
                 {exclusiveBlocked && (
                     <div className="mb-2 p-1 bg-red-100 border border-red-300 text-red-700 rounded text-center">
                         Incompatible with {blockingActionName}

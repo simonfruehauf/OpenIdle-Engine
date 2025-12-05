@@ -44,10 +44,11 @@ export interface Cost {
 
 export interface Effect {
   type: 'add_resource' | 'modify_max_resource_flat' | 'modify_max_resource_pct' | 'modify_task_yield_pct' | 'add_item' | 'modify_passive_gen' | 'increase_max_tasks';
+  amount: number;
   resourceId?: ResourceID;
   taskId?: TaskID;
   itemId?: ItemID;
-  amount: number;
+  scaleType?: 'exponential' | 'fixed' | 'percentage';
   scaleFactor?: number;
   chance?: number; // 0-1 probability for effect to trigger (default 1)
   hidden?: boolean; // If true, effect is calculated but not shown in tooltips
@@ -100,6 +101,7 @@ export interface ActionConfig {
   prerequisites?: Prerequisite[];
   exclusiveWith?: ActionID[];
   locks?: string[]; // IDs of tasks/actions/resources to hide & disable upon purchase
+  lockDescription?: string; // Text to display in UI about what is locked
   logMessage?: string; // Custom message to display in log when triggered
 }
 
@@ -125,6 +127,8 @@ export interface TaskConfig {
   firstCompletionEffects?: Effect[]; // Rewards given ONLY the first time the task is completed
 
   prerequisites?: Prerequisite[];
+  locks?: string[]; // IDs of tasks/actions/resources to hide & disable
+  lockDescription?: string; // Text to display in UI about what is locked
 }
 
 export interface CategoryConfig {

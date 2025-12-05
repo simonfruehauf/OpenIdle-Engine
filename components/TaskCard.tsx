@@ -146,6 +146,13 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, isLocked = false }) =>
 
                 <p className="text-gray-700 mb-2 leading-snug">{task.description}</p>
 
+                {task.lockDescription && (taskState.completions || 0) === 0 && (
+                    <div className="mb-2 p-1 bg-red-100 border border-red-300 text-red-700 rounded text-center">
+                        {task.lockDescription}
+                    </div>
+                )}
+
+
                 {!isLoop && (
                     <div className="text-gray-600 font-mono mb-2 text-[10px]">
                         Completion time: {formatTime(task.progressRequired || 0)}
