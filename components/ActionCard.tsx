@@ -128,6 +128,13 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
                 </div>
             );
         }
+        if (e.type === 'increase_max_tasks') {
+            return (
+                <div key={idx} className="text-purple-700">
+                    {chanceStr}Increases max concurrent tasks by {e.amount}
+                </div>
+            );
+        }
         return null;
     };
 

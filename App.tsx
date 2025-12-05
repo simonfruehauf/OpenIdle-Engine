@@ -33,7 +33,7 @@ const SectionHeader: React.FC<{
 );
 
 const GameLayout: React.FC = () => {
-  const { state, config, checkPrerequisites, checkIsVisible, saveGame, resetGame, exportSave, importSave, setRestTask, getMaxResource } = useGame();
+  const { state, config, toggleTask, checkPrerequisites, checkIsVisible, saveGame, resetGame, exportSave, importSave, setRestTask, getMaxResource } = useGame();
   const [activeTab, setActiveTab] = useState<'activity' | 'equipment' | 'completed'>('activity');
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
 
@@ -392,6 +392,67 @@ const GameLayout: React.FC = () => {
 
         {/* RIGHT COLUMN: BODY STATS */}
         <aside className="w-64 bg-gray-50 border-l border-gray-300 flex flex-col shrink-0">
+           
+           {/* Active Tasks HUD (Multitasking) */}
+           {state.maxConcurrentTasks > 1 && (
+             <div className="bg-white border-b border-gray-300 flex-shrink-0 shadow-sm z-10">
+                <div className="p-2 bg-orange-100 border-b border-orange-200 font-bold text-orange-800 text-xs uppercase tracking-wider text-center flex justify-between items-center">
+                    <span>Active Tasks</span>
+                    <span className="font-mono text-[10px] opacity-80 bg-orange-200 px-1.5 rounded text-orange-900">
+                        {state.activeTaskIds.length} / {state.maxConcurrentTasks}
+                    </span>
+                </div>
+                <div className="p-2 space-y-1.5 max-h-60 overflow-y-auto bg-orange-50/30">
+                    {state.activeTaskIds.length === 0 && (
+                        <div className="text-center text-gray-400 text-[10px] italic py-2">
+                            No tasks running.<br/>Select tasks to multitask.
+                        </div>
+                    )}
+                    {state.activeTaskIds.map(tid => {
+                        const task = config.tasks.find(t => t.id === tid);
+                        if(!task) return null;
+                        const tState = state.tasks[tid];
+                        // Calculate simplistic progress for visual feedback
+                        const progress = tState.progress || 0;
+                        const req = task.progressRequired || 1;
+                        const pct = Math.min(100, (progress/req)*100);
+                        const isLoop = task.autoRestart;
+
+                        return (
+                            <div 
+                                key={tid}
+                                onClick={() => toggleTask(tid)}
+                                className="group flex flex-col bg-white border border-orange-200 rounded-sm p-2 cursor-pointer hover:bg-red-50 hover:border-red-300 transition-all relative overflow-hidden shadow-sm select-none"
+                                title="Click to stop task"
+                            >
+                                {/* Progress Bar Background */}
+                                {req > 0 && (
+                                     <div className="absolute left-0 bottom-0 h-0.5 bg-gray-100 w-full">
+                                        <div 
+                                            className={`h-full transition-all duration-200 ${isLoop ? 'bg-orange-400' : 'bg-blue-500'}`} 
+                                            style={{width: `${pct}%`}}
+                                        ></div>
+                                     </div>
+                                )}
+                                
+                                <div className="flex justify-between items-center z-10 relative gap-2">
+                                    <span className="text-xs font-semibold text-gray-700 group-hover:text-red-700 truncate">{task.name}</span>
+                                    <div className="flex items-center gap-1 shrink-0">
+                                         {isLoop && (
+                                             <svg className="w-2.5 h-2.5 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                             </svg>
+                                         )}
+                                         <span className="text-[10px] text-gray-300 group-hover:text-red-500 font-bold">✕</span>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+             </div>
+           )}
+
            <div className="p-3 bg-gray-200 border-b border-gray-300 font-bold text-gray-600 text-xs uppercase tracking-wider text-center">
             Body & Stats
           </div>

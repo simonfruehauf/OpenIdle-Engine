@@ -31,7 +31,7 @@ export interface Cost {
 }
 
 export interface Effect {
-  type: 'add_resource' | 'modify_max_resource_flat' | 'modify_max_resource_pct' | 'modify_task_yield_pct' | 'add_item' | 'modify_passive_gen';
+  type: 'add_resource' | 'modify_max_resource_flat' | 'modify_max_resource_pct' | 'modify_task_yield_pct' | 'add_item' | 'modify_passive_gen' | 'increase_max_tasks';
   resourceId?: ResourceID; 
   taskId?: TaskID;
   itemId?: ItemID;         
@@ -161,6 +161,8 @@ export interface GameState {
   modifiers: Modifier[]; // Permanent modifiers from upgrades
   log: string[];
   totalTimePlayed: number;
+  activeTaskIds: string[]; // Track order of active tasks for concurrency limits
+  maxConcurrentTasks: number; // Cap on active tasks
   selectedRestTaskId?: string; // ID of the task to auto-switch to when out of resources
   lastActiveTaskId?: string; // ID of the task that was running before auto-switch
 }

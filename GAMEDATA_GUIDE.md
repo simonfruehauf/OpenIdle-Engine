@@ -65,13 +65,15 @@ interface TaskConfig {
   
   // 'rest' tasks appear in the fallback dropdown. 
   // The game auto-switches to the selected rest task if the main task fails costs.
+  // Mechanic: "Auto-Return": If the game switched to a Rest task due to lack of resources,
+  // it will automatically switch BACK to the original task once resources recover (> 90% of max).
   type?: 'normal' | 'rest'; 
 
   // Costs deducted per second. If cant afford, task stops (or switches to Rest).
   costPerSecond: { 
     resourceId: string; 
     amount: number; 
-    scaleFactor?: number; // Used if cost increases with level (rare for per-second costs)
+    scaleFactor?: number; // NOT IMPLEMENTED. Costs are currently flat.
   }[];
   
   // Resources gained per second.
@@ -165,7 +167,7 @@ interface Cost {
   resourceId: string;
   amount: number;
   // If defined, cost = amount * (scaleFactor ^ currentLevelOrExecutions)
-  scaleFactor?: number; 
+  scaleFactor?: number; // NOT IMPLEMENTED. Costs are currently static.
 }
 ```
 
@@ -206,6 +208,7 @@ interface Prerequisite {
 | `modify_max_resource_pct` | `resourceId` | Multiplies Resource Cap (1 + Pct). |
 | `modify_task_yield_pct` | `taskId` | Multiplies output of a specific task. |
 | `modify_passive_gen` | `resourceId` | Adds permanent passive generation per second. |
+| `increase_max_tasks` | None (uses `amount`) | Increases the global limit of concurrent tasks. |
 | `add_item` | `itemId` | Adds item to inventory. |
 
 **Effect Properties:**
@@ -267,7 +270,7 @@ export const ACTIONS = [
     name: "Learn Necromancy",
     description: "Unlock Mana.",
     category: "graveyard",
-    costs: [{ resourceId: "bones", amount: 10, scaleFactor: 1.5 }], // Cost increases by 50% each time (if maxExecutions > 1)
+    costs: [{ resourceId: "bones", amount: 10 }], 
     effects: [{ type: "modify_max_resource_flat", resourceId: "mana", amount: 20 }],
     firstCompletionEffects: [{ type: "add_resource", resourceId: "mana", amount: 20 }], // Bonus mana on first unlock
     maxExecutions: 1,
