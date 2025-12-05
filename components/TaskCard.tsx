@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { TaskConfig } from '../types';
+import { TaskConfig, Cost } from '../types';
 import { useGame } from '../context/GameContext';
 
 // --- Icons ---
@@ -30,13 +30,35 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, isLocked = false }) =>
     const taskState = state.tasks[task.id];
     const isActive = taskState.active;
 
+    // Helper function for calculating scaled costs (mirrors GameContext logic)
+    const getScaledCost = (
+      costConfig: Cost,
+      level: number,
+      completions: number
+    ): number => {
+      if (!costConfig.scaleFactor) return costConfig.amount;
+
+      const exponent = costConfig.scalesByCompletion ? completions : (level - 1);
+
+      switch (costConfig.scaleType) {
+        case 'fixed':
+          return costConfig.amount + (costConfig.scaleFactor * exponent);
+        case 'percentage':
+          return costConfig.amount * (1 + costConfig.scaleFactor * exponent);
+        case 'exponential':
+        default:
+          return costConfig.amount * Math.pow(costConfig.scaleFactor, exponent);
+      }
+    };
+
     // Calculate Multiplier for this task
     const modifiers = state.modifiers.filter(m => m.taskId === task.id && m.type === 'percent');
     const yieldMultiplier = 1 + modifiers.reduce((sum, m) => sum + m.value, 0);
 
     const canAffordStart = !task.startCosts || task.startCosts.every(c => {
         const res = state.resources[c.resourceId];
-        return res && res.current >= c.amount;
+        const scaledAmount = getScaledCost(c, taskState.level, taskState.completions || 0);
+        return res && res.current >= scaledAmount;
     });
 
     const getScaledAmount = (base: number, scaleFactor?: number) => {
@@ -48,10 +70,12 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, isLocked = false }) =>
     const isLoop = task.autoRestart === true;
     const isProject = !isLoop;
     
-    const isDisabled = isLocked || (!isActive && !canAffordStart);
+    const canStart = taskState.paid || canAffordStart;
+    const isDisabled = isLocked || (!isActive && !canStart);
 
     // Progress bar for all tasks
     const progressPercentage = Math.min(100, ((taskState.progress || 0) / (task.progressRequired || 1)) * 100);
+    const showProgress = isActive || (taskState.progress || 0) > 0;
     
     // Helper format time
     const formatTime = (seconds: number) => {
@@ -161,12 +185,18 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, isLocked = false }) =>
                     <>
                          <div className="border-t border-gray-400 my-2"></div>
                          <div className="font-semibold text-gray-600 italic mb-1">Cost</div>
-                         {task.startCosts.map(c => (
-                            <div key={c.resourceId} className="flex justify-between text-gray-800">
-                                <span>{getName(c.resourceId)}</span>
-                                <span className={`font-mono ${state.resources[c.resourceId]?.current >= c.amount ? 'text-red-700' : 'text-red-400'}`}>{c.amount}</span>
-                            </div>
-                         ))}
+                         {task.startCosts.map(c => {
+                            const scaledAmount = getScaledCost(c, taskState.level, taskState.completions || 0);
+                            const canPay = (state.resources[c.resourceId]?.current || 0) >= scaledAmount;
+                            return (
+                                <div key={c.resourceId} className="flex justify-between text-gray-800">
+                                    <span>{getName(c.resourceId)}</span>
+                                    <span className={`font-mono ${canPay ? 'text-red-700' : 'text-red-400'}`}>
+                                        {Number.isInteger(scaledAmount) ? scaledAmount : scaledAmount.toFixed(1)}
+                                    </span>
+                                </div>
+                            );
+                         })}
                     </>
                 )}
 
@@ -209,12 +239,22 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, isLocked = false }) =>
                     <>
                         <div className="border-t border-gray-400 my-2"></div>
                         <div className="font-semibold text-gray-600 italic mb-1">Upon Completion</div>
-                         {task.completionEffects.filter(e => !e.hidden).map((e, idx) => (
-                             <div key={idx} className="flex justify-between text-gray-800">
-                                 <span>{e.resourceId ? getName(e.resourceId) : e.itemId ? getName(e.itemId) : 'Effect'}</span>
-                                 <span className="font-mono text-green-700">+{e.amount}</span>
-                             </div>
-                         ))}
+                         {task.completionEffects.filter(e => !e.hidden).map((e, idx) => {
+                             if (e.type === 'modify_max_resource_flat' && e.resourceId) {
+                                 return (
+                                    <div key={idx} className="flex justify-between text-gray-800">
+                                        <span>Max {getName(e.resourceId)}</span>
+                                        <span className="font-mono text-blue-700">+{e.amount}</span>
+                                    </div>
+                                 );
+                             }
+                             return (
+                                 <div key={idx} className="flex justify-between text-gray-800">
+                                     <span>{e.resourceId ? getName(e.resourceId) : e.itemId ? getName(e.itemId) : 'Effect'}</span>
+                                     <span className="font-mono text-green-700">+{e.amount}</span>
+                                 </div>
+                             );
+                         })}
                     </>
                 )}
 
@@ -225,21 +265,26 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, isLocked = false }) =>
                         <div className="font-semibold text-gray-600 italic mb-1 flex justify-between">
                             First Completion
                         </div>
-                        {task.firstCompletionEffects.filter(e => !e.hidden).map((e, idx) => (
-                            <div key={idx} className="flex justify-between text-gray-800">
-                                <span>{e.resourceId ? getName(e.resourceId) : e.itemId ? getName(e.itemId) : 'Effect'}</span>
-                                <span className="font-mono text-green-700">+{e.amount}</span>
-                            </div>
-                        ))}
+                        {task.firstCompletionEffects.filter(e => !e.hidden).map((e, idx) => {
+                            if (e.type === 'modify_max_resource_flat' && e.resourceId) {
+                                return (
+                                   <div key={idx} className="flex justify-between text-gray-800">
+                                       <span>Max {getName(e.resourceId)}</span>
+                                       <span className="font-mono text-blue-700">+{e.amount}</span>
+                                   </div>
+                                );
+                            }
+                            return (
+                                <div key={idx} className="flex justify-between text-gray-800">
+                                    <span>{e.resourceId ? getName(e.resourceId) : e.itemId ? getName(e.itemId) : 'Effect'}</span>
+                                    <span className="font-mono text-green-700">+{e.amount}</span>
+                                </div>
+                            );
+                        })}
                      </>
                 )}
                 
-                {/* Yield Bonus */}
-                {yieldMultiplier > 1 && (
-                    <div className="mt-2 pt-2 border-t border-gray-400 text-purple-700 font-bold text-[10px] text-center">
-                        Active Yield Bonus: +{((yieldMultiplier - 1) * 100).toFixed(0)}%
-                    </div>
-                )}
+
             </div>,
             document.body
         );
@@ -323,10 +368,10 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, isLocked = false }) =>
                             </div>
                         </div>
                         
-                        {/* Progress Bar for ALL Tasks (if active) */}
-                        {isActive && (
+                        {/* Progress Bar for ALL Tasks (if active or paused with progress) */}
+                        {showProgress && (
                              <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden mt-1 border border-gray-200">
-                                <div className={`h-full transition-all duration-100 ease-linear ${isProject ? 'bg-blue-500' : 'bg-orange-500'}`} style={{ width: `${progressPercentage}%` }}></div>
+                                <div className={`h-full transition-all duration-100 ease-linear ${isProject ? 'bg-blue-500' : 'bg-orange-500'} ${!isActive ? 'opacity-50' : ''}`} style={{ width: `${progressPercentage}%` }}></div>
                              </div>
                         )}
                     </div>

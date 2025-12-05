@@ -1,9 +1,6 @@
-
-
-
 import React, { createContext, useContext, useEffect, useReducer, useRef } from "react";
 import { ACTIONS, CATEGORIES, RESOURCES, TASKS, SLOTS, ITEMS } from "../gameData/index";
-import { ActionConfig, GameContextType, GameState, Modifier, TaskConfig, ResourceID, ActionID, TaskID, Prerequisite, SlotID, ItemID, ItemConfig, SlotConfig, CategoryConfig, TaskState, Effect } from "../types";
+import { ActionConfig, GameContextType, GameState, Modifier, TaskConfig, ResourceID, Cost, ActionID, TaskID, Prerequisite, SlotID, ItemID, ItemConfig, SlotConfig, CategoryConfig, TaskState, Effect } from "../types";
 
 // --- Helper: Encoding for Unicode Support (Emojis) ---
 function utf8_to_b64(str: string) {
@@ -124,6 +121,40 @@ const gameReducer = (state: GameState, action: Action): GameState => {
   // Always calculate modifiers first for calculations within actions
   const allModifiers = getActiveModifiers(state);
 
+  // Helper function for calculating scaled costs
+  const getScaledCost = (
+    costConfig: Cost,
+    currentExecutions: number, // For actions
+    currentLevel: number,      // For tasks (default)
+    currentCompletions: number // For tasks (if scalesByCompletion)
+  ): number => {
+    if (!costConfig.scaleFactor) return costConfig.amount; // No scaling if no scaleFactor
+
+    let exponent: number;
+    // Determine exponent based on context (Action vs Task) and scalesByCompletion flag
+    // If it's a task cost and scalesByCompletion is true, use completions
+    if (costConfig.scalesByCompletion) {
+      exponent = currentCompletions;
+    } else if (costConfig.resourceId) { // Assume it's a task cost based on resourceId if no scalesByCompletion
+      exponent = currentLevel - 1; // Default task scaling
+    } else { // Assume it's an action cost
+        exponent = currentExecutions;
+    }
+
+    switch (costConfig.scaleType) {
+      case 'fixed':
+        // Linear additive growth: amount + (scaleFactor * exponent)
+        return costConfig.amount + (costConfig.scaleFactor * exponent);
+      case 'percentage':
+        // Linear percentage growth: amount * (1 + scaleFactor * exponent)
+        return costConfig.amount * (1 + costConfig.scaleFactor * exponent);
+      case 'exponential':
+      default:
+        // Exponential growth: amount * (scaleFactor ^ exponent)
+        return costConfig.amount * Math.pow(costConfig.scaleFactor, exponent);
+    }
+  };
+
   switch (action.type) {
     case "LOAD_GAME": {
         // Safe Merge: Merge loaded state with default state to ensure missing fields (schema updates) are filled
@@ -198,7 +229,10 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             return { ...state, log: [`${config.name} limit reached.`, ...state.log].slice(0,20) };
         }
 
-        const canAfford = config.costs.every(c => (state.resources[c.resourceId]?.current || 0) >= c.amount);
+        const canAfford = config.costs.every(c => {
+            const costAmount = getScaledCost(c, actionState.executions, 0, 0);
+            return (state.resources[c.resourceId]?.current || 0) >= costAmount;
+        });
         if (!canAfford) {
              return { ...state, log: [`Not enough resources for ${config.name}`, ...state.log].slice(0,20) };
         }
@@ -206,7 +240,8 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         // Pay Costs
         const newResources = cloneResources(state.resources);
         config.costs.forEach(c => {
-            newResources[c.resourceId].current -= c.amount;
+            const costAmount = getScaledCost(c, actionState.executions, 0, 0);
+            newResources[c.resourceId].current -= costAmount;
         });
 
         // Apply Effects
@@ -307,13 +342,17 @@ const gameReducer = (state: GameState, action: Action): GameState => {
 
         // Check Start Costs (Only if not already paid)
         if (nowActive && config.startCosts && !tState.paid) {
-             const canAfford = config.startCosts.every(c => (state.resources[c.resourceId]?.current || 0) >= c.amount);
+             const canAfford = config.startCosts.every(c => {
+                 const costAmount = getScaledCost(c, 0, tState.level, tState.completions || 0);
+                 return (state.resources[c.resourceId]?.current || 0) >= costAmount;
+             });
              if (!canAfford) {
                  return { ...state, log: [`Cannot afford start costs for ${config.name}`, ...state.log].slice(0, 20) };
              }
              // Deduct start costs
              config.startCosts.forEach(c => {
-                 newResources[c.resourceId].current -= c.amount;
+                 const costAmount = getScaledCost(c, 0, tState.level, tState.completions || 0);
+                 newResources[c.resourceId].current -= costAmount;
              });
              newPaid = true;
         }
@@ -336,15 +375,44 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         const newResources = cloneResources(state.resources);
         const newTasks = { ...state.tasks };
         let newInventory = [...state.inventory];
+        let newModifiers = [...state.modifiers];
         let logUpdates = [...state.log];
         let newActions = state.actions;
         let actionsChanged = false;
         let newLastActiveTaskId = state.lastActiveTaskId;
+        let newMaxTasks = state.maxConcurrentTasks;
 
         // Helper for calculating max within tick
         const getTickMax = (rid: string) => {
              const r = RESOURCES.find(x => x.id === rid);
              return r ? calculateMax(rid, allModifiers, r.baseMax) : 0;
+        };
+        
+        // Helper to apply effects (Shared logic for completion/first-completion)
+        const applyTaskEffect = (e: Effect, level: number, yieldMulti: number) => {
+             if (e.chance !== undefined && Math.random() > e.chance) return;
+
+             if (e.type === 'add_resource' && e.resourceId) {
+                const scale = e.scaleFactor ? Math.pow(e.scaleFactor, level - 1) : 1;
+                const amount = e.amount * scale * yieldMulti;
+                const current = newResources[e.resourceId].current;
+                const rConfig = RESOURCES.find(r => r.id === e.resourceId);
+                const max = calculateMax(e.resourceId, allModifiers, rConfig?.baseMax || 100);
+                newResources[e.resourceId].current = Math.min(current + amount, max);
+            } else if (e.type === 'modify_max_resource_flat' && e.resourceId) {
+                newModifiers.push({ sourceId: TASKS.find(t=>t.id === e.taskId)?.name || "Task", resourceId: e.resourceId, type: 'flat', value: e.amount, property: 'max' });
+            } else if (e.type === 'modify_max_resource_pct' && e.resourceId) {
+                newModifiers.push({ sourceId: TASKS.find(t=>t.id === e.taskId)?.name || "Task", resourceId: e.resourceId, type: 'percent', value: e.amount, property: 'max' });
+            } else if (e.type === 'modify_passive_gen' && e.resourceId) {
+                newModifiers.push({ sourceId: TASKS.find(t=>t.id === e.taskId)?.name || "Task", resourceId: e.resourceId, type: 'flat', value: e.amount, property: 'gen' });
+            } else if (e.type === 'modify_task_yield_pct' && e.taskId) {
+                newModifiers.push({ sourceId: "Task Reward", taskId: e.taskId, type: 'percent', value: e.amount });
+            } else if (e.type === 'add_item' && e.itemId) {
+                newInventory.push(e.itemId);
+                logUpdates.unshift(`Obtained: ${ITEMS.find(i=>i.id===e.itemId)?.name}`);
+            } else if (e.type === 'increase_max_tasks') {
+                newMaxTasks += e.amount;
+            }
         };
 
         // 1. Process Active Tasks
@@ -384,6 +452,32 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                         }
                      }
                  }
+            }
+            
+            // Check Start Costs (If not paid, e.g. auto-restart)
+            if (!tState.paid && config.startCosts) {
+                 const canAffordStart = config.startCosts.every(c => {
+                     const costAmount = getScaledCost(c, 0, tState.level, tState.completions || 0);
+                     return (newResources[c.resourceId]?.current || 0) >= costAmount;
+                 });
+
+                 if (!canAffordStart) {
+                     tState.active = false;
+                     logUpdates.unshift(`${config.name} stopped (cannot afford restart cost).`);
+                     // Fallback to Rest
+                     if (state.selectedRestTaskId && state.selectedRestTaskId !== tid) {
+                        newTasks[state.selectedRestTaskId].active = true;
+                        newLastActiveTaskId = tid;
+                     }
+                     return;
+                 }
+                 
+                 // Pay Start Costs
+                 config.startCosts.forEach(c => {
+                     const costAmount = getScaledCost(c, 0, tState.level, tState.completions || 0);
+                     newResources[c.resourceId].current -= costAmount;
+                 });
+                 tState.paid = true;
             }
 
             // Check Costs (Continuous)
@@ -433,39 +527,12 @@ const gameReducer = (state: GameState, action: Action): GameState => {
 
                     // 1. Completion Effects (Standard)
                     if (config.completionEffects) {
-                        config.completionEffects.forEach(e => {
-                             // Check Probability
-                             if (e.chance !== undefined && Math.random() > e.chance) return;
-
-                             if (e.type === 'add_resource' && e.resourceId) {
-                                const scale = e.scaleFactor ? Math.pow(e.scaleFactor, tState.level - 1) : 1;
-                                const amount = e.amount * scale * yieldMulti;
-                                const current = newResources[e.resourceId].current;
-                                const rConfig = RESOURCES.find(r => r.id === e.resourceId);
-                                const max = calculateMax(e.resourceId, allModifiers, rConfig?.baseMax || 100);
-                                newResources[e.resourceId].current = Math.min(current + amount, max);
-                            } else if (e.type === 'add_item' && e.itemId) {
-                                newInventory.push(e.itemId);
-                                logUpdates.unshift(`Obtained: ${ITEMS.find(i=>i.id===e.itemId)?.name}`);
-                            }
-                        });
+                        config.completionEffects.forEach(e => applyTaskEffect(e, tState.level, yieldMulti));
                     }
 
                     // 2. First Time Effects
                     if (completions === 0 && config.firstCompletionEffects) {
-                        config.firstCompletionEffects.forEach(e => {
-                             if (e.type === 'add_resource' && e.resourceId) {
-                                const amount = e.amount; // Usually no scale on first time bonuses
-                                const current = newResources[e.resourceId].current;
-                                const rConfig = RESOURCES.find(r => r.id === e.resourceId);
-                                const max = calculateMax(e.resourceId, allModifiers, rConfig?.baseMax || 100);
-                                newResources[e.resourceId].current = Math.min(current + amount, max);
-                                logUpdates.unshift(`First time bonus: +${amount} ${rConfig?.name}`);
-                            } else if (e.type === 'add_item' && e.itemId) {
-                                newInventory.push(e.itemId);
-                                logUpdates.unshift(`First time bonus: ${ITEMS.find(i=>i.id===e.itemId)?.name}`);
-                            }
-                        });
+                        config.firstCompletionEffects.forEach(e => applyTaskEffect(e, tState.level, yieldMulti));
                     }
 
                     // Reset Paid Status for next run
@@ -631,11 +698,13 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             resources: newResources,
             tasks: newTasks,
             actions: actionsChanged ? newActions : state.actions,
+            modifiers: newModifiers,
             inventory: newInventory,
             log: logUpdates.slice(0, 50),
             totalTimePlayed: state.totalTimePlayed + action.dt,
             lastActiveTaskId: newLastActiveTaskId,
-            activeTaskIds: nextActiveTaskIds
+            activeTaskIds: nextActiveTaskIds,
+            maxConcurrentTasks: newMaxTasks
         };
     }
     

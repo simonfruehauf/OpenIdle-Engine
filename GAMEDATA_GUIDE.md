@@ -167,7 +167,19 @@ interface Cost {
   resourceId: string;
   amount: number;
   // If defined, cost = amount * (scaleFactor ^ currentLevelOrExecutions)
-  scaleFactor?: number; // NOT IMPLEMENTED. Costs are currently static.
+  // For Tasks, defaults to scaling by (Level - 1).
+  // For Actions, scales by Executions.
+  scaleFactor?: number; 
+  
+  // If true (for Tasks only), scaling uses (Completions) instead of (Level - 1).
+  scalesByCompletion?: boolean;
+
+  // Defines how scaleFactor is applied.
+  // 'fixed': cost = amount + (scaleFactor * exponent) (linear additive growth)
+  // 'percentage': cost = amount * (1 + scaleFactor * exponent) (linear percentage growth)
+  // 'exponential': cost = amount * (scaleFactor ^ exponent) (exponential growth, default if scaleType is not provided but scaleFactor is)
+  // 'tiered': behaves like 'exponential' for now, intended for future more complex step-based scaling
+  scaleType?: 'fixed' | 'percentage' | 'exponential' | 'tiered';
 }
 ```
 

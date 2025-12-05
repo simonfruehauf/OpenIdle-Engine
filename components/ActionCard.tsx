@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ActionConfig } from '../types';
+import { ActionConfig, Cost} from '../types';
 import { useGame } from '../context/GameContext';
 
 // --- Icons ---
@@ -29,10 +29,31 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
 
     const actionState = state.actions[action.id];
 
+    // Helper function for calculating scaled costs (mirrors GameContext logic)
+    const getScaledCost = (
+      costConfig: Cost,
+      executions: number
+    ): number => {
+      if (!costConfig.scaleFactor) return costConfig.amount;
+
+      let exponent = executions;
+
+      switch (costConfig.scaleType) {
+        case 'fixed':
+          return costConfig.amount + (costConfig.scaleFactor * exponent);
+        case 'percentage':
+          return costConfig.amount * (1 + costConfig.scaleFactor * exponent);
+        case 'exponential':
+        default:
+          return costConfig.amount * Math.pow(costConfig.scaleFactor, exponent);
+      }
+    };
+
     // Determine if affordable
     const canAfford = action.costs.every(cost => {
         const res = state.resources[cost.resourceId];
-        return res && res.current >= cost.amount;
+        const scaledAmount = getScaledCost(cost, actionState.executions);
+        return res && res.current >= scaledAmount;
     });
 
     // Check Mutually Exclusive Actions
@@ -219,12 +240,18 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
                     <>
                         <div className="border-t border-gray-400 my-2"></div>
                         <div className="font-semibold text-gray-600 italic mb-1">Cost</div>
-                        {action.costs.map(c => (
-                            <div key={c.resourceId} className="flex justify-between text-gray-800">
-                                <span>{getName(c.resourceId)}</span>
-                                <span className="font-mono text-red-700">{c.amount}</span>
-                            </div>
-                        ))}
+                        {action.costs.map(c => {
+                            const scaledAmount = getScaledCost(c, actionState.executions);
+                            const canPay = (state.resources[c.resourceId]?.current || 0) >= scaledAmount;
+                            return (
+                                <div key={c.resourceId} className="flex justify-between text-gray-800">
+                                    <span>{getName(c.resourceId)}</span>
+                                    <span className={`font-mono ${canPay ? 'text-red-700' : 'text-red-400'}`}>
+                                        {Number.isInteger(scaledAmount) ? scaledAmount : scaledAmount.toFixed(1)}
+                                    </span>
+                                </div>
+                            );
+                        })}
                     </>
                 )}
 
