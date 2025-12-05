@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ActionConfig, Cost} from '../types';
+import { ActionConfig, Cost } from '../types';
 import { useGame } from '../context/GameContext';
 
 // --- Icons ---
@@ -31,22 +31,22 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
 
     // Helper function for calculating scaled costs (mirrors GameContext logic)
     const getScaledCost = (
-      costConfig: Cost,
-      executions: number
+        costConfig: Cost,
+        executions: number
     ): number => {
-      if (!costConfig.scaleFactor) return costConfig.amount;
+        if (!costConfig.scaleFactor) return costConfig.amount;
 
-      let exponent = executions;
+        let exponent = executions;
 
-      switch (costConfig.scaleType) {
-        case 'fixed':
-          return costConfig.amount + (costConfig.scaleFactor * exponent);
-        case 'percentage':
-          return costConfig.amount * (1 + costConfig.scaleFactor * exponent);
-        case 'exponential':
-        default:
-          return costConfig.amount * Math.pow(costConfig.scaleFactor, exponent);
-      }
+        switch (costConfig.scaleType) {
+            case 'fixed':
+                return costConfig.amount + (costConfig.scaleFactor * exponent);
+            case 'percentage':
+                return costConfig.amount * (1 + costConfig.scaleFactor * exponent);
+            case 'exponential':
+            default:
+                return costConfig.amount * Math.pow(costConfig.scaleFactor, exponent);
+        }
     };
 
     // Determine if affordable
@@ -61,16 +61,16 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
         const exState = state.actions[exId];
         return exState && exState.executions > 0;
     });
-    
+
     // Find name of blocking action for display
-    const blockingActionName = exclusiveBlocked 
-        ? config.actions.find(a => action.exclusiveWith?.includes(a.id) && state.actions[a.id]?.executions > 0)?.name 
+    const blockingActionName = exclusiveBlocked
+        ? config.actions.find(a => action.exclusiveWith?.includes(a.id) && state.actions[a.id]?.executions > 0)?.name
         : null;
 
     const isLimited = action.maxExecutions !== undefined;
     const isCompleted = isLimited && actionState.executions >= (action.maxExecutions || 0);
     const isDisabled = !canAfford || isCompleted || !!exclusiveBlocked || isLocked;
-    
+
     const isUpgrade = isLimited && (action.maxExecutions || 0) < 100; // Heuristic for "Upgrade" vs "Repeatable Action"
 
     const handleMouseEnter = (e: React.MouseEvent) => {
@@ -108,37 +108,37 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
         const chanceStr = e.chance ? `(${e.chance * 100}%) ` : '';
         if (e.type === 'add_resource') {
             return (
-               <div key={idx} className="flex justify-between text-gray-800">
-                   <span>{getName(e.resourceId!)}</span>
-                   <span className="font-mono text-green-700">+{e.amount} {chanceStr}</span>
-               </div>
+                <div key={idx} className="flex justify-between text-gray-800">
+                    <span>{getName(e.resourceId!)}</span>
+                    <span className="font-mono text-green-700">{e.amount > 0 ? "+" : ""}{e.amount} {chanceStr}</span>
+                </div>
             );
         }
         if (e.type === 'modify_max_resource_flat') {
             return (
-               <div key={idx} className="text-blue-700">
-                   {chanceStr}+{e.amount} Max {getName(e.resourceId!)}
-               </div>
+                <div key={idx} className="text-blue-700">
+                    {chanceStr}{e.amount > 0 ? "+" : ""}{e.amount} Max {getName(e.resourceId!)}
+                </div>
             );
         }
         if (e.type === 'modify_max_resource_pct') {
             return (
-               <div key={idx} className="text-blue-700">
-                   {chanceStr}+{(e.amount * 100).toFixed(0)}% Max {getName(e.resourceId!)}
-               </div>
+                <div key={idx} className="text-blue-700">
+                    {chanceStr}+{(e.amount * 100).toFixed(0)}% Max {getName(e.resourceId!)}
+                </div>
             );
         }
         if (e.type === 'modify_passive_gen' && e.resourceId) {
-           return (
-               <div key={idx} className="text-green-700">
-                   {chanceStr}+{e.amount}/sec {getName(e.resourceId)}
-               </div>
-           );
+            return (
+                <div key={idx} className="text-green-700">
+                    {chanceStr}+{e.amount}/sec {getName(e.resourceId)}
+                </div>
+            );
         }
         if (e.type === 'modify_task_yield_pct' && e.taskId) {
             return (
                 <div key={idx} className="text-purple-700">
-                    {chanceStr}+{(e.amount * 100).toFixed(0)}% Yield ({getName(e.taskId)})
+                    {chanceStr}{e.amount > 0 ? "+" : ""}{(e.amount * 100).toFixed(0)}% Yield ({getName(e.taskId)})
                 </div>
             );
         }
@@ -152,7 +152,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
         if (e.type === 'increase_max_tasks') {
             return (
                 <div key={idx} className="text-purple-700">
-                    {chanceStr}Increases max concurrent tasks by {e.amount}
+                    {chanceStr}Increases max tasks by {e.amount}
                 </div>
             );
         }
@@ -177,11 +177,11 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
         }
 
         return createPortal(
-            <div 
-                style={tooltipStyle} 
+            <div
+                style={tooltipStyle}
                 className="bg-gray-200 border border-gray-400 text-gray-800 p-3 rounded shadow-2xl w-64 text-xs pointer-events-none animate-fade-in z-[9999]"
             >
-                 <div className="flex justify-between items-start mb-1">
+                <div className="flex justify-between items-start mb-1">
                     <span className="font-bold text-sm text-black mr-2 leading-tight">{action.name}</span>
                     <div className="text-right text-gray-600 whitespace-nowrap">
                         {isLocked && <span className="text-red-600 font-bold uppercase">Locked</span>}
@@ -194,13 +194,13 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
                 </div>
 
                 <p className="text-gray-700 mb-2 leading-snug">{action.description}</p>
-                
+
                 {exclusiveBlocked && (
                     <div className="mb-2 p-1 bg-red-100 border border-red-300 text-red-700 rounded text-center">
                         Incompatible with {blockingActionName}
                     </div>
                 )}
-                
+
                 {action.exclusiveWith && !exclusiveBlocked && (
                     <div className="mb-2 text-yellow-700 italic text-[10px]">
                         Mutually exclusive with: {action.exclusiveWith.map(id => getName(id)).join(", ")}
@@ -209,7 +209,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
 
                 {/* Requirements */}
                 {isLocked && action.prerequisites && (
-                     <>
+                    <>
                         <div className="border-t border-gray-400 my-2"></div>
                         <div className="font-semibold text-gray-600 italic mb-1">Need</div>
                         {action.prerequisites.map((req, idx) => {
@@ -218,13 +218,14 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
                             if (req.resourceId) {
                                 const current = state.resources[req.resourceId]?.current || 0;
                                 if (req.minAmount && current < req.minAmount) met = false;
+                                if (req.maxAmount && current > req.maxAmount) met = false;
                                 text = `${req.minAmount} ${getName(req.resourceId)}`;
                             } else if (req.actionId) {
                                 const act = state.actions[req.actionId];
                                 if (!act || act.executions < 1) met = false;
                                 text = `Upgrade: ${getName(req.actionId)}`;
                             }
-                            
+
                             return (
                                 <div key={idx} className={`flex justify-between ${met ? 'text-gray-900' : 'text-red-600'}`}>
                                     <span>{text}</span>
@@ -232,7 +233,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
                                 </div>
                             );
                         })}
-                     </>
+                    </>
                 )}
 
                 {/* Costs */}
@@ -266,13 +267,13 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
 
                 {/* First Time Bonus */}
                 {action.firstCompletionEffects && action.firstCompletionEffects.some(e => !e.hidden) && actionState.executions === 0 && (
-                     <>
+                    <>
                         <div className="border-t border-gray-400 my-2"></div>
                         <div className="font-semibold text-gray-600 italic mb-1 flex justify-between">
                             First Use Bonus
                         </div>
                         {action.firstCompletionEffects.map((e, idx) => renderEffect(e, idx))}
-                     </>
+                    </>
                 )}
             </div>,
             document.body
@@ -281,7 +282,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
 
     // --- Dynamic Styling ---
     let styleClass = "relative flex flex-col items-start p-2 border rounded-sm w-full text-left transition-all mb-0 overflow-visible h-full min-h-[60px] ";
-    
+
     if (exclusiveBlocked) {
         styleClass += "bg-gray-200 border-gray-300 opacity-50 cursor-not-allowed";
     } else if (isCompleted) {
@@ -294,10 +295,10 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
     } else {
         // Affordable & Available
         if (isUpgrade) {
-             styleClass += "bg-yellow-50/20 border-yellow-200 hover:border-yellow-400 hover:shadow-sm cursor-pointer hover:bg-yellow-50/50 border-b-2";
+            styleClass += "bg-yellow-50/20 border-yellow-200 hover:border-yellow-400 hover:shadow-sm cursor-pointer hover:bg-yellow-50/50 border-b-2";
         } else {
-             // Brighter background for unlocked actions
-             styleClass += "bg-orange-10 border-orange-300 hover:border-orange-400 hover:shadow-sm cursor-pointer hover:bg-orange-100";
+            // Brighter background for unlocked actions
+            styleClass += "bg-orange-10 border-orange-300 hover:border-orange-400 hover:shadow-sm cursor-pointer hover:bg-orange-100";
         }
     }
 
@@ -311,19 +312,19 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
                 onMouseLeave={handleMouseLeave}
                 className={`group ${styleClass}`}
             >
-                 {exclusiveBlocked && (
-                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                         <div className="bg-gray-800 text-white text-[10px] px-2 py-0.5 rounded opacity-80">BLOCKED</div>
-                     </div>
-                 )}
-                 {isLocked && !exclusiveBlocked && (
-                      <div className="absolute top-2 right-2 text-gray-500">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                          </svg>
-                      </div>
-                 )}
-                
+                {exclusiveBlocked && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="bg-gray-800 text-white text-[10px] px-2 py-0.5 rounded opacity-80">BLOCKED</div>
+                    </div>
+                )}
+                {isLocked && !exclusiveBlocked && (
+                    <div className="absolute top-2 right-2 text-gray-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                    </div>
+                )}
+
                 <div className="flex justify-between items-start w-full h-full">
                     <div className="flex flex-col w-full">
                         {/* Header Row */}
@@ -331,7 +332,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
                             <span className={`font-semibold text-xs leading-tight text-left pr-1 ${exclusiveBlocked ? 'line-through' : ''} ${isLocked ? 'text-gray-600' : 'text-gray-800'}`}>
                                 {action.name}
                             </span>
-                            
+
                             {/* Type Icon */}
                             {!isLocked && !exclusiveBlocked && (
                                 <div className={`flex flex-col items-end shrink-0 ${isUpgrade ? 'text-yellow-500' : 'text-slate-400'}`}>
@@ -339,7 +340,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
                                 </div>
                             )}
                         </div>
-                        
+
                         {/* Limit Badge */}
                         {isLimited && !exclusiveBlocked && !isLocked && (
                             <div className={`text-[9px] font-mono mt-auto pt-1 self-start ${isCompleted ? 'text-gray-400' : 'text-gray-500'}`}>

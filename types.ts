@@ -17,7 +17,7 @@ export interface ResourceConfig {
   name: string;
   type: 'basic' | 'stat'; // 'basic' = Left Col, 'stat' = Right Col
   category?: string; // Grouping for the UI (matches CategoryID usually)
-  baseMax: number; 
+  baseMax: number;
   initialAmount?: number;
   color?: string; // CSS class for bar color
   description?: string;
@@ -30,8 +30,8 @@ export interface Cost {
   // If defined, cost = amount * (scaleFactor ^ currentLevelOrExecutions)
   // For Tasks, defaults to scaling by (Level - 1).
   // For Actions, scales by Executions.
-  scaleFactor?: number; 
-  
+  scaleFactor?: number;
+
   // If true (for Tasks only), scaling uses (Completions) instead of (Level - 1).
   scalesByCompletion?: boolean;
 
@@ -44,42 +44,43 @@ export interface Cost {
 
 export interface Effect {
   type: 'add_resource' | 'modify_max_resource_flat' | 'modify_max_resource_pct' | 'modify_task_yield_pct' | 'add_item' | 'modify_passive_gen' | 'increase_max_tasks';
-  resourceId?: ResourceID; 
+  resourceId?: ResourceID;
   taskId?: TaskID;
-  itemId?: ItemID;         
+  itemId?: ItemID;
   amount: number;
-  scaleFactor?: number; 
+  scaleFactor?: number;
   chance?: number; // 0-1 probability for effect to trigger (default 1)
   hidden?: boolean; // If true, effect is calculated but not shown in tooltips
 }
 
 // Items & Equipment
 export interface ItemConfig {
-    id: ItemID;
-    name: string;
-    description: string;
-    slot: SlotID;
-    effects: Effect[];
+  id: ItemID;
+  name: string;
+  description: string;
+  slot: SlotID;
+  effects: Effect[];
 }
 
 export interface SlotConfig {
-    id: SlotID;
-    name: string;
-    prerequisites?: Prerequisite[]; // E.g., "Extra Arm" requires mutation
+  id: SlotID;
+  name: string;
+  prerequisites?: Prerequisite[]; // E.g., "Extra Arm" requires mutation
 }
 
 export interface TaskDrop {
-    itemId: ItemID;
-    chancePerSecond: number; // 0.0 to 1.0
+  itemId: ItemID;
+  chancePerSecond: number; // 0.0 to 1.0
 }
 
 // --- Conditions ---
 export interface Prerequisite {
   resourceId?: ResourceID;
-  minAmount?: number;       
-  minMax?: number;          
-  
-  actionId?: ActionID;      
+  minAmount?: number; // If defined, gets unlocked when amount is greater than or equal to this
+  maxAmount?: number; // If defined, gets unlocked when amount is less than or equal to this
+  minMax?: number; // if defined, gets unlocked when max (capacity) is greater than or equal to this
+
+  actionId?: ActionID;
   minExecutions?: number;   // Requires action to be used X times (default 1)
 
   taskId?: TaskID;          // Requires specific task
@@ -94,10 +95,10 @@ export interface ActionConfig {
   costs: Cost[];
   effects: Effect[];
   firstCompletionEffects?: Effect[]; // Rewards given ONLY the first time the action is executed
-  maxExecutions?: number; 
+  maxExecutions?: number;
   cooldownMs?: number; //TODO: Currently not used, will have to be implemented
-  prerequisites?: Prerequisite[]; 
-  exclusiveWith?: ActionID[]; 
+  prerequisites?: Prerequisite[];
+  exclusiveWith?: ActionID[];
   locks?: string[]; // IDs of tasks/actions/resources to hide & disable upon purchase
   logMessage?: string; // Custom message to display in log when triggered
 }
@@ -108,22 +109,22 @@ export interface TaskConfig {
   description: string;
   category: CategoryID;
   type?: 'normal' | 'rest'; // 'rest' tasks can be auto-selected when resources run dry
-  
+
   // Standard Loop Props
   costPerSecond: Cost[];
   effectsPerSecond: Effect[];
-  xpPerSecond?: number; 
-  drops?: TaskDrop[]; 
+  xpPerSecond?: number;
+  drops?: TaskDrop[];
 
   // Progress / Timed Task Props
   startCosts?: Cost[]; // One-time cost to begin the task
   progressRequired?: number; // Duration in seconds to complete. If set, task stops upon reaching this.
   autoRestart?: boolean; // If true, task restarts progress automatically upon completion (Loop behavior). Default false.
-  
+
   completionEffects?: Effect[]; // Rewards given when progress reaches max
   firstCompletionEffects?: Effect[]; // Rewards given ONLY the first time the task is completed
 
-  prerequisites?: Prerequisite[]; 
+  prerequisites?: Prerequisite[];
 }
 
 export interface CategoryConfig {
@@ -139,7 +140,7 @@ export interface ResourceState {
 }
 
 export interface Modifier {
-  sourceId: string; 
+  sourceId: string;
   type: 'flat' | 'percent';
   value: number;
   // Targets 
@@ -151,7 +152,7 @@ export interface Modifier {
 export interface ActionState {
   executions: number;
   unlocked: boolean;
-  lastUsed?: number; 
+  lastUsed?: number;
 }
 
 export interface TaskState {
@@ -200,7 +201,7 @@ export interface GameContextType {
   checkIsVisible: (id: string, prereqs?: Prerequisite[]) => boolean;
   getResourceBreakdown: (resourceId: string) => any;
   getActiveModifiers: () => Modifier[];
-  
+
   // Persistence
   saveGame: () => void;
   resetGame: () => void;
