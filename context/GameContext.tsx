@@ -92,6 +92,8 @@ const createInitialState = (): GameState => {
     modifiers: [],
     log: ["Welcome. Manage your tasks and resources."],
     totalTimePlayed: 0,
+    activeTaskIds: [],
+    maxConcurrentTasks: 1,
     selectedRestTaskId: "sleep", // Default rest task
     lastActiveTaskId: undefined
   };
@@ -136,7 +138,9 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             equipment: action.state.equipment || defaults.equipment,
             modifiers: action.state.modifiers || defaults.modifiers,
             log: action.state.log || defaults.log,
-            selectedRestTaskId: action.state.selectedRestTaskId || defaults.selectedRestTaskId
+            selectedRestTaskId: action.state.selectedRestTaskId || defaults.selectedRestTaskId,
+            maxConcurrentTasks: action.state.maxConcurrentTasks || defaults.maxConcurrentTasks,
+            activeTaskIds: action.state.activeTaskIds || defaults.activeTaskIds
         };
     }
     
@@ -208,6 +212,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         // Apply Effects
         const newModifiers = [...state.modifiers];
         let newInventory = [...state.inventory];
+        let newMaxTasks = state.maxConcurrentTasks;
         
         // Helper function to apply a single effect
         const applyEffect = (e: Effect) => {
@@ -231,6 +236,8 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 for (let i = 0; i < e.amount; i++) {
                     newInventory.push(e.itemId);
                 }
+            } else if (e.type === 'increase_max_tasks') {
+                newMaxTasks += e.amount;
             }
         };
 
@@ -255,7 +262,8 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             actions: newActions,
             modifiers: newModifiers,
             inventory: newInventory,
-            log: [logMsg, ...state.log].slice(0, 20)
+            log: [logMsg, ...state.log].slice(0, 20),
+            maxConcurrentTasks: newMaxTasks
         };
     }
 
@@ -267,6 +275,23 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         const nowActive = !tState.active;
         const newResources = cloneResources(state.resources);
         let newPaid = tState.paid;
+        
+        // Prepare new state objects early
+        const newTasks = { ...state.tasks };
+        let newActiveTaskIds = [...state.activeTaskIds];
+        let logUpdates = [...state.log];
+
+        // Check Max Concurrent Tasks (and auto-cancel oldest if needed)
+        if (nowActive) {
+            if (newActiveTaskIds.length >= state.maxConcurrentTasks) {
+                 const oldestId = newActiveTaskIds.shift(); // Remove oldest
+                 if (oldestId) {
+                     newTasks[oldestId] = { ...newTasks[oldestId], active: false };
+                     const oldName = TASKS.find(t => t.id === oldestId)?.name || oldestId;
+                     logUpdates.unshift(`Stopped ${oldName} to focus on ${config.name}.`);
+                 }
+            }
+        }
 
         // Check Upkeep (If starting) to prevent instant-stop
         if (nowActive) {
@@ -293,16 +318,17 @@ const gameReducer = (state: GameState, action: Action): GameState => {
              newPaid = true;
         }
         
-        const newTasks = { ...state.tasks };
-        
-        if (nowActive) {
-            Object.keys(newTasks).forEach(tid => {
-                newTasks[tid] = { ...newTasks[tid], active: false };
-            });
-        }
+        // Apply change to target task
         newTasks[action.taskId] = { ...tState, active: nowActive, paid: newPaid };
 
-        return { ...state, tasks: newTasks, resources: newResources, lastActiveTaskId: undefined };
+        // Update activeTaskIds
+        if (nowActive) {
+            newActiveTaskIds.push(action.taskId);
+        } else {
+            newActiveTaskIds = newActiveTaskIds.filter(id => id !== action.taskId);
+        }
+
+        return { ...state, tasks: newTasks, resources: newResources, activeTaskIds: newActiveTaskIds, lastActiveTaskId: undefined, log: logUpdates.slice(0, 20) };
     }
 
     case "TICK": {
@@ -591,6 +617,15 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             }
         });
 
+        // Reconstruct activeTaskIds preserving order
+        let nextActiveTaskIds = state.activeTaskIds.filter(id => newTasks[id]?.active);
+        // Append any new active tasks (e.g. from auto-rest) that weren't tracked yet
+        Object.keys(newTasks).forEach(id => {
+            if (newTasks[id].active && !nextActiveTaskIds.includes(id)) {
+                nextActiveTaskIds.push(id);
+            }
+        });
+
         return {
             ...state,
             resources: newResources,
@@ -599,7 +634,8 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             inventory: newInventory,
             log: logUpdates.slice(0, 50),
             totalTimePlayed: state.totalTimePlayed + action.dt,
-            lastActiveTaskId: newLastActiveTaskId
+            lastActiveTaskId: newLastActiveTaskId,
+            activeTaskIds: nextActiveTaskIds
         };
     }
     

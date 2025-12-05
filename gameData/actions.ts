@@ -99,7 +99,21 @@ export const ACTIONS: ActionConfig[] = [
     prerequisites: [{ resourceId: 'money', minAmount: 20 }],
     maxExecutions: 5
   },
-
+  {
+    id: "learn_multitasking",
+    name: "Multitasking Training",
+    description: "Train your brain to handle more concurrent threads.",
+    category: "mundane",
+    costs: [
+        { resourceId: 'insight', amount: 5 },
+        { resourceId: 'stamina', amount: 10 }
+    ],
+    effects: [
+        { type: 'increase_max_tasks', amount: 1 }
+    ],
+    maxExecutions: 1,
+    prerequisites: [{ resourceId: 'insight', minAmount: 2 }]
+  },
   // --- RESEARCH & UNLOCKS ---
   {
     id: "pierce_veil",
