@@ -27,7 +27,19 @@ export interface ResourceConfig {
 export interface Cost {
   resourceId: ResourceID;
   amount: number;
-  scaleFactor?: number; // Cost multiplies by this per level
+  // If defined, cost = amount * (scaleFactor ^ currentLevelOrExecutions)
+  // For Tasks, defaults to scaling by (Level - 1).
+  // For Actions, scales by Executions.
+  scaleFactor?: number; 
+  
+  // If true (for Tasks only), scaling uses (Completions) instead of (Level - 1).
+  scalesByCompletion?: boolean;
+
+  // Defines how scaleFactor is applied. Default is 'exponential'.
+  // 'fixed': cost = amount + (scaleFactor * exponent) (linear additive growth)
+  // 'percentage': cost = amount * (1 + scaleFactor * exponent) (linear percentage growth)
+  // 'exponential': cost = amount * (scaleFactor ^ exponent) (exponential growth, default if scaleType is not provided but scaleFactor is)
+  scaleType?: 'exponential' | 'fixed' | 'percentage';
 }
 
 export interface Effect {
