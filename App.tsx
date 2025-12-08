@@ -81,12 +81,6 @@ const GameLayout: React.FC = () => {
 
     const hasCompletedUpgrades = config.actions.some(a => isActionCompleted(a.id)) || config.tasks.some(t => isTaskCompleted(t.id));
 
-    // Get unlocked rest tasks for dropdown
-    const restTasks = config.tasks.filter(t =>
-        t.type === 'rest' &&
-        checkIsVisible(t.id, t.prerequisites)
-    );
-
     const toggleSection = (id: string) => {
         setCollapsedSections(prev => ({
             ...prev,
@@ -349,23 +343,6 @@ const GameLayout: React.FC = () => {
                                         {activeTaskName}
                                     </span>
                                 </div>
-
-                                {/* Rest Task Selector */}
-                                {restTasks.length > 0 && (
-                                    <div className="flex items-center gap-1 border-l border-orange-200 pl-4">
-                                        <span className="text-[10px] text-orange-600 uppercase font-bold tracking-wide">Fallback Rest:</span>
-                                        <select
-                                            value={state.selectedRestTaskId || ''}
-                                            onChange={(e) => setRestTask(e.target.value)}
-                                            className="text-xs bg-white border border-orange-200 text-orange-800 rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-orange-300"
-                                        >
-                                            <option value="" disabled>Select Rest Task</option>
-                                            {restTasks.map(t => (
-                                                <option key={t.id} value={t.id}>{t.name}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                )}
                             </div>
 
                             <div className="flex-grow overflow-y-auto p-4 max-w-4xl mx-auto w-full">

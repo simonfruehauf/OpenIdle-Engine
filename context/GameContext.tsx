@@ -24,8 +24,12 @@ const getActiveModifiers = (state: GameState): Modifier[] => {
                     mods.push({ sourceId: item.name, type: 'flat', value: e.amount, resourceId: e.resourceId, property: 'max' });
                 } else if (e.type === 'modify_max_resource_pct' && e.resourceId) {
                     mods.push({ sourceId: item.name, type: 'percent', value: e.amount, resourceId: e.resourceId, property: 'max' });
-                } else if (e.type === 'modify_task_yield_pct' && e.taskId) {
-                    mods.push({ sourceId: item.name, type: 'percent', value: e.amount, taskId: e.taskId });
+                } else if (e.type === 'modify_yield_pct') {
+                    if (e.taskId) mods.push({ sourceId: item.name, type: 'percent', value: e.amount, taskId: e.taskId, property: 'yield' });
+                    if (e.actionId) mods.push({ sourceId: item.name, type: 'percent', value: e.amount, actionId: e.actionId, property: 'yield' });
+                } else if (e.type === 'modify_yield_flat') {
+                    if (e.taskId) mods.push({ sourceId: item.name, type: 'flat', value: e.amount, taskId: e.taskId, property: 'yield', resourceId: e.resourceId });
+                    if (e.actionId) mods.push({ sourceId: item.name, type: 'flat', value: e.amount, actionId: e.actionId, property: 'yield', resourceId: e.resourceId });
                 } else if (e.type === 'modify_passive_gen' && e.resourceId) {
                     mods.push({ sourceId: item.name, type: 'flat', value: e.amount, resourceId: e.resourceId, property: 'gen' });
                 }
@@ -51,11 +55,29 @@ const calculateMax = (resId: ResourceID, modifiers: Modifier[], baseMax: number)
     return Math.floor((baseMax + flats) * (1 + percents));
 };
 
-// --- Helper: Task Yield Multiplier ---
-const calculateTaskYieldMultiplier = (taskId: TaskID, modifiers: Modifier[]): number => {
-    const mods = modifiers.filter(m => m.taskId === taskId && m.type === 'percent');
-    const totalPercent = mods.reduce((sum, m) => sum + m.value, 0);
-    return 1 + totalPercent;
+// --- Helper: Universal Yield Calculation ---
+const calculateYield = (baseAmount: number, sourceId: string, sourceType: 'task' | 'action', resourceId: string, modifiers: Modifier[]): number => {
+    // 1. Calculate Flat Bonuses
+    const flats = modifiers.filter(m => {
+        if (m.property !== 'yield' || m.type !== 'flat') return false;
+        // Check Source Match
+        if (sourceType === 'task' && m.taskId !== sourceId) return false;
+        if (sourceType === 'action' && m.actionId !== sourceId) return false;
+        // Check Resource Match (Specific or Generic)
+        if (m.resourceId && m.resourceId !== resourceId) return false;
+        return true;
+    }).reduce((sum, m) => sum + m.value, 0);
+
+    // 2. Calculate Percent Bonuses
+    const percents = modifiers.filter(m => {
+        if (m.property !== 'yield' || m.type !== 'percent') return false;
+        if (sourceType === 'task' && m.taskId !== sourceId) return false;
+        if (sourceType === 'action' && m.actionId !== sourceId) return false;
+        if (m.resourceId && m.resourceId !== resourceId) return false;
+        return true;
+    }).reduce((sum, m) => sum + m.value, 0);
+
+    return (baseAmount + flats) * (1 + percents);
 };
 
 // --- Initial State ---
@@ -97,9 +119,7 @@ const createInitialState = (): GameState => {
         log: ["Welcome. Manage your tasks and resources."],
         totalTimePlayed: 0,
         activeTaskIds: [],
-        maxConcurrentTasks: 1,
-        selectedRestTaskId: "sleep", // Default rest task
-        lastActiveTaskId: undefined
+        maxConcurrentTasks: 1
     };
 };
 
@@ -108,7 +128,6 @@ type Action =
     | { type: "TICK"; dt: number }
     | { type: "TRIGGER_ACTION"; actionId: string }
     | { type: "TOGGLE_TASK"; taskId: string }
-    | { type: "SET_REST_TASK"; taskId: string }
     | { type: "EQUIP_ITEM"; itemId: string }
     | { type: "UNEQUIP_ITEM"; slotId: string }
     | { type: "BUY_CONVERTER"; converterId: string }
@@ -179,7 +198,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 equipment: action.state.equipment || defaults.equipment,
                 modifiers: action.state.modifiers || defaults.modifiers,
                 log: action.state.log || defaults.log,
-                selectedRestTaskId: action.state.selectedRestTaskId || defaults.selectedRestTaskId,
                 maxConcurrentTasks: action.state.maxConcurrentTasks || defaults.maxConcurrentTasks,
                 activeTaskIds: action.state.activeTaskIds || defaults.activeTaskIds
             };
@@ -190,9 +208,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
 
         case "ADD_LOG":
             return { ...state, log: [action.msg, ...state.log].slice(0, 50) };
-
-        case "SET_REST_TASK":
-            return { ...state, selectedRestTaskId: action.taskId };
 
         case "EQUIP_ITEM": {
             const item = ITEMS.find(i => i.id === action.itemId);
@@ -344,8 +359,12 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                     newModifiers.push({ sourceId: config.name, resourceId: e.resourceId, type: 'percent', value: e.amount, property: 'max' });
                 } else if (e.type === 'modify_passive_gen' && e.resourceId) {
                     newModifiers.push({ sourceId: config.name, resourceId: e.resourceId, type: 'flat', value: e.amount, property: 'gen' });
-                } else if (e.type === 'modify_task_yield_pct' && e.taskId) {
-                    newModifiers.push({ sourceId: config.name, taskId: e.taskId, type: 'percent', value: e.amount });
+                } else if (e.type === 'modify_yield_pct') {
+                    if (e.taskId) newModifiers.push({ sourceId: config.name, taskId: e.taskId, type: 'percent', value: e.amount, property: 'yield', resourceId: e.resourceId });
+                    if (e.actionId) newModifiers.push({ sourceId: config.name, actionId: e.actionId, type: 'percent', value: e.amount, property: 'yield', resourceId: e.resourceId });
+                } else if (e.type === 'modify_yield_flat') {
+                    if (e.taskId) newModifiers.push({ sourceId: config.name, taskId: e.taskId, type: 'flat', value: e.amount, property: 'yield', resourceId: e.resourceId });
+                    if (e.actionId) newModifiers.push({ sourceId: config.name, actionId: e.actionId, type: 'flat', value: e.amount, property: 'yield', resourceId: e.resourceId });
                 } else if (e.type === 'add_item' && e.itemId) {
                     for (let i = 0; i < e.amount; i++) {
                         newInventory.push(e.itemId);
@@ -365,9 +384,62 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             // Standard Effects
             config.effects.forEach(applyEffect);
 
+            // First Completion Effects (Re-iterating applyEffect logic)
+            // Wait, applyEffect uses the closure variables from triggerAction.
+            // Using forEach calls it.
+
+            // NOTE: We need to update resource adding to use calculateYield
+            // Redefining applyEffect to handle 'add_resource' correctly with yield
+            const applyEffectWithYield = (e: Effect) => {
+                // Check Probability
+                if (e.chance !== undefined && Math.random() > e.chance) return;
+
+                if (e.type === 'add_resource' && e.resourceId) {
+                    const current = newResources[e.resourceId].current;
+                    const rConfig = RESOURCES.find(r => r.id === e.resourceId);
+                    const max = calculateMax(e.resourceId, allModifiers, rConfig?.baseMax ?? 100);
+
+                    // Use calculateYield
+                    const finalAmount = calculateYield(e.amount, config.id, 'action', e.resourceId, allModifiers);
+
+                    newResources[e.resourceId].current = Math.min(current + finalAmount, max);
+                } else {
+                    // Delegate to standard handler for non-resource effects (or duplicate logic)
+                    // Since I'm replacing the block, I'll just include the rest of logic here.
+                    if (e.type === 'modify_max_resource_flat' && e.resourceId) {
+                        newModifiers.push({ sourceId: config.name, resourceId: e.resourceId, type: 'flat', value: e.amount, property: 'max' });
+                    } else if (e.type === 'modify_max_resource_pct' && e.resourceId) {
+                        newModifiers.push({ sourceId: config.name, resourceId: e.resourceId, type: 'percent', value: e.amount, property: 'max' });
+                    } else if (e.type === 'modify_passive_gen' && e.resourceId) {
+                        newModifiers.push({ sourceId: config.name, resourceId: e.resourceId, type: 'flat', value: e.amount, property: 'gen' });
+                    } else if (e.type === 'modify_yield_pct') {
+                        if (e.taskId) newModifiers.push({ sourceId: config.name, taskId: e.taskId, type: 'percent', value: e.amount, property: 'yield', resourceId: e.resourceId });
+                        if (e.actionId) newModifiers.push({ sourceId: config.name, actionId: e.actionId, type: 'percent', value: e.amount, property: 'yield', resourceId: e.resourceId });
+                    } else if (e.type === 'modify_yield_flat') {
+                        if (e.taskId) newModifiers.push({ sourceId: config.name, taskId: e.taskId, type: 'flat', value: e.amount, property: 'yield', resourceId: e.resourceId });
+                        if (e.actionId) newModifiers.push({ sourceId: config.name, actionId: e.actionId, type: 'flat', value: e.amount, property: 'yield', resourceId: e.resourceId });
+                    } else if (e.type === 'add_item' && e.itemId) {
+                        for (let i = 0; i < e.amount; i++) {
+                            newInventory.push(e.itemId);
+                        }
+                    } else if (e.type === 'increase_max_tasks') {
+                        newMaxTasks += e.amount;
+                    } else if (e.type === 'increase_max_executions') {
+                        if (e.taskId) {
+                            newModifiers.push({ sourceId: config.name, taskId: e.taskId, type: 'flat', value: e.amount, property: 'max_exec' });
+                        } else if (e.actionId) {
+                            newModifiers.push({ sourceId: config.name, actionId: e.actionId, type: 'flat', value: e.amount, property: 'max_exec' });
+                        }
+                    }
+                }
+            };
+
+            // Apply Effects
+            config.effects.forEach(applyEffectWithYield);
+
             // First Completion Effects
             if (actionState.executions === 0 && config.firstCompletionEffects) {
-                config.firstCompletionEffects.forEach(applyEffect);
+                config.firstCompletionEffects.forEach(applyEffectWithYield);
             }
 
             const newActions = {
@@ -458,7 +530,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 newActiveTaskIds = newActiveTaskIds.filter(id => id !== action.taskId);
             }
 
-            return { ...state, tasks: newTasks, resources: newResources, activeTaskIds: newActiveTaskIds, lastActiveTaskId: undefined, log: logUpdates.slice(0, 20) };
+            return { ...state, tasks: newTasks, resources: newResources, activeTaskIds: newActiveTaskIds, log: logUpdates.slice(0, 20) };
         }
 
         case "TICK": {
@@ -470,7 +542,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             let logUpdates = [...state.log];
             let newActions = state.actions;
             let actionsChanged = false;
-            let newLastActiveTaskId = state.lastActiveTaskId;
             let newMaxTasks = state.maxConcurrentTasks;
 
             // Helper for calculating max within tick
@@ -480,7 +551,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             };
 
             // Helper to apply effects (Shared logic for completion/first-completion)
-            const applyTaskEffect = (e: Effect, level: number, yieldMulti: number) => {
+            const applyTaskEffect = (e: Effect, level: number, taskId: string) => {
                 if (e.chance !== undefined && Math.random() > e.chance) return;
 
                 if (e.type === 'add_resource' && e.resourceId) {
@@ -489,21 +560,21 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                         const exponent = level - 1;
                         switch (e.scaleType) {
                             case 'fixed':
-                                // Linear: amount + (scaleFactor * exponent)
                                 amount = e.amount + (e.scaleFactor * exponent);
                                 break;
                             case 'percentage':
-                                // Percentage: amount * (1 + scaleFactor * exponent)
                                 amount = e.amount * (1 + e.scaleFactor * exponent);
                                 break;
                             case 'exponential':
                             default:
-                                // Exponential: amount * (scaleFactor ^ exponent)
                                 amount = e.amount * Math.pow(e.scaleFactor, exponent);
                                 break;
                         }
                     }
-                    amount *= yieldMulti;
+
+                    // Apply Yield Calculation
+                    amount = calculateYield(amount, taskId, 'task', e.resourceId, allModifiers);
+
                     const current = newResources[e.resourceId].current;
                     const rConfig = RESOURCES.find(r => r.id === e.resourceId);
                     const max = calculateMax(e.resourceId, allModifiers, rConfig?.baseMax ?? 100);
@@ -514,8 +585,12 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                     newModifiers.push({ sourceId: TASKS.find(t => t.id === e.taskId)?.name || "Task", resourceId: e.resourceId, type: 'percent', value: e.amount, property: 'max' });
                 } else if (e.type === 'modify_passive_gen' && e.resourceId) {
                     newModifiers.push({ sourceId: TASKS.find(t => t.id === e.taskId)?.name || "Task", resourceId: e.resourceId, type: 'flat', value: e.amount, property: 'gen' });
-                } else if (e.type === 'modify_task_yield_pct' && e.taskId) {
-                    newModifiers.push({ sourceId: "Task Reward", taskId: e.taskId, type: 'percent', value: e.amount });
+                } else if (e.type === 'modify_yield_pct') {
+                    if (e.taskId) newModifiers.push({ sourceId: TASKS.find(t => t.id === e.taskId)?.name || "Task", taskId: e.taskId, type: 'percent', value: e.amount, property: 'yield', resourceId: e.resourceId });
+                    if (e.actionId) newModifiers.push({ sourceId: TASKS.find(t => t.id === e.taskId)?.name || "Task", actionId: e.actionId, type: 'percent', value: e.amount, property: 'yield', resourceId: e.resourceId });
+                } else if (e.type === 'modify_yield_flat') {
+                    if (e.taskId) newModifiers.push({ sourceId: TASKS.find(t => t.id === e.taskId)?.name || "Task", taskId: e.taskId, type: 'flat', value: e.amount, property: 'yield', resourceId: e.resourceId });
+                    if (e.actionId) newModifiers.push({ sourceId: TASKS.find(t => t.id === e.taskId)?.name || "Task", actionId: e.actionId, type: 'flat', value: e.amount, property: 'yield', resourceId: e.resourceId });
                 } else if (e.type === 'add_item' && e.itemId) {
                     newInventory.push(e.itemId);
                     logUpdates.unshift(`Obtained: ${ITEMS.find(i => i.id === e.itemId)?.name}`);
@@ -536,47 +611,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 const config = TASKS.find(t => t.id === tid);
                 if (!config) return;
 
-                const yieldMulti = calculateTaskYieldMultiplier(tid, allModifiers);
-
-                // Check for Auto-Return from Rest
-                if (config.type === 'rest' && newLastActiveTaskId && state.selectedRestTaskId === tid) {
-                    const oldTask = TASKS.find(t => t.id === newLastActiveTaskId);
-                    if (oldTask) {
-                        // Determine if the old task can now afford to resume
-                        let oldTaskCanAffordResume = true;
-                        const oldTaskState = newTasks[newLastActiveTaskId];
-
-                        // Check Start Costs (if not already paid for the current cycle)
-                        if (oldTask.startCosts && !oldTaskState.paid) {
-                            const canAffordStart = oldTask.startCosts.every(c => {
-                                const costAmount = getScaledCost(c, 0, oldTaskState.level, oldTaskState.completions || 0);
-                                return (newResources[c.resourceId]?.current || 0) >= costAmount;
-                            });
-                            if (!canAffordStart) {
-                                oldTaskCanAffordResume = false;
-                            }
-                        }
-
-                        // Check Continuous Costs
-                        if (oldTaskCanAffordResume && oldTask.costPerSecond) {
-                            const canAffordPerSecond = oldTask.costPerSecond.every(c => {
-                                const costAmount = getScaledCost(c, 0, oldTaskState.level, oldTaskState.completions || 0); // Scale factor for tasks uses Level
-                                return (newResources[c.resourceId]?.current || 0) >= (costAmount * dtSeconds);
-                            });
-                            if (!canAffordPerSecond) {
-                                oldTaskCanAffordResume = false;
-                            }
-                        }
-
-                        if (oldTaskCanAffordResume) {
-                            tState.active = false; // Stop rest
-                            newTasks[newLastActiveTaskId].active = true;
-                            logUpdates.unshift(`Rest complete. Resuming ${oldTask.name}.`);
-                            newLastActiveTaskId = undefined;
-                            return; // Stop processing this rest task
-                        }
-                    }
-                }
+                // Removed yieldMulti calculation here, will be calculated per-resource in applyTaskEffect
 
                 // Check Start Costs (If not paid, e.g. auto-restart)
                 if (!tState.paid && config.startCosts) {
@@ -589,13 +624,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                     if (!canAffordStart) {
                         tState.active = false;
                         logUpdates.unshift(`${config.name} stopped (cannot afford restart cost).`);
-                        // Fallback to Rest
-                        if (state.selectedRestTaskId && state.selectedRestTaskId !== tid) {
-                            newTasks[state.selectedRestTaskId].active = true;
-                            newLastActiveTaskId = tid;
-                            logUpdates.unshift(`Switched to ${TASKS.find(t => t.id === state.selectedRestTaskId)?.name} (low resources)`);
-                            return;
-                        }
                         return;
                     }
 
@@ -617,20 +645,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
 
                 if (!canAfford) {
                     tState.active = false;
-
-                    // Fallback to Rest Task
-                    if (state.selectedRestTaskId && state.selectedRestTaskId !== tid) {
-                        const restTask = TASKS.find(t => t.id === state.selectedRestTaskId);
-                        if (restTask && restTask.type === 'rest') {
-                            // Note: Rest tasks shouldn't really have start costs, but if they did, check them here.
-                            // For now assuming rest tasks are free to start.
-                            newTasks[state.selectedRestTaskId].active = true;
-                            newLastActiveTaskId = tid;
-                            logUpdates.unshift(`Switched to ${restTask.name} (low resources)`);
-                            return;
-                        }
-                    }
-
                     logUpdates.unshift(`${config.name} stopped (insufficient resources)`);
                     return;
                 }
@@ -668,13 +682,13 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                         // 1. Completion Effects (Standard)
                         if (config.completionEffects) {
                             config.completionEffects.forEach(e => {
-                                applyTaskEffect(e, tState.level, yieldMulti);
+                                applyTaskEffect(e, tState.level, tid);
                             });
                         }
 
                         // 2. First Time Effects
                         if (completions === 0 && config.firstCompletionEffects) {
-                            config.firstCompletionEffects.forEach(e => applyTaskEffect(e, tState.level, yieldMulti));
+                            config.firstCompletionEffects.forEach(e => applyTaskEffect(e, tState.level, tid));
                         }
 
                         // Reset Paid Status for next run
@@ -713,7 +727,25 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                         // Streamed effects
                         if (e.type === 'add_resource' && e.resourceId) {
                             const scale = e.scaleFactor ? Math.pow(e.scaleFactor, tState.level - 1) : 1;
-                            const amount = e.amount * scale * dtSeconds * yieldMulti;
+                            let amount = e.amount * scale * dtSeconds;
+
+                            // Apply Per-Second Yield
+                            // NOTE: Flat yield usually means "per completion" or "per chunk".
+                            // For continuous streamed effects, flat yield per second might be powerful.
+                            // We will scale flat yield by dtSeconds as well to keep it consistent with "per second" definition.
+
+                            // To use calculateYield, we first calculate base per second, then apply yield.
+                            // But calculateYield adds FLATS directly.
+                            // If I have +1 Flat Yield, does it mean +1 per second? Yes.
+                            // So (Base + Flat) * Percent * dtSeconds?
+                            // OR (Base * dt) + (Flat * dt)? -> (Base + Flat) * dt
+                            // calculateYield does (Base + Flat) * Mul.
+                            // So we should pass "amount per second" to calculateYield?
+                            // If Base is 0.1/sec, Flat is 1.0 (meaning +1/sec).
+                            // calculateYield(0.1, ...) -> returns 1.1.
+                            // Then multiply by dtSeconds -> 1.1 * dt. Correct.
+
+                            amount = calculateYield(amount / dtSeconds, tid, 'task', e.resourceId, allModifiers) * dtSeconds;
 
                             const current = newResources[e.resourceId].current;
                             const rConfig = RESOURCES.find(r => r.id === e.resourceId);
@@ -922,7 +954,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 inventory: newInventory,
                 log: logUpdates.slice(0, 50),
                 totalTimePlayed: state.totalTimePlayed + action.dt,
-                lastActiveTaskId: newLastActiveTaskId,
                 activeTaskIds: nextActiveTaskIds,
                 maxConcurrentTasks: newMaxTasks
             };
@@ -1144,7 +1175,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const task = TASKS.find(t => t.id === tid);
             if (!task) return;
 
-            const yieldMulti = calculateTaskYieldMultiplier(tid, activeModifiers);
+            // const yieldMulti = calculateTaskYieldMultiplier(tid, activeModifiers);
+            // We need to calculate yield per resource now, so we can't have a single multiplier.
+            // But we can approximate or just calculate it inside the loop.
 
             // Only continuous costs
             task.costPerSecond.forEach(c => {
@@ -1157,7 +1190,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
             task.effectsPerSecond.forEach(e => {
                 if (e.resourceId === resourceId && e.type === 'add_resource') {
                     const scale = e.scaleFactor ? Math.pow(e.scaleFactor, tState.level - 1) : 1;
-                    rates.push({ source: task.name, amount: e.amount * scale * yieldMulti });
+                    let amount = e.amount * scale;
+                    amount = calculateYield(amount, tid, 'task', e.resourceId, activeModifiers);
+                    rates.push({ source: task.name, amount: amount });
                 }
             });
         });

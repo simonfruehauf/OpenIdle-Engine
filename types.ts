@@ -44,7 +44,7 @@ export interface Cost {
 }
 
 export interface Effect {
-  type: 'add_resource' | 'modify_max_resource_flat' | 'modify_max_resource_pct' | 'modify_task_yield_pct' | 'add_item' | 'modify_passive_gen' | 'increase_max_tasks' | 'increase_max_executions';
+  type: 'add_resource' | 'modify_max_resource_flat' | 'modify_max_resource_pct' | 'modify_yield_pct' | 'modify_yield_flat' | 'add_item' | 'modify_passive_gen' | 'increase_max_tasks' | 'increase_max_executions';
   amount: number;
   resourceId?: ResourceID;
   taskId?: TaskID;
@@ -174,7 +174,7 @@ export interface Modifier {
   resourceId?: ResourceID;
   taskId?: TaskID;
   actionId?: ActionID;
-  property?: 'max' | 'gen' | 'max_exec'; // 'max' (default) affects capacity, 'gen' affects passive generation, 'max_exec' affects execution limit
+  property?: 'max' | 'gen' | 'max_exec' | 'yield'; // 'max' (default) affects capacity, 'gen' affects passive generation, 'max_exec' affects execution limit
 }
 
 export interface ActionState {
@@ -205,8 +205,6 @@ export interface GameState {
   totalTimePlayed: number;
   activeTaskIds: string[]; // Track order of active tasks for concurrency limits
   maxConcurrentTasks: number; // Cap on active tasks
-  selectedRestTaskId?: string; // ID of the task to auto-switch to when out of resources
-  lastActiveTaskId?: string; // ID of the task that was running before auto-switch
 }
 
 export interface GameContextType {
@@ -222,7 +220,6 @@ export interface GameContextType {
   };
   triggerAction: (actionId: ActionID) => void;
   toggleTask: (taskId: TaskID) => void;
-  setRestTask: (taskId: string) => void;
   equipItem: (itemId: ItemID) => void;
   unequipItem: (slotId: SlotID) => void;
   buyConverter: (converterId: ConverterID) => void;
