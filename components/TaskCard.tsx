@@ -78,7 +78,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, isLocked = false }) =>
 
     // Progress bar for all tasks
     const progressPercentage = Math.min(100, ((taskState.progress || 0) / (task.progressRequired || 1)) * 100);
-    const showProgress = isActive || (taskState.progress || 0) > 0;
+    const showProgress = ((task.progressRequired || 0) > 0) && (isActive || (taskState.progress || 0) > 0);
 
     // Helper format time
     const formatTime = (seconds: number) => {
