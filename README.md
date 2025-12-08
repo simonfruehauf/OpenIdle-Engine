@@ -26,7 +26,7 @@ For getting started with content creation, see `GAMEDATA_GUIDE.md`.
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/yourusername/openidle.git
+   git clone https://github.com/simonfruehauf/openidle.git
    cd openidle
    ```
 
