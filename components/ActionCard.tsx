@@ -23,7 +23,7 @@ interface ActionCardProps {
 }
 
 export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false }) => {
-    const { triggerAction, state, config, checkPrerequisites } = useGame();
+    const { triggerAction, state, config, checkPrerequisites, getMaxResource } = useGame();
     const [hoverRect, setHoverRect] = useState<DOMRect | null>(null);
     const [isHovered, setIsHovered] = useState(false);
 
@@ -107,6 +107,9 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
 
         const chanceStr = e.chance ? `(${e.chance * 100}%) ` : '';
         if (e.type === 'add_resource' && e.resourceId) {
+            // Hide resource increases if max <= 0 (locked)
+            if (getMaxResource(e.resourceId) <= 0) return null;
+
             let amount = e.amount;
 
             // Calculate Yield (Flat + Percent)

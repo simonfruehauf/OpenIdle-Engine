@@ -150,7 +150,7 @@ export const ACTIONS: ActionConfig[] = [
     description: "DEBUG",
     category: "basic",
     costs: [],
-    effects: []
+    effects: [{ type: 'modify_max_resource_flat', resourceId: 'mana', amount: 1 }],
   },
   {
     id: "bookstore",

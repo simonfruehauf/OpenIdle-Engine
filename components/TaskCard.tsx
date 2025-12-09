@@ -23,7 +23,7 @@ interface TaskCardProps {
 }
 
 export const TaskCard: React.FC<TaskCardProps> = ({ task, isLocked = false }) => {
-    const { toggleTask, state, config } = useGame();
+    const { toggleTask, state, config, getMaxResource } = useGame();
     const [hoverRect, setHoverRect] = useState<DOMRect | null>(null);
     const [isHovered, setIsHovered] = useState(false);
 
@@ -232,6 +232,11 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, isLocked = false }) =>
                         <div className="border-t border-gray-400 my-2"></div>
                         <div className="font-semibold text-gray-600 italic mb-1">Effects</div>
                         {task.effectsPerSecond.filter(e => !e.hidden).map((e, idx) => {
+                            // Don't show increases for resources we haven't unlocked yet (max <= 0)
+                            if (e.type === 'add_resource' && e.resourceId) {
+                                if (getMaxResource(e.resourceId) <= 0) return null;
+                            }
+
                             let val = getScaledAmount(e.amount, e.scaleFactor);
                             if (e.type === 'add_resource' && e.resourceId) {
                                 // Calculate Yield (Flat + Percent)
