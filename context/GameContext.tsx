@@ -786,8 +786,23 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                     } else {
                         // Streamed effects
                         if (e.type === 'add_resource' && e.resourceId) {
-                            const scale = e.scaleFactor ? Math.pow(e.scaleFactor, tState.level - 1) : 1;
-                            let amount = e.amount * scale * dtSeconds;
+                            let amount = e.amount;
+                            if (e.scaleFactor) {
+                                const exponent = tState.level - 1;
+                                switch (e.scaleType) {
+                                    case 'fixed':
+                                        amount = e.amount + (e.scaleFactor * exponent);
+                                        break;
+                                    case 'percentage':
+                                        amount = e.amount * (1 + e.scaleFactor * exponent);
+                                        break;
+                                    case 'exponential':
+                                    default:
+                                        amount = e.amount * Math.pow(e.scaleFactor, exponent);
+                                        break;
+                                }
+                            }
+                            amount = amount * dtSeconds;
 
                             // Apply Per-Second Yield
                             // NOTE: Flat yield usually means "per completion" or "per chunk".

@@ -60,9 +60,18 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, isLocked = false }) =>
         return res && res.current >= scaledAmount;
     });
 
-    const getScaledAmount = (base: number, scaleFactor?: number) => {
+    const getScaledAmount = (base: number, scaleFactor?: number, scaleType?: 'exponential' | 'fixed' | 'percentage') => {
         if (!scaleFactor) return base;
-        return base * Math.pow(scaleFactor, taskState.level - 1);
+        const exponent = taskState.level - 1;
+        switch (scaleType) {
+            case 'fixed':
+                return base + (scaleFactor * exponent);
+            case 'percentage':
+                return base * (1 + scaleFactor * exponent);
+            case 'exponential':
+            default:
+                return base * Math.pow(scaleFactor, exponent);
+        }
     };
 
     // Distinguish based on restart behavior
@@ -237,7 +246,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, isLocked = false }) =>
                                 if (getMaxResource(e.resourceId) <= 0) return null;
                             }
 
-                            let val = getScaledAmount(e.amount, e.scaleFactor);
+                            let val = getScaledAmount(e.amount, e.scaleFactor, e.scaleType);
                             if (e.type === 'add_resource' && e.resourceId) {
                                 // Calculate Yield (Flat + Percent)
                                 const flats = state.modifiers.filter(m =>
