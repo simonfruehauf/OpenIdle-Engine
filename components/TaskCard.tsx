@@ -52,8 +52,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, isLocked = false }) =>
     };
 
     // Calculate Multiplier for this task
-    const modifiers = state.modifiers.filter(m => m.taskId === task.id && m.type === 'percent');
-    const yieldMultiplier = 1 + modifiers.reduce((sum, m) => sum + m.value, 0);
+    // Modifiers are now calculated per-effect to support flat/resource-specific yields
 
     const canAffordStart = !task.startCosts || task.startCosts.every(c => {
         const res = state.resources[c.resourceId];
@@ -234,8 +233,23 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, isLocked = false }) =>
                         <div className="font-semibold text-gray-600 italic mb-1">Effects</div>
                         {task.effectsPerSecond.filter(e => !e.hidden).map((e, idx) => {
                             let val = getScaledAmount(e.amount, e.scaleFactor);
-                            if (e.type === 'add_resource') {
-                                val *= yieldMultiplier;
+                            if (e.type === 'add_resource' && e.resourceId) {
+                                // Calculate Yield (Flat + Percent)
+                                const flats = state.modifiers.filter(m =>
+                                    m.property === 'yield' &&
+                                    m.type === 'flat' &&
+                                    m.taskId === task.id &&
+                                    (!m.resourceId || m.resourceId === e.resourceId)
+                                ).reduce((sum, m) => sum + m.value, 0);
+
+                                const percents = state.modifiers.filter(m =>
+                                    m.property === 'yield' &&
+                                    m.type === 'percent' &&
+                                    m.taskId === task.id &&
+                                    (!m.resourceId || m.resourceId === e.resourceId)
+                                ).reduce((sum, m) => sum + m.value, 0);
+
+                                val = (val + flats) * (1 + percents);
                             }
                             return (
                                 <div key={idx} className="flex justify-between text-gray-800">

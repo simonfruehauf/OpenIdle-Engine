@@ -160,7 +160,7 @@ export const ACTIONS: ActionConfig[] = [
     costs: [{ resourceId: 'money', amount: 15 }],
     effects: [{ type: 'modify_yield_flat', actionId: 'talk_cat', amount: 0.1, resourceId: 'lore' }],
     firstCompletionEffects: [{ type: 'modify_max_resource_flat', resourceId: 'lore', amount: 5 }],
-    prerequisites: [{ resourceId: 'money', minMax: 1 }],
+    prerequisites: [{ resourceId: 'money', minMax: 1 }, { resourceId: 'cat', minMax: 1 }],
     maxExecutions: 4
   }
 ];

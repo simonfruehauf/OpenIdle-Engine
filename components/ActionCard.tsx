@@ -106,11 +106,30 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
         if (e.hidden) return null; // Skip hidden effects
 
         const chanceStr = e.chance ? `(${e.chance * 100}%) ` : '';
-        if (e.type === 'add_resource') {
+        if (e.type === 'add_resource' && e.resourceId) {
+            let amount = e.amount;
+
+            // Calculate Yield (Flat + Percent)
+            const flats = state.modifiers.filter(m =>
+                m.property === 'yield' &&
+                m.type === 'flat' &&
+                m.actionId === action.id &&
+                (!m.resourceId || m.resourceId === e.resourceId)
+            ).reduce((sum, m) => sum + m.value, 0);
+
+            const percents = state.modifiers.filter(m =>
+                m.property === 'yield' &&
+                m.type === 'percent' &&
+                m.actionId === action.id &&
+                (!m.resourceId || m.resourceId === e.resourceId)
+            ).reduce((sum, m) => sum + m.value, 0);
+
+            const finalAmount = (amount + flats) * (1 + percents);
+
             return (
                 <div key={idx} className="flex justify-between text-gray-800">
-                    <span>{getName(e.resourceId!)}</span>
-                    <span className="font-mono text-green-700">{e.amount > 0 ? "+" : ""}{e.amount} {chanceStr}</span>
+                    <span>{getName(e.resourceId)}</span>
+                    <span className="font-mono text-green-700">{finalAmount > 0 ? "+" : ""}{finalAmount} {chanceStr}</span>
                 </div>
             );
         }
