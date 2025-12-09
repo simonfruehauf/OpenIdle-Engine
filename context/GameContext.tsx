@@ -25,11 +25,13 @@ const getActiveModifiers = (state: GameState): Modifier[] => {
                 } else if (e.type === 'modify_max_resource_pct' && e.resourceId) {
                     mods.push({ sourceId: item.name, type: 'percent', value: e.amount, resourceId: e.resourceId, property: 'max' });
                 } else if (e.type === 'modify_yield_pct') {
-                    if (e.taskId) mods.push({ sourceId: item.name, type: 'percent', value: e.amount, taskId: e.taskId, property: 'yield' });
-                    if (e.actionId) mods.push({ sourceId: item.name, type: 'percent', value: e.amount, actionId: e.actionId, property: 'yield' });
+                    if (e.taskId) mods.push({ sourceId: item.name, type: 'percent', value: e.amount, taskId: e.taskId, property: 'yield', resourceId: e.resourceId });
+                    else if (e.actionId) mods.push({ sourceId: item.name, type: 'percent', value: e.amount, actionId: e.actionId, property: 'yield', resourceId: e.resourceId });
+                    else if (e.resourceId) mods.push({ sourceId: item.name, type: 'percent', value: e.amount, resourceId: e.resourceId, property: 'yield' });
                 } else if (e.type === 'modify_yield_flat') {
                     if (e.taskId) mods.push({ sourceId: item.name, type: 'flat', value: e.amount, taskId: e.taskId, property: 'yield', resourceId: e.resourceId });
-                    if (e.actionId) mods.push({ sourceId: item.name, type: 'flat', value: e.amount, actionId: e.actionId, property: 'yield', resourceId: e.resourceId });
+                    else if (e.actionId) mods.push({ sourceId: item.name, type: 'flat', value: e.amount, actionId: e.actionId, property: 'yield', resourceId: e.resourceId });
+                    else if (e.resourceId) mods.push({ sourceId: item.name, type: 'flat', value: e.amount, resourceId: e.resourceId, property: 'yield' });
                 } else if (e.type === 'modify_passive_gen' && e.resourceId) {
                     mods.push({ sourceId: item.name, type: 'flat', value: e.amount, resourceId: e.resourceId, property: 'gen' });
                 }
@@ -60,10 +62,13 @@ const calculateYield = (baseAmount: number, sourceId: string, sourceType: 'task'
     // 1. Calculate Flat Bonuses
     const flats = modifiers.filter(m => {
         if (m.property !== 'yield' || m.type !== 'flat') return false;
-        // Check Source Match
-        if (sourceType === 'task' && m.taskId !== sourceId) return false;
-        if (sourceType === 'action' && m.actionId !== sourceId) return false;
-        // Check Resource Match (Specific or Generic)
+        // Check Source Match - Global modifiers (no taskId/actionId) apply to ALL sources
+        const isGlobalModifier = !m.taskId && !m.actionId;
+        if (!isGlobalModifier) {
+            if (sourceType === 'task' && m.taskId !== sourceId) return false;
+            if (sourceType === 'action' && m.actionId !== sourceId) return false;
+        }
+        // Check Resource Match (Specific or Generic - if no resourceId on modifier, it applies to all resources)
         if (m.resourceId && m.resourceId !== resourceId) return false;
         return true;
     }).reduce((sum, m) => sum + m.value, 0);
@@ -71,14 +76,20 @@ const calculateYield = (baseAmount: number, sourceId: string, sourceType: 'task'
     // 2. Calculate Percent Bonuses
     const percents = modifiers.filter(m => {
         if (m.property !== 'yield' || m.type !== 'percent') return false;
-        if (sourceType === 'task' && m.taskId !== sourceId) return false;
-        if (sourceType === 'action' && m.actionId !== sourceId) return false;
+        // Check Source Match - Global modifiers (no taskId/actionId) apply to ALL sources
+        const isGlobalModifier = !m.taskId && !m.actionId;
+        if (!isGlobalModifier) {
+            if (sourceType === 'task' && m.taskId !== sourceId) return false;
+            if (sourceType === 'action' && m.actionId !== sourceId) return false;
+        }
+        // Check Resource Match (Specific or Generic)
         if (m.resourceId && m.resourceId !== resourceId) return false;
         return true;
     }).reduce((sum, m) => sum + m.value, 0);
 
     return (baseAmount + flats) * (1 + percents);
 };
+
 
 // --- Initial State ---
 const createInitialState = (): GameState => {
@@ -1270,8 +1281,22 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Only continuous effects
             task.effectsPerSecond.forEach(e => {
                 if (e.resourceId === resourceId && e.type === 'add_resource') {
-                    const scale = e.scaleFactor ? Math.pow(e.scaleFactor, tState.level - 1) : 1;
-                    let amount = e.amount * scale;
+                    let amount = e.amount;
+                    if (e.scaleFactor) {
+                        const exponent = tState.level - 1;
+                        switch (e.scaleType) {
+                            case 'fixed':
+                                amount = e.amount + (e.scaleFactor * exponent);
+                                break;
+                            case 'percentage':
+                                amount = e.amount * (1 + e.scaleFactor * exponent);
+                                break;
+                            case 'exponential':
+                            default:
+                                amount = e.amount * Math.pow(e.scaleFactor, exponent);
+                                break;
+                        }
+                    }
                     amount = calculateYield(amount, tid, 'task', e.resourceId, activeModifiers);
                     rates.push({ source: task.name, amount: amount });
                 }

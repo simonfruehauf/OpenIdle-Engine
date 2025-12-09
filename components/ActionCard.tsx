@@ -23,7 +23,7 @@ interface ActionCardProps {
 }
 
 export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false }) => {
-    const { triggerAction, state, config, checkPrerequisites, getMaxResource } = useGame();
+    const { triggerAction, state, config, checkPrerequisites, getMaxResource, getActiveModifiers } = useGame();
     const [hoverRect, setHoverRect] = useState<DOMRect | null>(null);
     const [isHovered, setIsHovered] = useState(false);
 
@@ -112,20 +112,24 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
 
             let amount = e.amount;
 
-            // Calculate Yield (Flat + Percent)
-            const flats = state.modifiers.filter(m =>
-                m.property === 'yield' &&
-                m.type === 'flat' &&
-                m.actionId === action.id &&
-                (!m.resourceId || m.resourceId === e.resourceId)
-            ).reduce((sum, m) => sum + m.value, 0);
+            // Calculate Yield (Flat + Percent) - includes equipment bonuses via getActiveModifiers
+            const allMods = getActiveModifiers();
+            const flats = allMods.filter(m => {
+                if (m.property !== 'yield' || m.type !== 'flat') return false;
+                // Global modifiers (no taskId/actionId) apply to all
+                const isGlobal = !m.taskId && !m.actionId;
+                if (!isGlobal && m.actionId !== action.id) return false;
+                if (m.resourceId && m.resourceId !== e.resourceId) return false;
+                return true;
+            }).reduce((sum, m) => sum + m.value, 0);
 
-            const percents = state.modifiers.filter(m =>
-                m.property === 'yield' &&
-                m.type === 'percent' &&
-                m.actionId === action.id &&
-                (!m.resourceId || m.resourceId === e.resourceId)
-            ).reduce((sum, m) => sum + m.value, 0);
+            const percents = allMods.filter(m => {
+                if (m.property !== 'yield' || m.type !== 'percent') return false;
+                const isGlobal = !m.taskId && !m.actionId;
+                if (!isGlobal && m.actionId !== action.id) return false;
+                if (m.resourceId && m.resourceId !== e.resourceId) return false;
+                return true;
+            }).reduce((sum, m) => sum + m.value, 0);
 
             const finalAmount = (amount + flats) * (1 + percents);
 
@@ -157,6 +161,23 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
                 </div>
             );
         }
+        if (e.type === 'modify_yield_pct') {
+            const target = e.taskId ? `(${getName(e.taskId)})` : e.actionId ? `(${getName(e.actionId)})` : e.resourceId ? `to ${getName(e.resourceId)}` : '';
+            return (
+                <div key={idx} className="text-purple-700">
+                    {chanceStr}{e.amount > 0 ? '+' : ''}{(e.amount * 100).toFixed(0)}% Yield {target}
+                </div>
+            );
+        }
+        if (e.type === 'modify_yield_flat') {
+            const target = e.taskId ? `(${getName(e.taskId)})` : e.actionId ? `(${getName(e.actionId)})` : e.resourceId ? `to ${getName(e.resourceId)}` : '';
+            return (
+                <div key={idx} className="text-purple-700">
+                    {chanceStr}{e.amount > 0 ? '+' : ''}{e.amount} Yield {target}
+                </div>
+            );
+        }
+        // Legacy support
         if (e.type === 'modify_task_yield_pct' && e.taskId) {
             return (
                 <div key={idx} className="text-purple-700">

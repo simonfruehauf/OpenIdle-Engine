@@ -23,7 +23,7 @@ interface TaskCardProps {
 }
 
 export const TaskCard: React.FC<TaskCardProps> = ({ task, isLocked = false }) => {
-    const { toggleTask, state, config, getMaxResource } = useGame();
+    const { toggleTask, state, config, getMaxResource, getActiveModifiers } = useGame();
     const [hoverRect, setHoverRect] = useState<DOMRect | null>(null);
     const [isHovered, setIsHovered] = useState(false);
 
@@ -248,20 +248,24 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, isLocked = false }) =>
 
                             let val = getScaledAmount(e.amount, e.scaleFactor, e.scaleType);
                             if (e.type === 'add_resource' && e.resourceId) {
-                                // Calculate Yield (Flat + Percent)
-                                const flats = state.modifiers.filter(m =>
-                                    m.property === 'yield' &&
-                                    m.type === 'flat' &&
-                                    m.taskId === task.id &&
-                                    (!m.resourceId || m.resourceId === e.resourceId)
-                                ).reduce((sum, m) => sum + m.value, 0);
+                                // Calculate Yield (Flat + Percent) - includes equipment bonuses via getActiveModifiers
+                                const allMods = getActiveModifiers();
+                                const flats = allMods.filter(m => {
+                                    if (m.property !== 'yield' || m.type !== 'flat') return false;
+                                    // Global modifiers (no taskId/actionId) apply to all
+                                    const isGlobal = !m.taskId && !m.actionId;
+                                    if (!isGlobal && m.taskId !== task.id) return false;
+                                    if (m.resourceId && m.resourceId !== e.resourceId) return false;
+                                    return true;
+                                }).reduce((sum, m) => sum + m.value, 0);
 
-                                const percents = state.modifiers.filter(m =>
-                                    m.property === 'yield' &&
-                                    m.type === 'percent' &&
-                                    m.taskId === task.id &&
-                                    (!m.resourceId || m.resourceId === e.resourceId)
-                                ).reduce((sum, m) => sum + m.value, 0);
+                                const percents = allMods.filter(m => {
+                                    if (m.property !== 'yield' || m.type !== 'percent') return false;
+                                    const isGlobal = !m.taskId && !m.actionId;
+                                    if (!isGlobal && m.taskId !== task.id) return false;
+                                    if (m.resourceId && m.resourceId !== e.resourceId) return false;
+                                    return true;
+                                }).reduce((sum, m) => sum + m.value, 0);
 
                                 val = (val + flats) * (1 + percents);
                             }
