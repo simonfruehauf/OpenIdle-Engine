@@ -82,8 +82,8 @@ export const ConverterCard: React.FC<ConverterCardProps> = ({ converter, isOwned
                 <p className="text-gray-700 mb-2 leading-snug">{converter.description}</p>
 
                 {!converter.canBeToggled && (
-                    <div className="mb-2 p-1 bg-orange-100 border border-orange-300 text-orange-700 rounded text-center text-[10px]">
-                        Cannot be turned off once purchased
+                    <div className="mb-2 p-1 border font-bold rounded text-center text-[10px]">
+                        Cannot be turned off once purchased.
                     </div>
                 )}
 
