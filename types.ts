@@ -44,7 +44,7 @@ export interface Cost {
 }
 
 export interface Effect {
-  type: 'add_resource' | 'modify_max_resource_flat' | 'modify_max_resource_pct' | 'modify_yield_pct' | 'modify_yield_flat' | 'add_item' | 'modify_passive_gen' | 'increase_max_tasks' | 'increase_max_executions';
+  type: 'add_resource' | 'modify_max_resource_flat' | 'modify_max_resource_pct' | 'modify_yield_pct' | 'modify_yield_flat' | 'add_item' | 'modify_passive_gen' | 'increase_max_tasks' | 'increase_max_executions' | 'set_max_resource' | 'reset_resource_modifiers';
   amount: number;
   resourceId?: ResourceID;
   taskId?: TaskID;
@@ -168,7 +168,7 @@ export interface ResourceState {
 
 export interface Modifier {
   sourceId: string;
-  type: 'flat' | 'percent';
+  type: 'flat' | 'percent' | 'set';
   value: number;
   // Targets 
   resourceId?: ResourceID;

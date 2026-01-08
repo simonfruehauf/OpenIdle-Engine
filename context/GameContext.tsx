@@ -44,6 +44,15 @@ const getActiveModifiers = (state: GameState): Modifier[] => {
 
 // --- Helper: Dynamic Max Calculation ---
 const calculateMax = (resId: ResourceID, modifiers: Modifier[], baseMax: number): number => {
+    // 0. Check for 'set' Modifiers
+    const sets = modifiers
+        .filter(m => m.resourceId === resId && m.type === 'set' && (!m.property || m.property === 'max'))
+        .map(m => m.value);
+
+    // If set modifiers exist, take the MAXIMUM set value as the new base
+    // This allows "Set Max to 100" and "Set Max to 500" to coexist, resulting in 500.
+    const startingBase = sets.length > 0 ? Math.max(...sets) : baseMax;
+
     // 1. Sum Flat Bonuses (Explicitly check property is 'max' or undefined for legacy)
     const flats = modifiers
         .filter(m => m.resourceId === resId && m.type === 'flat' && (!m.property || m.property === 'max'))
@@ -54,7 +63,7 @@ const calculateMax = (resId: ResourceID, modifiers: Modifier[], baseMax: number)
         .filter(m => m.resourceId === resId && m.type === 'percent' && (!m.property || m.property === 'max'))
         .reduce((sum, m) => sum + m.value, 0);
 
-    return Math.floor((baseMax + flats) * (1 + percents));
+    return Math.floor((startingBase + flats) * (1 + percents));
 };
 
 // --- Helper: Universal Yield Calculation ---
@@ -358,7 +367,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             });
 
             // Apply Effects
-            const newModifiers = [...state.modifiers];
+            let newModifiers = [...state.modifiers];
             let newInventory = [...state.inventory];
             let newMaxTasks = state.maxConcurrentTasks;
 
@@ -425,6 +434,10 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                         newModifiers.push({ sourceId: config.name, resourceId: e.resourceId, type: 'flat', value: e.amount, property: 'max' });
                     } else if (e.type === 'modify_max_resource_pct' && e.resourceId) {
                         newModifiers.push({ sourceId: config.name, resourceId: e.resourceId, type: 'percent', value: e.amount, property: 'max' });
+                    } else if (e.type === 'set_max_resource' && e.resourceId) {
+                        newModifiers.push({ sourceId: config.name, resourceId: e.resourceId, type: 'set', value: e.amount, property: 'max' });
+                    } else if (e.type === 'reset_resource_modifiers' && e.resourceId) {
+                        newModifiers = newModifiers.filter(m => m.resourceId !== e.resourceId);
                     } else if (e.type === 'modify_passive_gen' && e.resourceId) {
                         newModifiers.push({ sourceId: config.name, resourceId: e.resourceId, type: 'flat', value: e.amount, property: 'gen' });
                     } else if (e.type === 'modify_yield_pct') {
@@ -601,6 +614,10 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                     newModifiers.push({ sourceId: TASKS.find(t => t.id === e.taskId)?.name || "Task", resourceId: e.resourceId, type: 'flat', value: e.amount, property: 'max' });
                 } else if (e.type === 'modify_max_resource_pct' && e.resourceId) {
                     newModifiers.push({ sourceId: TASKS.find(t => t.id === e.taskId)?.name || "Task", resourceId: e.resourceId, type: 'percent', value: e.amount, property: 'max' });
+                } else if (e.type === 'set_max_resource' && e.resourceId) {
+                    newModifiers.push({ sourceId: TASKS.find(t => t.id === e.taskId)?.name || "Task", resourceId: e.resourceId, type: 'set', value: e.amount, property: 'max' });
+                } else if (e.type === 'reset_resource_modifiers' && e.resourceId) {
+                    newModifiers = newModifiers.filter(m => m.resourceId !== e.resourceId);
                 } else if (e.type === 'modify_passive_gen' && e.resourceId) {
                     newModifiers.push({ sourceId: TASKS.find(t => t.id === e.taskId)?.name || "Task", resourceId: e.resourceId, type: 'flat', value: e.amount, property: 'gen' });
                 } else if (e.type === 'modify_yield_pct') {
@@ -1054,8 +1071,8 @@ interface RateBreakdown {
     amount: number;
 }
 
-interface ResourceBreakdown {
-    maxModifiers: { sourceName: string; value: number; type: 'flat' | 'percent' }[];
+export interface ResourceBreakdown {
+    maxModifiers: { sourceName: string; value: number; type: 'flat' | 'percent' | 'set' }[];
     rates: RateBreakdown[];
     totalRate: number;
 }

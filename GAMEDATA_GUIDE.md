@@ -215,6 +215,8 @@ interface Prerequisite {
 | `add_resource` | `resourceId` | Add/subtract amounts. Scales with task level. |
 | `modify_max_resource_flat` | `resourceId` | Increase capacity by a flat amount. |
 | `modify_max_resource_pct` | `resourceId` | Multiply capacity by (1 + amount). |
+| `set_max_resource` | `resourceId` | Set max capacity to a fixed value. Overrides baseMax but stacks with flat/pct modifiers. |
+| `reset_resource_modifiers` | `resourceId` | Removes all persistent modifiers for this resource (flat, pct, set). Does not affect equipment bonuses. |
 | `modify_yield_pct` | `taskId` / `actionId` / `resourceId` | Multiply output by (1 + amount). Can target specific resources. |
 | `modify_yield_flat` | `taskId` / `actionId` / `resourceId` | Add flat bonus to output. Can target specific resources. |
 | `modify_passive_gen` | `resourceId` | Add permanent passive generation per second. |

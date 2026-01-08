@@ -293,6 +293,22 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, isLocked = false }) =>
                                     </div>
                                 );
                             }
+                            if (e.type === 'set_max_resource' && e.resourceId) {
+                                return (
+                                    <div key={idx} className="flex justify-between text-gray-800">
+                                        <span>Set Max {getName(e.resourceId)}</span>
+                                        <span className="font-mono text-blue-700">{e.amount}</span>
+                                    </div>
+                                );
+                            }
+                            if (e.type === 'reset_resource_modifiers' && e.resourceId) {
+                                return (
+                                    <div key={idx} className="flex justify-between text-gray-800">
+                                        <span>Result</span>
+                                        <span className="font-mono text-red-700">Meta Reset: {getName(e.resourceId)}</span>
+                                    </div>
+                                );
+                            }
                             return (
                                 <div key={idx} className="flex justify-between text-gray-800">
                                     <span>{e.resourceId ? getName(e.resourceId) : e.itemId ? getName(e.itemId) : 'Effect'}</span>
@@ -316,6 +332,22 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, isLocked = false }) =>
                                     <div key={idx} className="flex justify-between text-gray-800">
                                         <span>Max {getName(e.resourceId)}</span>
                                         <span className="font-mono text-blue-700">+{e.amount}</span>
+                                    </div>
+                                );
+                            }
+                            if (e.type === 'set_max_resource' && e.resourceId) {
+                                return (
+                                    <div key={idx} className="flex justify-between text-gray-800">
+                                        <span>Set Max {getName(e.resourceId)}</span>
+                                        <span className="font-mono text-blue-700">{e.amount}</span>
+                                    </div>
+                                );
+                            }
+                            if (e.type === 'reset_resource_modifiers' && e.resourceId) {
+                                return (
+                                    <div key={idx} className="flex justify-between text-gray-800">
+                                        <span>Result</span>
+                                        <span className="font-mono text-red-700">Meta Reset: {getName(e.resourceId)}</span>
                                     </div>
                                 );
                             }

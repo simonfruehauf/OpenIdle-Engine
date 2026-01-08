@@ -154,6 +154,20 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
                 </div>
             );
         }
+        if (e.type === 'set_max_resource' && e.resourceId) {
+            return (
+                <div key={idx} className="text-blue-700 font-bold">
+                    {chanceStr}Sets Max {getName(e.resourceId)} to {e.amount}
+                </div>
+            );
+        }
+        if (e.type === 'reset_resource_modifiers' && e.resourceId) {
+            return (
+                <div key={idx} className="text-red-700 font-bold">
+                    {chanceStr}Removes all modifiers from {getName(e.resourceId)}
+                </div>
+            );
+        }
         if (e.type === 'modify_passive_gen' && e.resourceId) {
             return (
                 <div key={idx} className="text-green-700">
