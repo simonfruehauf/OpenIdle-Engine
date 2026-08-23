@@ -371,49 +371,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             let newInventory = [...state.inventory];
             let newMaxTasks = state.maxConcurrentTasks;
 
-            // Helper function to apply a single effect
-            const applyEffect = (e: Effect) => {
-                // Check Probability
-                if (e.chance !== undefined && Math.random() > e.chance) return;
-
-                if (e.type === 'add_resource' && e.resourceId) {
-                    const current = newResources[e.resourceId].current;
-                    const rConfig = RESOURCES.find(r => r.id === e.resourceId);
-                    const max = calculateMax(e.resourceId, allModifiers, rConfig?.baseMax ?? 100);
-                    newResources[e.resourceId].current = Math.min(current + e.amount, max);
-                } else if (e.type === 'modify_max_resource_flat' && e.resourceId) {
-                    newModifiers.push({ sourceId: config.name, resourceId: e.resourceId, type: 'flat', value: e.amount, property: 'max' });
-                } else if (e.type === 'modify_max_resource_pct' && e.resourceId) {
-                    newModifiers.push({ sourceId: config.name, resourceId: e.resourceId, type: 'percent', value: e.amount, property: 'max' });
-                } else if (e.type === 'modify_passive_gen' && e.resourceId) {
-                    newModifiers.push({ sourceId: config.name, resourceId: e.resourceId, type: 'flat', value: e.amount, property: 'gen' });
-                } else if (e.type === 'modify_yield_pct') {
-                    if (e.taskId) newModifiers.push({ sourceId: config.name, taskId: e.taskId, type: 'percent', value: e.amount, property: 'yield', resourceId: e.resourceId });
-                    if (e.actionId) newModifiers.push({ sourceId: config.name, actionId: e.actionId, type: 'percent', value: e.amount, property: 'yield', resourceId: e.resourceId });
-                } else if (e.type === 'modify_yield_flat') {
-                    if (e.taskId) newModifiers.push({ sourceId: config.name, taskId: e.taskId, type: 'flat', value: e.amount, property: 'yield', resourceId: e.resourceId });
-                    if (e.actionId) newModifiers.push({ sourceId: config.name, actionId: e.actionId, type: 'flat', value: e.amount, property: 'yield', resourceId: e.resourceId });
-                } else if (e.type === 'add_item' && e.itemId) {
-                    for (let i = 0; i < e.amount; i++) {
-                        newInventory.push(e.itemId);
-                    }
-                } else if (e.type === 'increase_max_tasks') {
-                    newMaxTasks += e.amount;
-                } else if (e.type === 'increase_max_executions') {
-                    // Increase max executions for a task or action
-                    if (e.taskId) {
-                        newModifiers.push({ sourceId: config.name, taskId: e.taskId, type: 'flat', value: e.amount, property: 'max_exec' });
-                    } else if (e.actionId) {
-                        newModifiers.push({ sourceId: config.name, actionId: e.actionId, type: 'flat', value: e.amount, property: 'max_exec' });
-                    }
-                }
-            };
-
-            // NOTE: applyEffect is kept for reference but replaced by applyEffectWithYield below
-            // which correctly handles yield calculations for resource effects
-
-            // NOTE: We need to update resource adding to use calculateYield
-            // Redefining applyEffect to handle 'add_resource' correctly with yield
             const applyEffectWithYield = (e: Effect) => {
                 // Check Probability
                 if (e.chance !== undefined && Math.random() > e.chance) return;
@@ -645,7 +602,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 const config = TASKS.find(t => t.id === tid);
                 if (!config) return;
 
-                // Check Start Costs (If not paid, e.g. auto-restart)
+// Check Start Costs (If not paid, e.g. auto-restart)
                 if (!tState.paid && config.startCosts) {
                     const canAffordStart = config.startCosts.every(c => {
                         const costAmount = getScaledCost(c, 0, tState.level, tState.completions || 0);
@@ -665,7 +622,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                     });
                     newTasks[tid] = { ...tState, paid: true };
                     tState = newTasks[tid]; // Update local reference
-                } else if (tid === 'fester' && config.startCosts) {
                 }
 
                 // Check Costs (Continuous)
@@ -1284,10 +1240,26 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const task = TASKS.find(t => t.id === tid);
             if (!task) return;
 
-            // Only continuous costs
+            // Only continuous costs - use scaled cost like TICK does
             task.costPerSecond.forEach(c => {
                 if (c.resourceId === resourceId) {
-                    rates.push({ source: task.name, amount: -c.amount });
+                    const exponent = c.scalesByCompletion ? (tState.completions || 0) : (tState.level - 1);
+                    let scaledAmount = c.amount;
+                    if (c.scaleFactor) {
+                        switch (c.scaleType) {
+                            case 'fixed':
+                                scaledAmount = c.amount + (c.scaleFactor * exponent);
+                                break;
+                            case 'percentage':
+                                scaledAmount = c.amount * (1 + c.scaleFactor * exponent);
+                                break;
+                            case 'exponential':
+                            default:
+                                scaledAmount = c.amount * Math.pow(c.scaleFactor, exponent);
+                                break;
+                        }
+                    }
+                    rates.push({ source: task.name, amount: -scaledAmount });
                 }
             });
 

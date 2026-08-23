@@ -69,5 +69,14 @@ export const RESOURCES: ResourceConfig[] = [
     initialAmount: 0,
     description: "An odd furball with a pair of eyes.",
     passiveGen: [{ targetResourceId: 'insanity', ratePerUnit: 0.01 }]
+  },
+  {
+    id: "insight",
+    name: "Insight",
+    type: "basic",
+    category: "strange",
+    baseMax: 0,
+    initialAmount: 0,
+    description: "A flicker of understanding about the true nature of things."
   }
 ];

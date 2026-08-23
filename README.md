@@ -45,6 +45,7 @@ Output goes to `dist/`.
 ├── components/       # UI components (TaskCard, ActionCard, etc.)
 ├── context/          # Core engine logic (reducer, game loop, save/load)
 ├── gameData/         # Your game content lives here
+│   ├── _template.ts  # Starter template for new modules
 │   ├── resources.ts
 │   ├── tasks.ts
 │   ├── actions.ts
@@ -52,10 +53,23 @@ Output goes to `dist/`.
 │   ├── converters.ts
 │   ├── categories.ts
 │   └── index.ts      # Module registry
+├── docs/             # Engine API, validation checklist, roadmap
 ├── types.ts          # TypeScript interfaces
 ├── App.tsx           # Main layout
 └── index.tsx         # Entry point
 ```
+
+## Documentation
+
+| Doc | For |
+|-----|-----|
+| `GAMEDATA_GUIDE.md` | Tutorial: how to define resources/tasks/actions/items/converters |
+| `gameData/_template.ts` | Copy-paste starter for a new content pack |
+| `ARCHITECTURE.md` | How the reducer, tick loop, and yield pipeline fit together |
+| `AGENTS.md` | AI-agent working guide: conventions, sharp edges, done checklist |
+| `CONTRIBUTING.md` | Setup, style, verification, PR process |
+| `docs/ENGINE_API.md` | Field-by-field API reference + validation checklist |
+| `docs/ROADMAP.md` | Prioritized TODOs / known gaps — good first contributions |
 
 ## Making Your Own Game
 
@@ -74,7 +88,7 @@ const modules = [
 ];
 ```
 
-See `GAMEDATA_GUIDE.md` for the full reference on data structures and mechanics.
+See `GAMEDATA_GUIDE.md` for the full reference on data structures and mechanics. For API details and validation, see `docs/ENGINE_API.md` and `docs/ROADMAP.md`.
 
 ## Technologies
 
