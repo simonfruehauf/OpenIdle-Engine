@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { ResourceConfig } from '../types';
 import { useGame } from '../context/GameContext';
 import { ProgressBar } from './ProgressBar';
+import { formatNumber, formatRate } from '../utils/format';
 
 interface ResourceRowProps {
     resource: ResourceConfig;
@@ -69,9 +70,11 @@ export const ResourceRow: React.FC<ResourceRowProps> = ({ resource }) => {
                         <div className="font-mono font-bold leading-none text-gray-900">
                             {Math.floor(current)} <span className="text-gray-600 font-normal">/ {max}</span>
                         </div>
-                        <div className={`font-mono text-[10px] mt-0.5 ${totalRate > 0 ? 'text-green-700' : totalRate < 0 ? 'text-red-700' : 'text-gray-600'}`}>
-                            {totalRate > 0 ? '+' : ''}{totalRate.toFixed(4)}/s
-                        </div>
+                        {totalRate !== 0 && (
+                            <div className={`font-mono text-[10px] mt-0.5 ${totalRate > 0 ? 'text-green-700' : 'text-red-700'}`}>
+                                {totalRate > 0 ? '+' : ''}{totalRate.toFixed(4)}/s
+                            </div>
+                        )}
                     </div>
                 </div>
 

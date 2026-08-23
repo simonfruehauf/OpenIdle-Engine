@@ -105,9 +105,16 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, isLocked = false }) =>
         setIsHovered(false);
     };
 
-    const handleClick = () => {
+    const handleClick = (e?: React.MouseEvent | React.KeyboardEvent) => {
         if (!isDisabled) {
             toggleTask(task.id);
+            (e?.currentTarget as HTMLElement)?.blur();
+        }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if ((e.key === 'Enter' || e.key === ' ') && e.repeat) {
+            e.preventDefault();
         }
     };
 
@@ -399,8 +406,11 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, isLocked = false }) =>
             {renderTooltip()}
             <div
                 onClick={handleClick}
+                onKeyDown={handleKeyDown}
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
+                tabIndex={0}
+                role="button"
                 className={`
                     group relative flex flex-col p-2 border rounded-sm w-full transition-all mb-0 select-none overflow-visible h-full min-h-[60px]
                     ${containerClass}

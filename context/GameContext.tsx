@@ -129,6 +129,7 @@ const createInitialState = (): GameState => {
     });
 
     return {
+        version: 3,
         resources,
         actions: actionsState,
         tasks: tasksState,
@@ -210,21 +211,110 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         case "LOAD_GAME": {
             // Safe Merge: Merge loaded state with default state to ensure missing fields (schema updates) are filled
             const defaults = createInitialState();
+            const incoming = action.state as GameState;
+            const incomingVersion = (incoming as any).version ?? 0;
+            const migratedVersion = incomingVersion < defaults.version ? defaults.version : incomingVersion;
+
+            // Migration v1 -> v2: side branches were visible from start due to baseMax >0 and low prerequisites.
+            // Reset their unlocked state and hide their resources if the unlock action was not legitimately earned.
+            let migratedResources = { ...defaults.resources, ...(incoming.resources || {}) };
+            let migratedActions = { ...defaults.actions, ...(incoming.actions || {}) };
+            let migratedTasks = { ...defaults.tasks, ...(incoming.tasks || {}) };
+            let migratedModifiers = incoming.modifiers || defaults.modifiers;
+            let migratedInventory = incoming.inventory || defaults.inventory;
+            let migratedEquipment = incoming.equipment || defaults.equipment;
+
+            if (incomingVersion < 2) {
+                const sideBranchResources = ["petals", "ribbons", "may_wine", "quiet", "marginalia", "tokens", "favor", "echo", "resonance"];
+                const unlockActions: Record<string, string> = {
+                    "petals": "belthane_hear_festival",
+                    "ribbons": "belthane_hear_festival",
+                    "may_wine": "belthane_hear_festival",
+                    "quiet": "library_find",
+                    "marginalia": "library_find",
+                    "tokens": "market_hear",
+                    "favor": "market_hear",
+                    "echo": "threshold_open",
+                    "resonance": "threshold_open"
+                };
+                // Hide resources and strip their modifiers if not unlocked
+                for (const rid of sideBranchResources) {
+                    const unlockId = unlockActions[rid];
+                    const unlocked = unlockId ? (incoming.actions?.[unlockId]?.executions ?? 0) > 0 : false;
+                    if (!unlocked) {
+                        if (migratedResources[rid]) migratedResources[rid] = { ...migratedResources[rid], current: 0 };
+                        migratedModifiers = migratedModifiers.filter(m => m.resourceId !== rid);
+                        // Also remove items from inventory/equipment that belong to locked branches
+                        const branchItems: Record<string, string[]> = {
+                            "belthane_hear_festival": ["flower_crown","ribbon_crown","wine_stain","bonfire_token","belthane_charm"],
+                            "library_find": ["library_card_item","whispering_bookmark","bound_folio"],
+                            "market_hear": ["brass_scale","market_ledger"],
+                            "threshold_open": ["key_ajar","packed_bag","threshold_coat","echo_keepsake"]
+                        };
+                        const itemsToRemove = branchItems[unlockId] || [];
+                        if (itemsToRemove.length > 0) {
+                            migratedInventory = migratedInventory.filter(id => !itemsToRemove.includes(id));
+                            for (const slot of Object.keys(migratedEquipment)) {
+                                if (itemsToRemove.includes(migratedEquipment[slot])) delete migratedEquipment[slot];
+                            }
+                        }
+                    }
+                }
+                // Reset unlocked flags for side-branch actions/tasks so they go through proper gate again
+                const sideBranchIds = [
+                    "belthane_hear_festival","belthane_gather_petals","belthane_weave_garland","belthane_dance_maypole","belthane_tend_bonfire","belthane_trade_ribbons","belthane_bless_bonfire","belthane_crown_flowers","belthane_crown_ribbons","belthane_taste_wine","belthane_keep_token","belthane_stay_late",
+                    "library_find","library_sit","library_copy","library_shelve","library_card","library_restricted","library_bind_book","library_whisper_stacks",
+                    "market_hear","market_browse","market_carry","market_haggle","market_enter","market_deal_small","market_deal_large","market_repay","market_stall_tokens","market_stall_favor",
+                    "threshold_open","threshold_hold","threshold_listen_final","ending_stay","ending_leave","ending_become","prestige_begin_again","threshold_brazier"
+                ];
+                for (const sid of sideBranchIds) {
+                    if (migratedActions[sid]) migratedActions[sid] = { ...migratedActions[sid], unlocked: !!defaults.actions[sid]?.unlocked };
+                    if (migratedTasks[sid]) migratedTasks[sid] = { ...migratedTasks[sid], unlocked: !!defaults.tasks[sid]?.unlocked, active: false, progress: 0, paid: false };
+                    if ((migratedActions[sid] && defaults.actions[sid]?.prerequisites) || (migratedTasks[sid] && defaults.tasks[sid]?.prerequisites)) {
+                        // Will be re-unlocked via TICK latch if prerequisites actually met
+                    }
+                }
+                // Also reset converters unlock
+                const sideConverters = ["market_stall_tokens","market_stall_favor","threshold_brazier","kettle","dryer","incense_burner"];
+                const migratedConverters = { ...defaults.converters, ...(incoming.converters || {}) };
+                for (const cid of sideConverters) {
+                    if (migratedConverters[cid]) migratedConverters[cid] = { ...migratedConverters[cid], unlocked: !!defaults.converters[cid]?.unlocked, owned: false, active: false };
+                }
+                return {
+                    ...defaults,
+                    ...incoming,
+                    version: migratedVersion,
+                    resources: migratedResources,
+                    actions: migratedActions,
+                    tasks: migratedTasks,
+                    converters: migratedConverters,
+                    inventory: migratedInventory,
+                    equipment: migratedEquipment,
+                    modifiers: migratedModifiers,
+                    log: incoming.log || defaults.log,
+                    maxConcurrentTasks: incoming.maxConcurrentTasks || defaults.maxConcurrentTasks,
+                    activeTaskIds: [],
+                    restTaskId: (incoming as any).restTaskId ?? defaults.restTaskId,
+                    previousTaskId: (incoming as any).previousTaskId ?? defaults.previousTaskId
+                };
+            }
+
             return {
                 ...defaults,
-                ...action.state,
-                resources: { ...defaults.resources, ...(action.state.resources || {}) },
-                actions: { ...defaults.actions, ...(action.state.actions || {}) },
-                tasks: { ...defaults.tasks, ...(action.state.tasks || {}) },
-                converters: { ...defaults.converters, ...(action.state.converters || {}) },
-                inventory: action.state.inventory || defaults.inventory,
-                equipment: action.state.equipment || defaults.equipment,
-                modifiers: action.state.modifiers || defaults.modifiers,
-                log: action.state.log || defaults.log,
-                maxConcurrentTasks: action.state.maxConcurrentTasks || defaults.maxConcurrentTasks,
-                activeTaskIds: action.state.activeTaskIds || defaults.activeTaskIds,
-                restTaskId: action.state.restTaskId || defaults.restTaskId,
-                previousTaskId: action.state.previousTaskId || defaults.previousTaskId
+                ...incoming,
+                version: migratedVersion,
+                resources: { ...defaults.resources, ...(incoming.resources || {}) },
+                actions: { ...defaults.actions, ...(incoming.actions || {}) },
+                tasks: { ...defaults.tasks, ...(incoming.tasks || {}) },
+                converters: { ...defaults.converters, ...(incoming.converters || {}) },
+                inventory: incoming.inventory || defaults.inventory,
+                equipment: incoming.equipment || defaults.equipment,
+                modifiers: incoming.modifiers || defaults.modifiers,
+                log: incoming.log || defaults.log,
+                maxConcurrentTasks: incoming.maxConcurrentTasks || defaults.maxConcurrentTasks,
+                activeTaskIds: incoming.activeTaskIds || defaults.activeTaskIds,
+                restTaskId: (incoming as any).restTaskId ?? defaults.restTaskId,
+                previousTaskId: (incoming as any).previousTaskId ?? defaults.previousTaskId
             };
         }
 
@@ -349,6 +439,19 @@ const gameReducer = (state: GameState, action: Action): GameState => {
 
             if (config.maxExecutions && actionState.executions >= config.maxExecutions) {
                 return { ...state, log: [`${config.name} limit reached.`, ...state.log].slice(0, 20) };
+            }
+
+            const effectiveCooldown = config.cooldownMs ?? 200;
+            if (actionState.lastUsed) {
+                const elapsed = Date.now() - actionState.lastUsed;
+                if (elapsed < effectiveCooldown) {
+                    // Silently ignore spam / hold-enter; log only for long cooldowns to avoid log spam
+                    if (effectiveCooldown >= 1000) {
+                        const remaining = Math.ceil((effectiveCooldown - elapsed) / 1000);
+                        return { ...state, log: [`${config.name} is on cooldown (${remaining}s).`, ...state.log].slice(0, 20) };
+                    }
+                    return state;
+                }
             }
 
             const canAfford = config.costs.every(c => {
@@ -949,6 +1052,8 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                     if (p.taskId) {
                         const task = newTasks[p.taskId];
                         if (!task) return false;
+                        // Require task to be unlocked first - otherwise level 1 is true at start and bypasses chain
+                        if (!task.unlocked) return false;
                         // minLevel checks task level
                         if (p.minLevel !== undefined && task.level < p.minLevel) return false;
                         // minAmount checks task completions (legacy)
@@ -1173,6 +1278,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
             if (p.taskId) {
                 const tState = state.tasks[p.taskId];
+                if (!tState?.unlocked) return false;
                 if (p.minLevel !== undefined && (tState?.level || 1) < p.minLevel) return false;
             }
             return true;
@@ -1343,8 +1449,11 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
             });
         });
 
-        const totalRate = rates.reduce((sum, r) => sum + r.amount, 0);
-        return { maxModifiers, rates, totalRate };
+        const filteredRates = rates.filter(r => r.amount !== 0);
+        const totalRate = filteredRates.reduce((sum, r) => sum + r.amount, 0);
+        // Hide zero-rate entries entirely; if all cancel to 0, filteredRates may be non-empty but totalRate 0 is still valid
+        // Only omit truly zero-amount sources, keep counteracting ± rates
+        return { maxModifiers, rates: filteredRates, totalRate };
     };
 
     return (

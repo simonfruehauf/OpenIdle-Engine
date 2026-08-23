@@ -8,6 +8,9 @@ import * as EquipmentModule from './equipment';
 import * as ConvertersModule from './converters';
 import * as CatModule from './cat/catpaths';
 import * as BelthaneModule from './belthane';
+import * as LibraryModule from './library';
+import * as NightMarketModule from './nightmarket';
+import * as EndgameModule from './endgame';
 
 // Seasonal content
 // import * as ChristmasModule from './christmas';
@@ -20,7 +23,10 @@ const modules: any[] = [
     EquipmentModule,
     ConvertersModule,
     CatModule,
-    BelthaneModule
+    BelthaneModule,
+    LibraryModule,
+    NightMarketModule,
+    EndgameModule
 ];
 
 // Add quest modules

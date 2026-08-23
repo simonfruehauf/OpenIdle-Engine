@@ -20,7 +20,7 @@ export const RESOURCES: ResourceConfig[] = [
     name: "Petals",
     type: "basic",
     category: "belthane",
-    baseMax: 25,
+    baseMax: 0,
     initialAmount: 0,
     description: "Pale, slightly luminous petals. They were blowing down every street this morning. No one else seems to notice."
   },
@@ -38,7 +38,7 @@ export const RESOURCES: ResourceConfig[] = [
     name: "May Wine",
     type: "basic",
     category: "belthane",
-    baseMax: 12,
+    baseMax: 0,
     initialAmount: 0,
     description: "Sweet, green, faintly effervescent. Served in chipped cups around the bonfire. It makes Time feel less sharp."
   }
@@ -91,13 +91,17 @@ export const TASKS: TaskConfig[] = [
     ],
     effectsPerSecond: [
       { type: "add_resource", resourceId: "petals", amount: 0.1 },
-      { type: "add_resource", resourceId: "may_wine", amount: 0.04 }
+      { type: "add_resource", resourceId: "may_wine", amount: 0.04 },
+      { type: "add_resource", resourceId: "ribbons", amount: 0.06 }
     ],
     progressRequired: 10,
     autoRestart: true,
     completionEffects: [
       { type: "add_resource", resourceId: "ribbons", amount: 1 },
       { type: "add_resource", resourceId: "insanity", amount: -0.2 }
+    ],
+    firstCompletionEffects: [
+      { type: "modify_max_resource_flat", resourceId: "ribbons", amount: 6 }
     ],
     prerequisites: [{ taskId: "belthane_weave_garland", minLevel: 1 }],
     xpPerSecond: 5
@@ -132,11 +136,13 @@ export const ACTIONS: ActionConfig[] = [
     category: "belthane",
     costs: [{ resourceId: "time", amount: 2 }],
     effects: [
-      { type: "modify_max_resource_flat", resourceId: "petals", amount: 10, hidden: true },
-      { type: "add_resource", resourceId: "petals", amount: 5 }
+      { type: "modify_max_resource_flat", resourceId: "petals", amount: 25 },
+      { type: "add_resource", resourceId: "petals", amount: 5 },
+      { type: "modify_max_resource_flat", resourceId: "may_wine", amount: 12 },
+      { type: "modify_max_resource_flat", resourceId: "ribbons", amount: 6 }
     ],
     prerequisites: [
-      { resourceId: "money", minAmount: 8 }
+      { actionId: "get_job", minExecutions: 1 }
     ],
     maxExecutions: 1,
     logMessage: "The park is already there. It was always there. You just hadn't been invited."

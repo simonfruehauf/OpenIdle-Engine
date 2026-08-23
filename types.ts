@@ -99,7 +99,7 @@ export interface ActionConfig {
   effects: Effect[];
   firstCompletionEffects?: Effect[]; // Rewards given ONLY the first time the action is executed
   maxExecutions?: number;
-  cooldownMs?: number; //TODO: Currently not used, will have to be implemented
+  cooldownMs?: number; // Cooldown in ms between executions (enforced in TRIGGER_ACTION via lastUsed)
   prerequisites?: Prerequisite[];
   exclusiveWith?: ActionID[];
   locks?: string[]; // IDs of tasks/actions/resources to hide & disable upon purchase
@@ -194,6 +194,7 @@ export interface TaskState {
 }
 
 export interface GameState {
+  version: number; // Save version for migrations
   resources: Record<ResourceID, ResourceState>;
   actions: Record<ActionID, ActionState>;
   tasks: Record<TaskID, TaskState>;

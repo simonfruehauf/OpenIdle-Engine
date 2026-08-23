@@ -69,7 +69,9 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
 
     const isLimited = action.maxExecutions !== undefined;
     const isCompleted = isLimited && actionState.executions >= (action.maxExecutions || 0);
-    const isDisabled = !canAfford || isCompleted || !!exclusiveBlocked || isLocked;
+    const effectiveCooldown = action.cooldownMs ?? 200;
+    const isOnCooldown = actionState.lastUsed ? (Date.now() - actionState.lastUsed < effectiveCooldown) : false;
+    const isDisabled = !canAfford || isCompleted || !!exclusiveBlocked || isLocked || isOnCooldown;
 
     const isUpgrade = isLimited && (action.maxExecutions || 0) < 100; // Heuristic for "Upgrade" vs "Repeatable Action"
 
@@ -82,9 +84,18 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
         setIsHovered(false);
     };
 
-    const handleClick = () => {
+    const handleClick = (e?: React.MouseEvent | React.KeyboardEvent) => {
         if (!isDisabled) {
             triggerAction(action.id);
+            // Drop focus so holding Enter doesn't fire repeated clicks via key repeat
+            (e?.currentTarget as HTMLElement)?.blur();
+        }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        // Prevent holding Enter/Space from spamming via key repeat
+        if ((e.key === 'Enter' || e.key === ' ') && (e.repeat || isOnCooldown)) {
+            e.preventDefault();
         }
     };
 
@@ -379,6 +390,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
             {renderTooltip()}
             <button
                 onClick={handleClick}
+                onKeyDown={handleKeyDown}
                 aria-disabled={isDisabled}
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}

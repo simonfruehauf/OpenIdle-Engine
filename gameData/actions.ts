@@ -162,6 +162,55 @@ export const ACTIONS: ActionConfig[] = [
     firstCompletionEffects: [{ type: 'modify_max_resource_flat', resourceId: 'lore', amount: 5 }],
     prerequisites: [{ resourceId: 'money', minMax: 1 }, { resourceId: 'cat', minMax: 1 }],
     maxExecutions: 4
+  },
+  {
+    id: "sit_breathe",
+    name: "Sit and Breathe",
+    description: "You sit on the floor and try to notice your breath. Nothing happens. Then, slightly, something does.",
+    category: "upgrades",
+    costs: [{ resourceId: 'time', amount: 4 }],
+    effects: [
+      { type: 'modify_max_resource_flat', resourceId: 'mana', amount: 14 },
+      { type: 'add_resource', resourceId: 'mana', amount: 7 }
+    ],
+    prerequisites: [{ actionId: 'appartment', minExecutions: 1 }],
+    maxExecutions: 1,
+    logMessage: "Your chest learns a new rhythm."
+  },
+  {
+    id: "meditate_deeper",
+    name: "Breathe Deeper",
+    description: "Same floor. Same breath. Now you can hold it long enough to hear the apartment hum.",
+    category: "upgrades",
+    costs: [{ resourceId: 'mana', amount: 8 }, { resourceId: 'time', amount: 5 }],
+    effects: [
+      { type: 'modify_max_resource_flat', resourceId: 'mana', amount: 22 },
+      { type: 'modify_passive_gen', resourceId: 'mana', amount: 0.04 }
+    ],
+    prerequisites: [{ actionId: 'sit_breathe', minExecutions: 1 }],
+    maxExecutions: 1
+  },
+  {
+    id: "surgery_eye",
+    name: "Volunteer for the Study",
+    description: "A flyer on the corkboard: compensated study, pineal stimulation. The clinic smells like ozone and old paper.",
+    category: "oddness",
+    costs: [
+      { resourceId: 'money', amount: 90 },
+      { resourceId: 'insanity', amount: 4 }
+    ],
+    effects: [
+      { type: 'modify_max_resource_flat', resourceId: 'mana', amount: 10 },
+      { type: 'add_resource', resourceId: 'mana', amount: 10 },
+      { type: 'add_item', itemId: 'eye_patch', amount: 1 },
+      { type: 'modify_passive_gen', resourceId: 'insight', amount: 0.015 }
+    ],
+    prerequisites: [
+      { resourceId: 'insight', minAmount: 8 },
+      { resourceId: 'mana', minMax: 1 }
+    ],
+    maxExecutions: 1,
+    logMessage: "You leave with an eyepatch and an afterimage that does not fade."
   }
 ];
 
