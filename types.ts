@@ -193,6 +193,13 @@ export interface TaskState {
   paid?: boolean; // Tracks if start costs have been paid for the current run
 }
 
+export type LogCategory = 'flavour' | 'loot' | 'unlock' | 'other';
+
+export interface LogEntry {
+  msg: string;
+  category: LogCategory;
+}
+
 export interface GameState {
   version: number; // Save version for migrations
   resources: Record<ResourceID, ResourceState>;
@@ -202,7 +209,7 @@ export interface GameState {
   inventory: ItemID[]; // List of owned items
   equipment: Record<SlotID, ItemID>; // Slot -> ItemID
   modifiers: Modifier[]; // Permanent modifiers from upgrades
-  log: string[];
+  log: LogEntry[];
   totalTimePlayed: number;
   activeTaskIds: string[]; // Track order of active tasks for concurrency limits
   maxConcurrentTasks: number; // Cap on active tasks
@@ -228,7 +235,7 @@ export interface GameContextType {
   buyConverter: (converterId: ConverterID) => void;
   toggleConverter: (converterId: ConverterID) => void;
   getMaxResource: (resourceId: ResourceID) => number;
-  addLog: (msg: string) => void;
+  addLog: (msg: string, category?: LogCategory) => void;
   checkPrerequisites: (prereqs?: Prerequisite[]) => boolean;
   checkIsVisible: (id: string, prereqs?: Prerequisite[]) => boolean;
   getResourceBreakdown: (resourceId: string) => any;

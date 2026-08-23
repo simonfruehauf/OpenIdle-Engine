@@ -6,7 +6,7 @@ import { TaskCard } from "./components/TaskCard";
 import { ResourceRow } from "./components/ResourceRow";
 import { EquipmentView } from "./components/EquipmentView";
 import { ConverterCard } from "./components/ConverterCard";
-import { ResourceConfig } from "./types";
+import { ResourceConfig, LogCategory, LogEntry } from "./types";
 
 // --- Components ---
 const SectionHeader: React.FC<{
@@ -37,6 +37,7 @@ const GameLayout: React.FC = () => {
     const { state, config, toggleTask, checkPrerequisites, checkIsVisible, saveGame, resetGame, exportSave, importSave, setRestTask, getMaxResource, buyConverter, toggleConverter } = useGame();
     const [activeTab, setActiveTab] = useState<'activity' | 'equipment' | 'converters' | 'completed'>('activity');
     const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+    const [logFilters, setLogFilters] = useState<Record<LogCategory, boolean>>({ flavour: true, loot: true, unlock: true, other: true });
 
     // Modal State
     const [modalMode, setModalMode] = useState<'none' | 'export' | 'import' | 'reset'>('none');
@@ -87,6 +88,18 @@ const GameLayout: React.FC = () => {
             [id]: !prev[id]
         }));
     };
+
+    const logCategoryMeta: Record<LogCategory, { label: string; color: string; dot: string }> = {
+        flavour: { label: 'Flavour', color: 'bg-purple-100 text-purple-700 border-purple-200', dot: 'bg-purple-500' },
+        loot: { label: 'Loot', color: 'bg-amber-100 text-amber-700 border-amber-200', dot: 'bg-amber-500' },
+        unlock: { label: 'Unlocks', color: 'bg-green-100 text-green-700 border-green-200', dot: 'bg-green-500' },
+        other: { label: 'Other', color: 'bg-gray-100 text-gray-600 border-gray-200', dot: 'bg-gray-400' },
+    };
+    const allLogFiltersOn = (Object.keys(logFilters) as LogCategory[]).every(k => logFilters[k]);
+    const toggleLogFilter = (cat: LogCategory) => setLogFilters(prev => ({ ...prev, [cat]: !prev[cat] }));
+    const setAllLogFilters = (val: boolean) => setLogFilters({ flavour: val, loot: val, unlock: val, other: val });
+    const getLogEntry = (entry: LogEntry | string): LogEntry => typeof entry === 'string' ? { msg: entry, category: 'other' } : entry;
+    const filteredLog = (state.log as (LogEntry | string)[]).filter(e => logFilters[getLogEntry(e as any).category]);
 
     // --- Modal Handlers ---
 
@@ -285,14 +298,48 @@ const GameLayout: React.FC = () => {
                     </div>
 
                     {/* LOG */}
-                    <div className="h-48 border-t border-gray-300 bg-white flex flex-col">
-                        <div className="p-1 bg-gray-100 border-b border-gray-200 text-[10px] font-bold text-gray-500 text-center uppercase">Game Log</div>
+                    <div className="h-64 border-t border-gray-300 bg-white flex flex-col">
+                        <div className="p-1 bg-gray-100 border-b border-gray-200 text-[10px] font-bold text-gray-500 text-center uppercase flex items-center justify-between px-2">
+                            <span>Game Log</span>
+                            <span className="text-[9px] font-normal normal-case text-gray-400">{filteredLog.length}/{state.log.length}</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1 p-1.5 bg-gray-50 border-b border-gray-200">
+                            {(Object.keys(logCategoryMeta) as LogCategory[]).map(cat => {
+                                const meta = logCategoryMeta[cat];
+                                const active = logFilters[cat];
+                                return (
+                                    <button
+                                        key={cat}
+                                        onClick={() => toggleLogFilter(cat)}
+                                        className={`text-[9px] px-1.5 py-0.5 rounded border font-bold uppercase tracking-wide transition-colors ${active ? meta.color : 'bg-white text-gray-300 border-gray-200'}`}
+                                        title={meta.label}
+                                    >
+                                        {meta.label}
+                                    </button>
+                                );
+                            })}
+                            <button
+                                onClick={() => setAllLogFilters(!allLogFiltersOn)}
+                                className="text-[9px] px-1.5 py-0.5 rounded border bg-white text-gray-500 border-gray-200 hover:bg-gray-100 ml-auto"
+                            >
+                                {allLogFiltersOn ? 'None' : 'All'}
+                            </button>
+                        </div>
                         <div className="flex-grow overflow-y-auto p-2 font-mono text-[10px] leading-4 space-y-1">
-                            {state.log.map((entry, i) => (
-                                <div key={i} className={`${i === 0 ? 'text-black' : 'text-gray-400'}`}>
-                                    {i === 0 ? '>' : ''} {entry}
-                                </div>
-                            ))}
+                            {filteredLog.length === 0 ? (
+                                <div className="text-gray-300 italic text-center py-2">No entries for selected filters.</div>
+                            ) : (
+                                filteredLog.map((raw: any, i: number) => {
+                                    const entry = getLogEntry(raw);
+                                    const meta = logCategoryMeta[entry.category];
+                                    return (
+                                        <div key={i} className={`flex gap-1.5 items-start ${i === 0 ? 'text-black' : 'text-gray-400'}`}>
+                                            <span className={`mt-1 w-1.5 h-1.5 rounded-full shrink-0 ${meta.dot} ${i !== 0 ? 'opacity-40' : ''}`} />
+                                            <span className="flex-1 break-words">{i === 0 ? '> ' : ''}{entry.msg}</span>
+                                        </div>
+                                    );
+                                })
+                            )}
                         </div>
                     </div>
                 </aside>

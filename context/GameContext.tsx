@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useReducer, useRef } from "react";
 import { ACTIONS, CATEGORIES, RESOURCES, TASKS, SLOTS, ITEMS, CONVERTERS } from "../gameData/index";
-import { ActionConfig, GameContextType, GameState, Modifier, TaskConfig, ResourceID, Cost, ActionID, TaskID, Prerequisite, SlotID, ItemID, ItemConfig, SlotConfig, CategoryConfig, TaskState, Effect, ConverterID, ConverterConfig } from "../types";
+import { ActionConfig, GameContextType, GameState, Modifier, TaskConfig, ResourceID, Cost, ActionID, TaskID, Prerequisite, SlotID, ItemID, ItemConfig, SlotConfig, CategoryConfig, TaskState, Effect, ConverterID, ConverterConfig, LogEntry, LogCategory } from "../types";
 
 // --- Helper: Encoding for Unicode Support (Emojis) ---
 function utf8_to_b64(str: string) {
@@ -40,6 +40,24 @@ const getActiveModifiers = (state: GameState): Modifier[] => {
     });
 
     return mods;
+};
+
+// --- Helper: Log Categorization ---
+const inferLogCategory = (msg: string): LogCategory => {
+    if (/Obtained:|Found item:/i.test(msg)) return 'loot';
+    if (/leveled up to|completed\.|max completions reached|Purchased/i.test(msg)) return 'unlock';
+    return 'other';
+};
+
+const makeLog = (msg: string, category: LogCategory = 'other'): LogEntry => ({ msg, category });
+
+const migrateLog = (rawLog: any): LogEntry[] => {
+    if (!Array.isArray(rawLog)) return [makeLog("Welcome. Manage your tasks and resources.", 'other')];
+    return rawLog.map((e: any) => {
+        if (typeof e === 'string') return makeLog(e, inferLogCategory(e));
+        if (e && typeof e.msg === 'string') return { msg: e.msg, category: (e.category as LogCategory) || inferLogCategory(e.msg) };
+        return makeLog(String(e), 'other');
+    }).slice(0, 50);
 };
 
 // --- Helper: Dynamic Max Calculation ---
@@ -129,7 +147,7 @@ const createInitialState = (): GameState => {
     });
 
     return {
-        version: 4,
+        version: 5,
         resources,
         actions: actionsState,
         tasks: tasksState,
@@ -137,7 +155,7 @@ const createInitialState = (): GameState => {
         inventory: [],
         equipment: {},
         modifiers: [],
-        log: ["Welcome. Manage your tasks and resources."],
+        log: [makeLog("Welcome. Manage your tasks and resources.", 'other')],
         totalTimePlayed: 0,
         activeTaskIds: [],
         maxConcurrentTasks: 1,
@@ -155,7 +173,7 @@ type Action =
     | { type: "UNEQUIP_ITEM"; slotId: string }
     | { type: "BUY_CONVERTER"; converterId: string }
     | { type: "TOGGLE_CONVERTER"; converterId: string }
-    | { type: "ADD_LOG"; msg: string }
+    | { type: "ADD_LOG"; msg: string; category?: LogCategory }
     | { type: "LOAD_GAME"; state: GameState }
     | { type: "RESET_GAME" }
     | { type: "SET_REST_TASK"; taskId: string | null };
@@ -223,8 +241,9 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             let migratedModifiers = incoming.modifiers || defaults.modifiers;
             let migratedInventory = incoming.inventory || defaults.inventory;
             let migratedEquipment = incoming.equipment || defaults.equipment;
+            const migratedLog = migrateLog((incoming as any).log);
 
-            if (incomingVersion < 4) {
+            if (incomingVersion < 5) {
                 const sideBranchResources = ["petals", "ribbons", "may_wine", "quiet", "marginalia", "tokens", "favor", "echo", "resonance"];
                 const unlockActions: Record<string, string> = {
                     "petals": "belthane_hear_festival",
@@ -311,7 +330,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                     inventory: migratedInventory,
                     equipment: migratedEquipment,
                     modifiers: migratedModifiers,
-                    log: incoming.log || defaults.log,
+                    log: migratedLog,
                     maxConcurrentTasks: incoming.maxConcurrentTasks || defaults.maxConcurrentTasks,
                     activeTaskIds: [],
                     restTaskId: (incoming as any).restTaskId ?? defaults.restTaskId,
@@ -330,7 +349,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 inventory: incoming.inventory || defaults.inventory,
                 equipment: incoming.equipment || defaults.equipment,
                 modifiers: incoming.modifiers || defaults.modifiers,
-                log: incoming.log || defaults.log,
+                log: migrateLog((incoming as any).log),
                 maxConcurrentTasks: incoming.maxConcurrentTasks || defaults.maxConcurrentTasks,
                 activeTaskIds: incoming.activeTaskIds || defaults.activeTaskIds,
                 restTaskId: (incoming as any).restTaskId ?? defaults.restTaskId,
@@ -342,7 +361,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             return createInitialState();
 
         case "ADD_LOG":
-            return { ...state, log: [action.msg, ...state.log].slice(0, 50) };
+            return { ...state, log: [makeLog(action.msg, action.category || 'other'), ...state.log].slice(0, 50) };
 
         case "SET_REST_TASK":
             return { ...state, restTaskId: action.taskId };
@@ -363,7 +382,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 ...state,
                 inventory: newInventory,
                 equipment: { ...state.equipment, [item.slot]: action.itemId },
-                log: [`Equipped ${item.name}`, ...state.log].slice(0, 50)
+                log: [makeLog(`Equipped ${item.name}`, 'other'), ...state.log].slice(0, 50)
             };
         }
 
@@ -378,7 +397,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 ...state,
                 inventory: [...state.inventory, itemId],
                 equipment: newEquipment,
-                log: [`Unequipped ${ITEMS.find(i => i.id === itemId)?.name}`, ...state.log].slice(0, 50)
+                log: [makeLog(`Unequipped ${ITEMS.find(i => i.id === itemId)?.name}`, 'other'), ...state.log].slice(0, 50)
             };
         }
 
@@ -388,7 +407,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
 
             const converterState = state.converters[action.converterId];
             if (converterState.owned) {
-                return { ...state, log: [`Already own ${config.name}`, ...state.log].slice(0, 20) };
+                return { ...state, log: [makeLog(`Already own ${config.name}`, 'other'), ...state.log].slice(0, 20) };
             }
 
             // Check if can afford
@@ -396,7 +415,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 (state.resources[c.resourceId]?.current || 0) >= c.amount
             );
             if (!canAfford) {
-                return { ...state, log: [`Cannot afford ${config.name}`, ...state.log].slice(0, 20) };
+                return { ...state, log: [makeLog(`Cannot afford ${config.name}`, 'other'), ...state.log].slice(0, 20) };
             }
 
             // Pay costs
@@ -419,7 +438,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 ...state,
                 resources: newResources,
                 converters: newConverters,
-                log: [`Purchased ${config.name}`, ...state.log].slice(0, 20)
+                log: [makeLog(`Purchased ${config.name}`, 'unlock'), ...state.log].slice(0, 20)
             };
         }
 
@@ -429,11 +448,11 @@ const gameReducer = (state: GameState, action: Action): GameState => {
 
             const converterState = state.converters[action.converterId];
             if (!converterState.owned) {
-                return { ...state, log: [`Don't own ${config.name}`, ...state.log].slice(0, 20) };
+                return { ...state, log: [makeLog(`Don't own ${config.name}`, 'other'), ...state.log].slice(0, 20) };
             }
 
             if (!config.canBeToggled) {
-                return { ...state, log: [`${config.name} cannot be toggled`, ...state.log].slice(0, 20) };
+                return { ...state, log: [makeLog(`${config.name} cannot be toggled`, 'other'), ...state.log].slice(0, 20) };
             }
 
             const newConverters = {
@@ -447,7 +466,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             return {
                 ...state,
                 converters: newConverters,
-                log: [`${config.name} ${!converterState.active ? 'activated' : 'deactivated'}`, ...state.log].slice(0, 20)
+                log: [makeLog(`${config.name} ${!converterState.active ? 'activated' : 'deactivated'}`, 'other'), ...state.log].slice(0, 20)
             };
         }
 
@@ -458,7 +477,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             const actionState = state.actions[action.actionId];
 
             if (config.maxExecutions && actionState.executions >= config.maxExecutions) {
-                return { ...state, log: [`${config.name} limit reached.`, ...state.log].slice(0, 20) };
+                return { ...state, log: [makeLog(`${config.name} limit reached.`, 'other'), ...state.log].slice(0, 20) };
             }
 
             const effectiveCooldown = config.cooldownMs ?? 200;
@@ -468,7 +487,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                     // Silently ignore spam / hold-enter; log only for long cooldowns to avoid log spam
                     if (effectiveCooldown >= 1000) {
                         const remaining = Math.ceil((effectiveCooldown - elapsed) / 1000);
-                        return { ...state, log: [`${config.name} is on cooldown (${remaining}s).`, ...state.log].slice(0, 20) };
+                        return { ...state, log: [makeLog(`${config.name} is on cooldown (${remaining}s).`, 'other'), ...state.log].slice(0, 20) };
                     }
                     return state;
                 }
@@ -479,7 +498,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 return (state.resources[c.resourceId]?.current || 0) >= costAmount;
             });
             if (!canAfford) {
-                return { ...state, log: [`Not enough resources for ${config.name}`, ...state.log].slice(0, 20) };
+                return { ...state, log: [makeLog(`Not enough resources for ${config.name}`, 'other'), ...state.log].slice(0, 20) };
             }
 
             // Pay Costs
@@ -542,13 +561,13 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 }
             };
 
-            // Apply Effects
-            config.effects.forEach(applyEffectWithYield);
-
-            // First Completion Effects
+            // First Completion Effects first so max is available before gains (fixes first-gain clamp for hidden resources)
             if (actionState.executions === 0 && config.firstCompletionEffects) {
                 config.firstCompletionEffects.forEach(applyEffectWithYield);
             }
+
+            // Apply Effects
+            config.effects.forEach(applyEffectWithYield);
 
             const newActions = {
                 ...state.actions,
@@ -556,6 +575,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             };
 
             const logMsg = config.logMessage || `Used ${config.name}`;
+            const logCat: LogCategory = config.logMessage ? 'flavour' : 'other';
 
             return {
                 ...state,
@@ -563,7 +583,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 actions: newActions,
                 modifiers: newModifiers,
                 inventory: newInventory,
-                log: [logMsg, ...state.log].slice(0, 20),
+                log: [makeLog(logMsg, logCat), ...state.log].slice(0, 20),
                 maxConcurrentTasks: newMaxTasks
             };
         }
@@ -575,7 +595,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
 
             // Check maxExecutions limit
             if (config.maxExecutions && (tState.completions || 0) >= config.maxExecutions) {
-                return { ...state, log: [`${config.name} limit reached.`, ...state.log].slice(0, 20) };
+                return { ...state, log: [makeLog(`${config.name} limit reached.`, 'other'), ...state.log].slice(0, 20) };
             }
 
             const nowActive = !tState.active;
@@ -585,7 +605,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             // Prepare new state objects early
             const newTasks = { ...state.tasks };
             let newActiveTaskIds = [...state.activeTaskIds];
-            let logUpdates = [...state.log];
+            let logUpdates: LogEntry[] = [...state.log];
 
             // Check Max Concurrent Tasks (and auto-cancel oldest if needed)
             if (nowActive) {
@@ -594,7 +614,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                     if (oldestId) {
                         newTasks[oldestId] = { ...newTasks[oldestId], active: false };
                         const oldName = TASKS.find(t => t.id === oldestId)?.name || oldestId;
-                        logUpdates.unshift(`Stopped ${oldName} to focus on ${config.name}.`);
+                        logUpdates.unshift(makeLog(`Stopped ${oldName} to focus on ${config.name}.`, 'other'));
                     }
                 }
             }
@@ -607,7 +627,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 );
 
                 if (!canMaintain) {
-                    return { ...state, log: [`Cannot start ${config.name}: Insufficient resources for upkeep.`, ...state.log].slice(0, 20) };
+                    return { ...state, log: [makeLog(`Cannot start ${config.name}: Insufficient resources for upkeep.`, 'other'), ...state.log].slice(0, 20) };
                 }
             }
 
@@ -618,7 +638,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                     return (state.resources[c.resourceId]?.current || 0) >= costAmount;
                 });
                 if (!canAfford) {
-                    return { ...state, log: [`Cannot afford start costs for ${config.name}`, ...state.log].slice(0, 20) };
+                    return { ...state, log: [makeLog(`Cannot afford start costs for ${config.name}`, 'other'), ...state.log].slice(0, 20) };
                 }
                 // Deduct start costs
                 config.startCosts.forEach(c => {
@@ -734,7 +754,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
 
                     if (!canAffordStart) {
                         newTasks[tid] = { ...tState, active: false };
-                        logUpdates.unshift(`${config.name} stopped (cannot afford restart cost).`);
+                        logUpdates.unshift(makeLog(`${config.name} stopped (cannot afford restart cost).`, 'other'));
                         return;
                     }
 
@@ -756,7 +776,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 if (!canAfford) {
                     newTasks[tid] = { ...tState, active: false };
                     newActiveTaskIds = newActiveTaskIds.filter(id => id !== tid);
-                    logUpdates.unshift(`${config.name} stopped (insufficient resources)`);
+                    logUpdates.unshift(makeLog(`${config.name} stopped (insufficient resources)`, 'other'));
 
                     // AUTO REST LOGIC
                     if (newRestTaskId && newRestTaskId !== tid) {
@@ -770,7 +790,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                             if (!newTasks[newRestTaskId].active) {
                                 newTasks[newRestTaskId] = { ...newTasks[newRestTaskId], active: true, paid: false };
                                 newActiveTaskIds.push(newRestTaskId);
-                                logUpdates.unshift(`Auto-switched to ${restTaskConfig.name} to recover.`);
+                                logUpdates.unshift(makeLog(`Auto-switched to ${restTaskConfig.name} to recover.`, 'other'));
                             }
                         }
                     }
@@ -808,7 +828,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                             newTasks[newPreviousTaskId] = { ...prevTaskState, active: true, paid: false };
                             newActiveTaskIds.push(newPreviousTaskId);
 
-                            logUpdates.unshift(`Resources recovered. Returning to ${prevConfig.name}.`);
+                            logUpdates.unshift(makeLog(`Resources recovered. Returning to ${prevConfig.name}.`, 'other'));
 
                             newPreviousTaskId = null; // Clear memory
                             return; // Stop processing rest task for this tick
@@ -838,19 +858,19 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                         if (!config.autoRestart) {
                             tState.active = false;
                             newActiveTaskIds = newActiveTaskIds.filter(id => id !== tid);
-                            logUpdates.unshift(`${config.name} completed.`);
+                            logUpdates.unshift(makeLog(`${config.name} completed.`, 'unlock'));
                         }
 
-                        // 1. Completion Effects (Standard)
+                        // 1. First Time Effects first so max is available before gains (fixes first-gain clamp)
+                        if (completions === 0 && config.firstCompletionEffects) {
+                            config.firstCompletionEffects.forEach(e => applyTaskEffect(e, tState.level, tid));
+                        }
+
+                        // 2. Completion Effects (Standard)
                         if (config.completionEffects) {
                             config.completionEffects.forEach(e => {
                                 applyTaskEffect(e, tState.level, tid);
                             });
-                        }
-
-                        // 2. First Time Effects
-                        if (completions === 0 && config.firstCompletionEffects) {
-                            config.firstCompletionEffects.forEach(e => applyTaskEffect(e, tState.level, tid));
                         }
 
                         // Reset Paid Status for next run
@@ -861,7 +881,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                         if (config.maxExecutions && tState.completions >= config.maxExecutions) {
                             tState.active = false;
                             newActiveTaskIds = newActiveTaskIds.filter(id => id !== tid);
-                            logUpdates.unshift(`${config.name} max completions reached.`);
+                            logUpdates.unshift(makeLog(`${config.name} max completions reached.`, 'other'));
                             return;
                         }
 
@@ -940,7 +960,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                         if (Math.random() < drop.chancePerSecond * dtSeconds) {
                             newInventory.push(drop.itemId);
                             const itemName = ITEMS.find(i => i.id === drop.itemId)?.name || drop.itemId;
-                            logUpdates.unshift(`Found item: ${itemName}!`);
+                            logUpdates.unshift(makeLog(`Found item: ${itemName}!`, 'loot'));
                         }
                     });
                 }
@@ -952,7 +972,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                     if (tState.xp >= xpNeeded) {
                         tState.level++;
                         tState.xp -= xpNeeded;
-                        logUpdates.unshift(`${config.name} leveled up to ${tState.level}!`);
+                        logUpdates.unshift(makeLog(`${config.name} leveled up to ${tState.level}!`, 'unlock'));
                     }
                 }
             });
@@ -1273,7 +1293,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const unequipItem = (slotId: SlotID) => dispatch({ type: "UNEQUIP_ITEM", slotId });
     const buyConverter = (converterId: ConverterID) => dispatch({ type: "BUY_CONVERTER", converterId });
     const toggleConverter = (converterId: ConverterID) => dispatch({ type: "TOGGLE_CONVERTER", converterId });
-    const addLog = (msg: string) => dispatch({ type: "ADD_LOG", msg });
+    const addLog = (msg: string, category?: LogCategory) => dispatch({ type: "ADD_LOG", msg, category });
     const setRestTask = (taskId: string | null) => dispatch({ type: "SET_REST_TASK", taskId });
 
     const activeModifiers = getActiveModifiers(state);
