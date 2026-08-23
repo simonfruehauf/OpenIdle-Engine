@@ -44,7 +44,7 @@ export const TASKS: TaskConfig[] = [
     description: "Held breaths, slow transitions. Mana gathers like heat in the quiet studio.",
     category: "wellness",
     type: "rest",
-    progressRequired: 1,
+    progressRequired: 8,
     autoRestart: true,
     costPerSecond: [],
     effectsPerSecond: [
@@ -53,7 +53,7 @@ export const TASKS: TaskConfig[] = [
       { type: "add_resource", resourceId: "mana", amount: 0.5, scaleFactor: 0.04, scaleType: "fixed" },
     ],
     prerequisites: [{ actionId: "wellness_choose_yoga", minExecutions: 1 }],
-    xpPerSecond: 6,
+    xpPerSecond: 3,
   },
   {
     id: "rest_running",
@@ -61,7 +61,7 @@ export const TASKS: TaskConfig[] = [
     description: "Counterclockwise loops on the track and road. Time stretches when you chase your own stride.",
     category: "wellness",
     type: "rest",
-    progressRequired: 1,
+    progressRequired: 8,
     autoRestart: true,
     costPerSecond: [],
     effectsPerSecond: [
@@ -70,7 +70,7 @@ export const TASKS: TaskConfig[] = [
       { type: "add_resource", resourceId: "mana", amount: 0.1, scaleFactor: 0.01, scaleType: "fixed" },
     ],
     prerequisites: [{ actionId: "wellness_choose_running", minExecutions: 1 }],
-    xpPerSecond: 6,
+    xpPerSecond: 3,
   },
   {
     id: "rest_swimming",
@@ -78,7 +78,7 @@ export const TASKS: TaskConfig[] = [
     description: "Rhythmic strokes through cool water. Health steadies and breathing finds a calm cadence.",
     category: "wellness",
     type: "rest",
-    progressRequired: 1,
+    progressRequired: 8,
     autoRestart: true,
     costPerSecond: [],
     effectsPerSecond: [
@@ -87,7 +87,7 @@ export const TASKS: TaskConfig[] = [
       { type: "add_resource", resourceId: "mana", amount: 0.3, scaleFactor: 0.02, scaleType: "fixed" },
     ],
     prerequisites: [{ actionId: "wellness_choose_swimming", minExecutions: 1 }],
-    xpPerSecond: 6,
+    xpPerSecond: 3,
   },
   {
     id: "rest_hiking",
@@ -95,7 +95,7 @@ export const TASKS: TaskConfig[] = [
     description: "Elevation, pine air, and dirt paths. Time pays you back with spare change found along trails.",
     category: "wellness",
     type: "rest",
-    progressRequired: 1,
+    progressRequired: 8,
     autoRestart: true,
     costPerSecond: [],
     effectsPerSecond: [
@@ -105,7 +105,7 @@ export const TASKS: TaskConfig[] = [
       { type: "add_resource", resourceId: "money", amount: 0.05, scaleFactor: 0.01, scaleType: "fixed" },
     ],
     prerequisites: [{ actionId: "wellness_choose_hiking", minExecutions: 1 }],
-    xpPerSecond: 6,
+    xpPerSecond: 3,
   },
 ];
 export const ACTIONS: ActionConfig[] = [
