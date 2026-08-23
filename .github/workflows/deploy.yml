@@ -21,10 +21,10 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
       - name: Setup Pages
         uses: actions/configure-pages@v5
-      - name: Update npm to fix optional-deps bug
+      - name: Update npm
         run: npm install -g npm@latest
       - name: Install dependencies
         run: npm ci
