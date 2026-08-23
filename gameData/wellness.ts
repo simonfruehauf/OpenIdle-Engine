@@ -10,7 +10,77 @@ export const SLOTS: SlotConfig[] = [
   { id: "accessory_2", name: "Accessory II", prerequisites: [{ actionId: "wellness_stitch_pouch_yoga", minExecutions: 1 }] },
 ];
 
-export const TASKS: TaskConfig[] = [];
+export const TASKS: TaskConfig[] = [
+  {
+    id: "rest_yoga",
+    name: "Yoga Flow",
+    description: "Held breaths, slow transitions. Mana gathers like heat.",
+    category: "wellness",
+    type: "rest",
+    progressRequired: 1,
+    autoRestart: true,
+    costPerSecond: [],
+    effectsPerSecond: [
+      { type: "add_resource", resourceId: "time", amount: 0.6, scaleFactor: 0.02, scaleType: "fixed" },
+      { type: "add_resource", resourceId: "health", amount: 0.4, scaleFactor: 0.02, scaleType: "fixed" },
+      { type: "add_resource", resourceId: "mana", amount: 0.7, scaleFactor: 0.04, scaleType: "fixed" },
+    ],
+    prerequisites: [{ actionId: "wellness_choose_yoga", minExecutions: 1 }],
+    xpPerSecond: 6,
+  },
+  {
+    id: "rest_running",
+    name: "Street Run",
+    description: "Counterclockwise loops. Time stretches when you chase it.",
+    category: "wellness",
+    type: "rest",
+    progressRequired: 1,
+    autoRestart: true,
+    costPerSecond: [],
+    effectsPerSecond: [
+      { type: "add_resource", resourceId: "time", amount: 1.1, scaleFactor: 0.05, scaleType: "fixed" },
+      { type: "add_resource", resourceId: "health", amount: 0.6, scaleFactor: 0.03, scaleType: "fixed" },
+      { type: "add_resource", resourceId: "mana", amount: 0.15, scaleFactor: 0.01, scaleType: "fixed" },
+    ],
+    prerequisites: [{ actionId: "wellness_choose_running", minExecutions: 1 }],
+    xpPerSecond: 6,
+  },
+  {
+    id: "rest_swimming",
+    name: "Lap Swimming",
+    description: "Two lengths, breathe, turn. Health steadies.",
+    category: "wellness",
+    type: "rest",
+    progressRequired: 1,
+    autoRestart: true,
+    costPerSecond: [],
+    effectsPerSecond: [
+      { type: "add_resource", resourceId: "time", amount: 0.7, scaleFactor: 0.03, scaleType: "fixed" },
+      { type: "add_resource", resourceId: "health", amount: 0.7, scaleFactor: 0.04, scaleType: "fixed" },
+      { type: "add_resource", resourceId: "mana", amount: 0.4, scaleFactor: 0.02, scaleType: "fixed" },
+    ],
+    prerequisites: [{ actionId: "wellness_choose_swimming", minExecutions: 1 }],
+    xpPerSecond: 6,
+  },
+  {
+    id: "rest_hiking",
+    name: "Trail Hike",
+    description: "Elevation and quiet. Time pays you back with spare change found on trails.",
+    category: "wellness",
+    type: "rest",
+    progressRequired: 1,
+    autoRestart: true,
+    costPerSecond: [],
+    effectsPerSecond: [
+      { type: "add_resource", resourceId: "time", amount: 0.9, scaleFactor: 0.04, scaleType: "fixed" },
+      { type: "add_resource", resourceId: "health", amount: 0.5, scaleFactor: 0.02, scaleType: "fixed" },
+      { type: "add_resource", resourceId: "mana", amount: 0.3, scaleFactor: 0.02, scaleType: "fixed" },
+      { type: "add_resource", resourceId: "money", amount: 0.05, scaleFactor: 0.01, scaleType: "fixed" },
+    ],
+    prerequisites: [{ actionId: "wellness_choose_hiking", minExecutions: 1 }],
+    xpPerSecond: 6,
+  },
+];
 export const ACTIONS: ActionConfig[] = [
   {
     id: "wellness_find_flyer",
