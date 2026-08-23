@@ -7,7 +7,7 @@ export const CATEGORIES: CategoryConfig[] = [
 export const RESOURCES: ResourceConfig[] = [];
 
 export const SLOTS: SlotConfig[] = [
-  { id: "accessory_2", name: "Accessory II", prerequisites: [{ actionId: "wellness_stitch_pouch_yoga", minExecutions: 1 }] },
+  { id: "accessory_2", name: "Accessory II", prerequisites: [{ actionId: "wellness_stitch_pouch", minExecutions: 1 }] },
 ];
 
 export const TASKS: TaskConfig[] = [
@@ -148,6 +148,17 @@ export const ACTIONS: ActionConfig[] = [
     locks: ["wellness_choose_yoga","wellness_choose_running","wellness_choose_swimming","rest_yoga","rest_running","rest_swimming"],
     lockDescription: "Choosing Hiking closes others.",
     logMessage: "You pick the trail. The map is already creased."
+  },
+  {
+    id: "wellness_stitch_pouch",
+    name: "Stitch Second Pouch",
+    description: "You sew a second pocket onto your bag. It takes time, money, and the discipline you learned from your practice.",
+    category: "wellness",
+    costs: [{ resourceId: "money", amount: 80 }, { resourceId: "mana", amount: 15 }],
+    effects: [{ type: "modify_max_resource_flat", resourceId: "health", amount: 4 }],
+    prerequisites: [{ actionId: "wellness_find_flyer", minExecutions: 1 }],
+    maxExecutions: 1,
+    logMessage: "Your bag now holds two charms. The second pouch hangs light."
   },
 ];
 export const ITEMS: ItemConfig[] = [];
