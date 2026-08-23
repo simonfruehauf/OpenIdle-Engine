@@ -7,6 +7,7 @@ export const SLOTS: SlotConfig[] = [
     { id: "body", name: "Body" },
     { id: "head", name: "Head" },
     { id: "accessory", name: "Accessory" },
+    { id: "accessory_2", name: "Accessory" },
 
     // --- MUTATIONS ---
     {
