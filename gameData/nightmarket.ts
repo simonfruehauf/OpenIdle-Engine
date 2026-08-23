@@ -43,6 +43,9 @@ export const TASKS: TaskConfig[] = [
     ],
     progressRequired: 12,
     autoRestart: true,
+    firstCompletionEffects: [
+      { type: "modify_max_resource_flat", resourceId: "favor", amount: 6 }
+    ],
     prerequisites: [{ actionId: "market_hear", minExecutions: 1 }],
     xpPerSecond: 3
   },
@@ -98,7 +101,9 @@ export const ACTIONS: ActionConfig[] = [
     costs: [{ resourceId: "money", amount: 20 }],
     effects: [
       { type: "modify_max_resource_flat", resourceId: "tokens", amount: 12 },
-      { type: "add_resource", resourceId: "tokens", amount: 6 }
+      { type: "add_resource", resourceId: "tokens", amount: 6 },
+      { type: "modify_max_resource_flat", resourceId: "favor", amount: 8 },
+      { type: "add_resource", resourceId: "favor", amount: 2 }
     ],
     prerequisites: [{ actionId: "get_job", minExecutions: 1 }],
     maxExecutions: 1,

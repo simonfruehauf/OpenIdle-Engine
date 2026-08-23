@@ -129,7 +129,7 @@ const createInitialState = (): GameState => {
     });
 
     return {
-        version: 3,
+        version: 4,
         resources,
         actions: actionsState,
         tasks: tasksState,
@@ -224,7 +224,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             let migratedInventory = incoming.inventory || defaults.inventory;
             let migratedEquipment = incoming.equipment || defaults.equipment;
 
-            if (incomingVersion < 2) {
+            if (incomingVersion < 4) {
                 const sideBranchResources = ["petals", "ribbons", "may_wine", "quiet", "marginalia", "tokens", "favor", "echo", "resonance"];
                 const unlockActions: Record<string, string> = {
                     "petals": "belthane_hear_festival",
@@ -260,6 +260,26 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                         }
                     }
                 }
+                // v4 fix: Browse/Night Market favor was deadlocked (max 0). Ensure hear gives favor max even for v3 saves.
+                if ((incoming.actions?.["market_hear"]?.executions ?? 0) > 0) {
+                    const hasFavorMax = migratedModifiers.some(m => m.resourceId === "favor" && m.type === "flat" && (!m.property || m.property === "max"));
+                    if (!hasFavorMax) {
+                        migratedModifiers.push({ sourceId: "Night Market (migration v4)", resourceId: "favor", type: "flat", value: 8, property: "max" });
+                        if (migratedResources["favor"]) {
+                            const cur = migratedResources["favor"].current;
+                            if (cur === 0) migratedResources["favor"] = { ...migratedResources["favor"], current: 2 };
+                        }
+                    }
+                }
+                const browseCompletions = (incoming.tasks?.["market_browse"] as any)?.completions ?? 0;
+                if (browseCompletions > 0) {
+                    const hasBrowseFavor = migratedModifiers.some(m => m.resourceId === "favor" && m.value === 6);
+                    if (!hasBrowseFavor) {
+                        // Browse first completion now gives favor+6 max, retroactively grant
+                        migratedModifiers.push({ sourceId: "Browse (migration v4)", resourceId: "favor", type: "flat", value: 6, property: "max" });
+                    }
+                }
+
                 // Reset unlocked flags for side-branch actions/tasks so they go through proper gate again
                 const sideBranchIds = [
                     "belthane_hear_festival","belthane_gather_petals","belthane_weave_garland","belthane_dance_maypole","belthane_tend_bonfire","belthane_trade_ribbons","belthane_bless_bonfire","belthane_crown_flowers","belthane_crown_ribbons","belthane_taste_wine","belthane_keep_token","belthane_stay_late",
