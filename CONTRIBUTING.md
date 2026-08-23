@@ -1,4 +1,4 @@
-# Contributing — OpenIdle Engine
+# Contributing - OpenIdle Engine
 
 ## 1. Setup
 
@@ -22,7 +22,7 @@ Requirements: Node 16+ (Node 20 recommended), npm 8+.
 | `App.tsx` | Layout. Prefer extracting components over growing it. |
 | `docs/` | Engine API + validation checklist for reviewers. |
 | `ARCHITECTURE.md` | How the engine works (for agents & humans). |
-| `AGENTS.md` | AI-agent working guide — read before automating changes. |
+| `AGENTS.md` | AI-agent working guide - read before automating changes. |
 
 ## 3. How to Make Changes
 
@@ -36,8 +36,8 @@ Requirements: Node 16+ (Node 20 recommended), npm 8+.
 ### 3.2 Engine change (schema / reducer / UI)
 
 1. Update `types.ts` interface first.
-2. Update reducer in `context/GameContext.tsx` — add to the exhaustive `Action` union and handle in `gameReducer`.
-3. Update all tooltip renderers: `TaskCard.tsx:282`, `ActionCard.tsx:105`, `ConverterCard.tsx:53`, `EquipmentView.tsx:41` (they duplicate `getName`/`renderEffect` — keep in sync or extract).
+2. Update reducer in `context/GameContext.tsx` - add to the exhaustive `Action` union and handle in `gameReducer`.
+3. Update all tooltip renderers: `TaskCard.tsx:282`, `ActionCard.tsx:105`, `ConverterCard.tsx:53`, `EquipmentView.tsx:41` (they duplicate `getName`/`renderEffect` - keep in sync or extract).
 4. Document the change in `ARCHITECTURE.md` and `docs/ENGINE_API.md`.
 5. Consider save compatibility: bump a `version` field and handle migration in `LOAD_GAME` if you rename/remove fields.
 
@@ -65,7 +65,7 @@ npm run dev
 **Future:** `npm test` (vitest) and `npm run lint` do not exist yet. When adding them, add at least:
 
 * `calculateMax`, `calculateYield`, `getScaledCost` unit tests.
-* `scripts/validateGameData.ts` — checks duplicate IDs & missing references.
+* `scripts/validateGameData.ts` - checks duplicate IDs & missing references.
 
 ## 6. Commit & PR Guidelines
 
@@ -87,7 +87,7 @@ Open an issue with:
 
 Feature proposals: describe the data shape first (new `types.ts` fields), then UI, then example content. Check `Known Gaps` (§8) to avoid duplicates.
 
-## 8. Known Gaps — Good First Contributions
+## 8. Known Gaps - Good First Contributions
 
 * [ ] `cooldownMs` actually enforce a cooldown (`types.ts:102` is TODO).
 * [ ] Fix `insight`/`strange` missing definitions in `cat/catpaths.ts` (or remove the refs).

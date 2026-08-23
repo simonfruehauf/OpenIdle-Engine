@@ -1,4 +1,4 @@
-# AGENTS.md — Working Guide for AI Agents
+# AGENTS.md - Working Guide for AI Agents
 
 > **Purpose:** Minimize setup/wrong-assumption churn when an AI agent (or human mimicking one) picks up this repo. Read `ARCHITECTURE.md` for engine internals, this file for *how to work*.
 
@@ -10,7 +10,7 @@ npm run dev   # Vite on http://localhost:3000
 npm run build # type-check + production bundle → dist/
 ```
 
-* **No tests, no linter** in `package.json` yet. Do not run `npm test` / `npm run lint` — they don't exist.
+* **No tests, no linter** in `package.json` yet. Do not run `npm test` / `npm run lint` - they don't exist.
 * **No `.opencode` / `.vscode` config** in repo. Use vanilla `bash` / `read` / `edit` tools.
 * **Entry points:** `index.tsx` → `App.tsx` (layout) → `context/GameContext.tsx` (state + loop) → `gameData/index.ts` (content).
 
@@ -20,7 +20,7 @@ npm run build # type-check + production bundle → dist/
 
 * **Never edit `context/GameContext.tsx` to add content.** Add a module under `gameData/` exporting typed arrays (`RESOURCES`, `TASKS`, `ACTIONS`, `CATEGORIES`, `ITEMS`, `SLOTS`, `CONVERTERS`) and register it in `gameData/index.ts:14` (`modules` array). See `GAMEDATA_GUIDE.md` + `gameData/_template.ts`.
 * `types.ts` is the schema. If you add a new field/effect, update the interface there **and** the reducer **and** all four tooltip renderers (`TaskCard.tsx`, `ActionCard.tsx`, `ConverterCard.tsx`, `EquipmentView.tsx`).
-* IDs are global strings. Keep them `snake_case` and namespaced if needed (`myMod_gold`). Duplicates across modules silently collide — validate (see `docs/ENGINE_API.md`).
+* IDs are global strings. Keep them `snake_case` and namespaced if needed (`myMod_gold`). Duplicates across modules silently collide - validate (see `docs/ENGINE_API.md`).
 
 ### 1.2 State mutations only via reducer
 
@@ -37,11 +37,11 @@ npm run build # type-check + production bundle → dist/
 | Path | Do | Don't |
 |------|----|-------|
 | `context/GameContext.tsx` | Keep `getScaledCost`, `calculateMax`, `calculateYield`, `getActiveModifiers` pure and unit-testable (extract if adding tests) | Add game content directly; duplicate `applyEffect` logic (clean the dead `applyEffect` at `:375`) |
-| `App.tsx` | Keep header persistence buttons; tabs route via `activeTab` state | Grow past 600 lines — extract `Header`, `LeftPanel`, `MiddlePanel`, `RightPanel`, `SaveModals` |
+| `App.tsx` | Keep header persistence buttons; tabs route via `activeTab` state | Grow past 600 lines - extract `Header`, `LeftPanel`, `MiddlePanel`, `RightPanel`, `SaveModals` |
 | `components/*` | Tooltip = `createPortal` + `hoverRect`; filter `hidden` effects in tooltip, not reducer | Assume `cooldownMs` works (it's a TODO at `types.ts:102`) |
-| `gameData/cat/catpaths.ts` | Valid pattern for branching packs (`exclusiveWith`) | Forget to define the resource/category you reference (current bug: `insight` + `strange` missing — see §4) |
+| `gameData/cat/catpaths.ts` | Valid pattern for branching packs (`exclusiveWith`) | Forget to define the resource/category you reference (current bug: `insight` + `strange` missing - see §4) |
 
-## 3. Common Tasks — Where to Look
+## 3. Common Tasks - Where to Look
 
 | Task | Files | Notes |
 |------|-------|-------|
@@ -66,7 +66,7 @@ npm run build # type-check + production bundle → dist/
 ## 5. Agent Workflow
 
 1. **Read** `README.md` (user-facing quick start) + `ARCHITECTURE.md` + `GAMEDATA_GUIDE.md` (content schema) before editing.
-2. **Inspect** `types.ts` fully (242 lines) — it's the contract. Grep for the ID you plan to use to avoid collisions (`rg '"my_id"' gameData`).
+2. **Inspect** `types.ts` fully (242 lines) - it's the contract. Grep for the ID you plan to use to avoid collisions (`rg '"my_id"' gameData`).
 3. **Make minimal edits:** prefer editing existing gameData modules or adding a new file + one line in `gameData/index.ts`. Don't refactor reducer unless the feature truly requires it.
 4. **Verify by execution:** `npm run build` must pass (type-check). Manual QA: `npm run dev`, open browser, check visibility, affordability, progression. For reducer math, inline a quick sanity check via `bash` `python3 -c` or a vitest stub once tests exist.
 5. **No secrets in saves/commits:** `exportSave` is base64, not encrypted. Don't commit local saves.

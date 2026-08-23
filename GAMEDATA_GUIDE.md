@@ -13,7 +13,7 @@ To add content:
 2. Export your arrays, typed against interfaces in `types.ts`.
 3. Import your file in `gameData/index.ts` and add it to the `modules` array.
 
-You can organize files however you want—by theme (`pirates.ts`), by type (`resources.ts`), or in subfolders (`gameData/quests/`) as long as they are imported in `gameData/index.ts`.
+You can organize files however you want-by theme (`pirates.ts`), by type (`resources.ts`), or in subfolders (`gameData/quests/`) as long as they are imported in `gameData/index.ts`.
 
 ---
 
@@ -220,7 +220,7 @@ interface Prerequisite {
 | `modify_yield_pct` | `taskId` / `actionId` / `resourceId` | Multiply output by (1 + amount). Can target specific resources. |
 | `modify_yield_flat` | `taskId` / `actionId` / `resourceId` | Add flat bonus to output. Can target specific resources. |
 | `modify_passive_gen` | `resourceId` | Add permanent passive generation per second. |
-| `increase_max_tasks` | — | Raise concurrent task limit by `amount`. |
+| `increase_max_tasks` | - | Raise concurrent task limit by `amount`. |
 | `increase_max_executions` | `taskId` / `actionId` | Raise execution cap. |
 | `add_item` | `itemId` | Grant an item to inventory. |
 
@@ -249,7 +249,7 @@ interface Effect {
 
 Use `baseMax: 0` to hide a resource until the player unlocks it:
 
-1. Define the resource with `baseMax: 0` — invisible and can't hold anything.
+1. Define the resource with `baseMax: 0` - invisible and can't hold anything.
 2. Create an action that applies `modify_max_resource_flat` to increase capacity.
 3. When purchased, the resource appears and becomes usable.
 

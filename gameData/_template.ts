@@ -1,5 +1,5 @@
 /**
- * gameData/_template.ts — Starter module for new content packs.
+ * gameData/_template.ts - Starter module for new content packs.
  *
  * 1. Copy this file to e.g. `gameData/myPack.ts` (or `gameData/packs/myPack.ts`).
  * 2. Fill in the arrays. Delete the examples you don't need.

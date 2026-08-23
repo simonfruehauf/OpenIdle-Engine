@@ -7,9 +7,9 @@ import { ActionConfig, CategoryConfig, ResourceConfig, TaskConfig, ItemConfig } 
 // exclusiveWith + locks, so saves remain consistent after reload.
 
 export const CATEGORIES: CategoryConfig[] = [
-  { id: "faith", name: "Faith — The Cat's Road" },
-  { id: "denial", name: "Denial — The Sealed Wall" },
-  { id: "hunger", name: "Hunger — The Taking" },
+  { id: "faith", name: "Faith - The Cat's Road" },
+  { id: "denial", name: "Denial - The Sealed Wall" },
+  { id: "hunger", name: "Hunger - The Taking" },
 ];
 
 export const RESOURCES: ResourceConfig[] = [
@@ -35,7 +35,7 @@ export const RESOURCES: ResourceConfig[] = [
 ];
 
 export const TASKS: TaskConfig[] = [
-  // — FAITH PATH —
+  // - FAITH PATH -
   {
     id: "faith_alley_walk",
     name: "Walk the Alleys at Night",
@@ -77,7 +77,7 @@ export const TASKS: TaskConfig[] = [
     maxExecutions: 12
   },
 
-  // — DENIAL PATH —
+  // - DENIAL PATH -
   {
     id: "denial_routine",
     name: "Return to Routine",
@@ -114,11 +114,11 @@ export const TASKS: TaskConfig[] = [
     maxExecutions: 15
   },
 
-  // — HUNGER PATH —
+  // - HUNGER PATH -
   {
     id: "hunger_extract",
     name: "Extract Knowledge",
-    description: "You corner the cat — not unkindly, you tell yourself. You ask it to show you again. It blinks slowly and the room tilts. Something is being pulled out of you as much as put in.",
+    description: "You corner the cat - not unkindly, you tell yourself. You ask it to show you again. It blinks slowly and the room tilts. Something is being pulled out of you as much as put in.",
     category: "hunger",
     costPerSecond: [
       { resourceId: "time", amount: 0.5 },
@@ -156,11 +156,11 @@ export const TASKS: TaskConfig[] = [
 ];
 
 export const ACTIONS: ActionConfig[] = [
-  // — THE FIRST CHOICE — (remains in 'strange', now with deeper consequences)
+  // - THE FIRST CHOICE - (remains in 'strange', now with deeper consequences)
   {
     id: "trust_cat",
     name: "Trust the Cat",
-    description: "You stop asking whether it is real. The cat flicks its tail — approval, or amusement — and the air behind it seems to crease like paper. 'Follow,' it seems to say. You say yes before you can rehearse doubt.",
+    description: "You stop asking whether it is real. The cat flicks its tail - approval, or amusement - and the air behind it seems to crease like paper. 'Follow,' it seems to say. You say yes before you can rehearse doubt.",
     category: "strange",
     costs: [{ resourceId: "lore", amount: 5 }],
     effects: [
@@ -179,7 +179,7 @@ export const ACTIONS: ActionConfig[] = [
   {
     id: "reject_cat",
     name: "Reject the Cat",
-    description: "You tell it — and yourself — that cats do not talk, walls do not breathe, and you are tired. You drag the bookshelf against the patched plaster. The cat watches without blinking. 'As you wish,' its silence says.",
+    description: "You tell it - and yourself - that cats do not talk, walls do not breathe, and you are tired. You drag the bookshelf against the patched plaster. The cat watches without blinking. 'As you wish,' its silence says.",
     category: "strange",
     costs: [{ resourceId: "lore", amount: 5 }],
     effects: [
@@ -214,7 +214,7 @@ export const ACTIONS: ActionConfig[] = [
     lockDescription: "Choosing Hunger closes Faith and Denial."
   },
 
-  // — FAITH FOLLOW-UPS —
+  // - FAITH FOLLOW-UPS -
   {
     id: "faith_drink_milk",
     name: "Drink the Milk It Offers",
@@ -274,7 +274,7 @@ export const ACTIONS: ActionConfig[] = [
     maxExecutions: 1,
     exclusiveWith: ["faith_become_keeper"],
     logMessage: "You belong to the alleys now. The alleys belong to you. Fair trade.",
-    lockDescription: "Feral or Keeper — you cannot be both."
+    lockDescription: "Feral or Keeper - you cannot be both."
   },
   {
     id: "faith_become_keeper",
@@ -294,10 +294,10 @@ export const ACTIONS: ActionConfig[] = [
     maxExecutions: 1,
     exclusiveWith: ["faith_become_stray"],
     logMessage: "You hold the line. Something holds it with you.",
-    lockDescription: "Keeper or Stray — you cannot be both."
+    lockDescription: "Keeper or Stray - you cannot be both."
   },
 
-  // — DENIAL FOLLOW-UPS —
+  // - DENIAL FOLLOW-UPS -
   {
     id: "denial_seal_wall",
     name: "Seal the Wall with Concrete",
@@ -360,7 +360,7 @@ export const ACTIONS: ActionConfig[] = [
   {
     id: "denial_remember",
     name: "Admit You Remember",
-    description: "You stop sealing. You leave the notebook open. You write: 'It was a cat. I pretended it wasn't. I am done pretending.' The writing is shaky. The cat — wherever it is — purrs, once, through the wall.",
+    description: "You stop sealing. You leave the notebook open. You write: 'It was a cat. I pretended it wasn't. I am done pretending.' The writing is shaky. The cat - wherever it is - purrs, once, through the wall.",
     category: "denial",
     costs: [
       { resourceId: "ashes", amount: 10 },
@@ -379,7 +379,7 @@ export const ACTIONS: ActionConfig[] = [
     lockDescription: "Remembering and forgetting cannot coexist."
   },
 
-  // — HUNGER FOLLOW-UPS —
+  // - HUNGER FOLLOW-UPS -
   {
     id: "hunger_interrogate",
     name: "Press for True Names",
@@ -472,7 +472,7 @@ export const ITEMS: ItemConfig[] = [
   {
     id: "nest_threads",
     name: "Nest of Threads",
-    description: "A closet lined with the city's soft excess — lint, cobweb, unsent letters felted together. Something sleeps here with you, lightly.",
+    description: "A closet lined with the city's soft excess - lint, cobweb, unsent letters felted together. Something sleeps here with you, lightly.",
     slot: "body",
     effects: [{ type: "modify_passive_gen", resourceId: "threads", amount: 0.04 }]
   },

@@ -1,4 +1,4 @@
-# Architecture — OpenIdle Engine
+# Architecture - OpenIdle Engine
 
 > Agent-facing map of how the engine fits together. Read this before touching `context/`, `types.ts`, or `gameData/`.
 
@@ -114,7 +114,7 @@ Applied in:
 ## 6. Visibility & Locking
 
 * `checkIsVisible(id, prereqs)` (`GameContext.tsx:1226`): first checks global `locks[]` from any *executed* action or *active/done/leveled* task that lists `id` in its `locks`. If hit → hidden. Otherwise visibility = `state.tasks[id].unlocked || state.actions[id].unlocked`. Note: converters/slots not checked here.
-* `checkPrerequisites(prereqs)` (`GameContext.tsx:1200`): every prerequisite must pass. For hidden resources (`max == 0`) pattern still blocks until `modify_max_resource_flat` unlocks it — see *Hidden Resource* pattern in `GAMEDATA_GUIDE.md`.
+* `checkPrerequisites(prereqs)` (`GameContext.tsx:1200`): every prerequisite must pass. For hidden resources (`max == 0`) pattern still blocks until `modify_max_resource_flat` unlocks it - see *Hidden Resource* pattern in `GAMEDATA_GUIDE.md`.
 * `exclusiveWith` (actions only, `ActionCard.tsx:60`): after one fires, siblings become `BLOCKED` (disabled, not hidden) and show blocker name.
 * `hideWhenComplete` + `maxExecutions`: when cap reached, card disappears from main tab and moves to **Completed** tab (`App.tsx:53`). If `hideWhenComplete: true`, it vanishes entirely.
 
@@ -141,17 +141,17 @@ Header (Title + Save/Export/Import/Reset)
 
 * Collapsible sections backed by `collapsedSections: Record<string, boolean>` local state.
 * Tooltip system: each card uses `createPortal` to `document.body` + `hoverRect` positioning; `hidden` effects are filtered out there, not in reducer.
-* `App.tsx` is ~560 lines and handles modal + tab + grouping logic — candidate for extraction (see TODO section).
+* `App.tsx` is ~560 lines and handles modal + tab + grouping logic - candidate for extraction (see TODO section).
 
 ## 9. Known Gotchas for Contributors
 
-1. **Dead code** in `GameContext.tsx:668` (`fester` branch) and duplicated `applyEffect` (`:375` vs `:417`) — do not extend; clean up first.
+1. **Dead code** in `GameContext.tsx:668` (`fester` branch) and duplicated `applyEffect` (`:375` vs `:417`) - do not extend; clean up first.
 2. **`cooldownMs` is a no-op** (`types.ts:102` TODO). Do not rely on it.
-3. **Converter costs are unscaled** — unlike tasks/actions, purchase cost is flat.
-4. **`getResourceBreakdown` cost math** (`GameContext.tsx:1288`) ignores `scaleFactor` for active task drain display — tooltip rate differs from actual tick rate after leveling.
+3. **Converter costs are unscaled** - unlike tasks/actions, purchase cost is flat.
+4. **`getResourceBreakdown` cost math** (`GameContext.tsx:1288`) ignores `scaleFactor` for active task drain display - tooltip rate differs from actual tick rate after leveling.
 5. **Action tier heuristic** (`ActionCard.tsx:74`): `maxExecutions < 100` → styled as Upgrade. Keep limits under 100 for yellow styling or change the heuristic.
 6. **Resource `category` vs `CategoryConfig`**: basic resources group by `CategoryConfig.id` match; mismatch → bucketed under "Other" (`App.tsx:145`). Always register the category.
-7. **`allModifiers` snapshot**: captured at reducer entry; effects that add modifiers inside the same tick still use the old snapshot for `calculateYield`/`calculateMax` that tick — next tick picks them up.
+7. **`allModifiers` snapshot**: captured at reducer entry; effects that add modifiers inside the same tick still use the old snapshot for `calculateYield`/`calculateMax` that tick - next tick picks them up.
 
 ## 10. Extension Points
 

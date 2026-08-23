@@ -1,4 +1,4 @@
-# Engine API — Reference & Validation Checklist
+# Engine API - Reference & Validation Checklist
 
 > **For agents & reviewers:** how to reason about every config field, what the engine enforces, and how to validate content. Complements `GAMEDATA_GUIDE.md` (tutorial) + `ARCHITECTURE.md` (internals).
 
@@ -51,9 +51,9 @@ Groups cards in middle column (`App.tsx:368`) and resource groups in left column
 | `set_max_resource` | `resourceId` | Add `set` modifier with `value:amount` | Max `set` wins; then flats/pct apply |
 | `reset_resource_modifiers` | `resourceId` | Remove all modifiers for that resource | Does not affect equipment; `GameContext.tsx:418` |
 | `modify_yield_pct` | `taskId`\|`actionId`\|`resourceId` | `+amount` percent yield | At least one target; `hidden` respected |
-| `modify_yield_flat` | `taskId`\|`actionId`\|`resourceId` | `+amount` flat yield | — |
+| `modify_yield_flat` | `taskId`\|`actionId`\|`resourceId` | `+amount` flat yield | - |
 | `modify_passive_gen` | `resourceId` | `+amount` passive `/s` (`property:'gen'`) | `flat` gen modifier; shown in breakdown |
-| `increase_max_tasks` | — | `maxConcurrentTasks += amount` | No target |
+| `increase_max_tasks` | - | `maxConcurrentTasks += amount` | No target |
 | `increase_max_executions` | `taskId`\|`actionId` | `+amount` to cap (`property:'max_exec'`) | Not yet shown distinct from max tasks |
 | `add_item` | `itemId` | push `amount` copies | Inventory |
 
@@ -72,7 +72,7 @@ Plus legacy `modify_task_yield_pct` rendered as alias. `hidden:true` → applied
 }
 ```
 
-* No `progressRequired` → infinite loop task (must be `autoRestart`? Not enforced — but without progress it never completes).
+* No `progressRequired` → infinite loop task (must be `autoRestart`? Not enforced - but without progress it never completes).
 * `progressRequired` set → timed; when `progress >= required` awards completions, runs `completionEffects` then resets `progress=0, paid=false`. If `autoRestart:false` → `active=false`.
 * `paid` flag prevents double-charging `startCosts` mid-run; cleared on completion/toggle off.
 * `xpPerSecond`: `xpNeeded = level * 100` (`GameContext.tsx:872`).
@@ -84,9 +84,9 @@ Plus legacy `modify_task_yield_pct` rendered as alias. `hidden:true` → applied
   cooldownMs?, prerequisites?, exclusiveWith?, locks?, lockDescription?, hideWhenComplete?, logMessage? }
 ```
 
-* `cooldownMs` **not implemented** — ignore or implement.
-* `exclusiveWith: ActionID[]` — blocks purchase if sibling has `executions>0`; still visible. Render warning in `ActionCard.tsx:270`.
-* `locks: string[]` — any executed action id in locks hides target globally (`checkIsVisible`).
+* `cooldownMs` **not implemented** - ignore or implement.
+* `exclusiveWith: ActionID[]` - blocks purchase if sibling has `executions>0`; still visible. Render warning in `ActionCard.tsx:270`.
+* `locks: string[]` - any executed action id in locks hides target globally (`checkIsVisible`).
 
 ### 1.7 ConverterConfig `types.ts:145`
 
@@ -175,7 +175,7 @@ If `resource.baseMax === 0`, there must be at least one `modify_max_resource_fla
 ### 3.4 Prerequisite Round-Trips
 
 * Every `prerequisites` entry should be satisfiable (e.g., don't require `money.minAmount: 999` when no yield ever reaches it).
-* `minMax` checks capacity, not amount — use it to gate "is this hidden resource revealed?"
+* `minMax` checks capacity, not amount - use it to gate "is this hidden resource revealed?"
 
 ### 3.5 Locks / Hide Behavior
 
@@ -184,17 +184,17 @@ If `resource.baseMax === 0`, there must be at least one `modify_max_resource_fla
 
 ### 3.6 Scaling & Economy
 
-* Pick one `scaleType` and keep it. `exponential` grows fast — keep `scaleFactor` in `[1.01, 1.5]` for costs, `[1.05, 2]` for rewards.
+* Pick one `scaleType` and keep it. `exponential` grows fast - keep `scaleFactor` in `[1.01, 1.5]` for costs, `[1.05, 2]` for rewards.
 * Verify both reducer and card `getScaledCost` agree (they duplicate logic).
-* Check breakdown rates (`getResourceBreakdown`) match actual tick drain after few levels — converter/tools ignore scaling (known bug).
+* Check breakdown rates (`getResourceBreakdown`) match actual tick drain after few levels - converter/tools ignore scaling (known bug).
 
 ## 4. Common Pitfalls
 
-* **Forgetting to register categories/items** — config compiles but UI groups incorrectly or items unreachable.
-* **Assuming `cooldownMs` throttles** — it is parsed and stored (`lastUsed`) but never enforced.
-* **Adding `exclusiveWith` to tasks** — no reducer handling; only actions.
-* **Relying on save compatibility after renames** — `LOAD_GAME` is additive; removed fields orphan, renamed IDs duplicate.
-* **Modifying state outside reducer** — will be overwritten next tick.
+* **Forgetting to register categories/items** - config compiles but UI groups incorrectly or items unreachable.
+* **Assuming `cooldownMs` throttles** - it is parsed and stored (`lastUsed`) but never enforced.
+* **Adding `exclusiveWith` to tasks** - no reducer handling; only actions.
+* **Relying on save compatibility after renames** - `LOAD_GAME` is additive; removed fields orphan, renamed IDs duplicate.
+* **Modifying state outside reducer** - will be overwritten next tick.
 
 ## 5. Future Validation Script Shape
 
@@ -212,6 +212,6 @@ Add as `npm run validate` once implemented.
 
 ## 6. See Also
 
-* `GAMEDATA_GUIDE.md` — tutorial & hidden-resource pattern
-* `ARCHITECTURE.md` — state shape, loop order, modifier formulas
-* `AGENTS.md` — file-level Do/Don't + Done checklist
+* `GAMEDATA_GUIDE.md` - tutorial & hidden-resource pattern
+* `ARCHITECTURE.md` - state shape, loop order, modifier formulas
+* `AGENTS.md` - file-level Do/Don't + Done checklist

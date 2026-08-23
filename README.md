@@ -69,7 +69,7 @@ Output goes to `dist/`.
 | `AGENTS.md` | AI-agent working guide: conventions, sharp edges, done checklist |
 | `CONTRIBUTING.md` | Setup, style, verification, PR process |
 | `docs/ENGINE_API.md` | Field-by-field API reference + validation checklist |
-| `docs/ROADMAP.md` | Prioritized TODOs / known gaps — good first contributions |
+| `docs/ROADMAP.md` | Prioritized TODOs / known gaps - good first contributions |
 
 ## Making Your Own Game
 
