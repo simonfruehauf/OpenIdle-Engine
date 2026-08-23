@@ -7,7 +7,17 @@ export const CATEGORIES: CategoryConfig[] = [
 export const RESOURCES: ResourceConfig[] = [];
 
 export const SLOTS: SlotConfig[] = [
-  { id: "accessory_2", name: "Accessory II", prerequisites: [{ actionId: "wellness_stitch_pouch", minExecutions: 1 }] },
+  {
+    id: "accessory_2",
+    name: "Accessory II",
+    prerequisites: [],
+    prerequisitesAny: [
+      { actionId: "wellness_stitch_pouch_yoga", minExecutions: 1 },
+      { actionId: "wellness_stitch_pouch_running", minExecutions: 1 },
+      { actionId: "wellness_stitch_pouch_swimming", minExecutions: 1 },
+      { actionId: "wellness_stitch_pouch_hiking", minExecutions: 1 },
+    ],
+  },
 ];
 
 export const TASKS: TaskConfig[] = [
@@ -150,15 +160,52 @@ export const ACTIONS: ActionConfig[] = [
     logMessage: "You pick the trail. The map is already creased."
   },
   {
-    id: "wellness_stitch_pouch",
-    name: "Stitch Second Pouch",
-    description: "You sew a second pocket onto your bag. It takes time, money, and the discipline you learned from your practice.",
+    id: "wellness_stitch_pouch_yoga",
+    name: "Stitch Second Pouch (Yoga)",
+    description: "You sew a second pocket onto your bag. It takes time, money, and the discipline you learned from yoga.",
     category: "wellness",
     costs: [{ resourceId: "money", amount: 80 }, { resourceId: "mana", amount: 15 }],
     effects: [{ type: "modify_max_resource_flat", resourceId: "health", amount: 4 }],
-    prerequisites: [{ actionId: "wellness_find_flyer", minExecutions: 1 }],
+    prerequisites: [{ actionId: "wellness_find_flyer", minExecutions: 1 }, { taskId: "rest_yoga", minLevel: 3 }],
     maxExecutions: 1,
-    logMessage: "Your bag now holds two charms. The second pouch hangs light."
+    exclusiveWith: ["wellness_stitch_pouch_running", "wellness_stitch_pouch_swimming", "wellness_stitch_pouch_hiking"],
+    logMessage: "Your bag now holds two charms. The second pouch hangs light. (Yoga discipline)"
+  },
+  {
+    id: "wellness_stitch_pouch_running",
+    name: "Stitch Second Pouch (Running)",
+    description: "You sew a second pocket onto your bag. It takes time, money, and the discipline you learned from running.",
+    category: "wellness",
+    costs: [{ resourceId: "money", amount: 80 }, { resourceId: "mana", amount: 15 }],
+    effects: [{ type: "modify_max_resource_flat", resourceId: "health", amount: 4 }],
+    prerequisites: [{ actionId: "wellness_find_flyer", minExecutions: 1 }, { taskId: "rest_running", minLevel: 3 }],
+    maxExecutions: 1,
+    exclusiveWith: ["wellness_stitch_pouch_yoga", "wellness_stitch_pouch_swimming", "wellness_stitch_pouch_hiking"],
+    logMessage: "Your bag now holds two charms. The second pouch hangs light. (Running discipline)"
+  },
+  {
+    id: "wellness_stitch_pouch_swimming",
+    name: "Stitch Second Pouch (Swimming)",
+    description: "You sew a second pocket onto your bag. It takes time, money, and the discipline you learned from swimming.",
+    category: "wellness",
+    costs: [{ resourceId: "money", amount: 80 }, { resourceId: "mana", amount: 15 }],
+    effects: [{ type: "modify_max_resource_flat", resourceId: "health", amount: 4 }],
+    prerequisites: [{ actionId: "wellness_find_flyer", minExecutions: 1 }, { taskId: "rest_swimming", minLevel: 3 }],
+    maxExecutions: 1,
+    exclusiveWith: ["wellness_stitch_pouch_yoga", "wellness_stitch_pouch_running", "wellness_stitch_pouch_hiking"],
+    logMessage: "Your bag now holds two charms. The second pouch hangs light. (Swimming discipline)"
+  },
+  {
+    id: "wellness_stitch_pouch_hiking",
+    name: "Stitch Second Pouch (Hiking)",
+    description: "You sew a second pocket onto your bag. It takes time, money, and the discipline you learned from hiking.",
+    category: "wellness",
+    costs: [{ resourceId: "money", amount: 80 }, { resourceId: "mana", amount: 15 }],
+    effects: [{ type: "modify_max_resource_flat", resourceId: "health", amount: 4 }],
+    prerequisites: [{ actionId: "wellness_find_flyer", minExecutions: 1 }, { taskId: "rest_hiking", minLevel: 3 }],
+    maxExecutions: 1,
+    exclusiveWith: ["wellness_stitch_pouch_yoga", "wellness_stitch_pouch_running", "wellness_stitch_pouch_swimming"],
+    logMessage: "Your bag now holds two charms. The second pouch hangs light. (Hiking discipline)"
   },
   {
     id: "wellness_claim_yoga_mat",

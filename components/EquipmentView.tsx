@@ -113,7 +113,13 @@ export const EquipmentView: React.FC = () => {
 
             {/* Paper Doll Grid */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-8">
-                {config.slots.filter(s => checkPrerequisites(s.prerequisites)).map(slot => {
+                {config.slots.filter(s => {
+                    if (!checkPrerequisites(s.prerequisites)) return false;
+                    if (s.prerequisitesAny && s.prerequisitesAny.length > 0) {
+                        return s.prerequisitesAny.some(p => checkPrerequisites([p]));
+                    }
+                    return true;
+                }).map(slot => {
                     const equippedItemId = state.equipment[slot.id];
                     const equippedItem = equippedItemId ? ITEMS.find(i => i.id === equippedItemId) : null;
 

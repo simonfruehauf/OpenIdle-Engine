@@ -68,7 +68,8 @@ export interface ItemConfig {
 export interface SlotConfig {
   id: SlotID;
   name: string;
-  prerequisites?: Prerequisite[]; // E.g., "Extra Arm" requires mutation
+  prerequisites?: Prerequisite[]; // E.g., "Extra Arm" requires mutation (AND)
+  prerequisitesAny?: Prerequisite[]; // OR: if present, at least one entry must be satisfied (each entry is AND internally)
 }
 
 export interface TaskDrop {
