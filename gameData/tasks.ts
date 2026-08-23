@@ -13,7 +13,7 @@ export const TASKS: TaskConfig[] = [
         effectsPerSecond: [
             { type: 'add_resource', resourceId: 'time', amount: 0.8 },
             { type: 'add_resource', resourceId: 'health', amount: 0.2 },
-            { type: 'add_resource', resourceId: 'mana', amount: 0.2 }
+            { type: 'add_resource', resourceId: 'mana', amount: 0.1 }
         ],
         xpPerSecond: 5,
     },
