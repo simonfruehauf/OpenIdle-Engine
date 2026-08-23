@@ -45,7 +45,16 @@ const GameLayout: React.FC = () => {
     const [copyFeedback, setCopyFeedback] = useState(false);
 
     const activeTaskId = Object.keys(state.tasks).find(id => state.tasks[id].active);
-    const activeTaskName = activeTaskId ? config.tasks.find(t => t.id === activeTaskId)?.name : "Idle";
+    const isAutoResting = !!(state.previousTaskId && state.restTaskId && state.activeTaskIds.includes(state.restTaskId));
+    const activeTaskName = (() => {
+        if (!activeTaskId) return "Idle";
+        if (isAutoResting) {
+            const prev = config.tasks.find(t => t.id === state.previousTaskId);
+            return prev ? prev.name : config.tasks.find(t => t.id === activeTaskId)?.name || "Idle";
+        }
+        return config.tasks.find(t => t.id === activeTaskId)?.name || "Idle";
+    })();
+    const autoRestLabel = isAutoResting ? `auto-resting via ${config.tasks.find(t => t.id === state.restTaskId)?.name}` : null;
 
     const hasItems = state.inventory.length > 0 || Object.keys(state.equipment).length > 0;
     const hasConverters = config.converters.some(c => state.converters[c.id]?.unlocked);
@@ -408,6 +417,9 @@ const GameLayout: React.FC = () => {
                                     <span className={`font-bold ${activeTaskId ? 'text-orange-800' : 'text-gray-400 italic'}`}>
                                         {activeTaskName}
                                     </span>
+                                    {autoRestLabel && (
+                                        <span className="text-[10px] text-orange-600 ml-2 italic font-normal">({autoRestLabel})</span>
+                                    )}
                                 </div>
                             </div>
 

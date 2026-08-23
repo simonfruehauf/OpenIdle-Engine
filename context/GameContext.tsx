@@ -147,7 +147,7 @@ const createInitialState = (): GameState => {
     });
 
     return {
-        version: 5,
+        version: 6,
         resources,
         actions: actionsState,
         tasks: tasksState,
@@ -319,6 +319,33 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 for (const cid of sideConverters) {
                     if (migratedConverters[cid]) migratedConverters[cid] = { ...migratedConverters[cid], unlocked: !!defaults.converters[cid]?.unlocked, owned: false, active: false };
                 }
+                // v6 fix: cat 0/1 bug - find_cat gave max but current stayed 0 due to stale max clamp
+                if (incomingVersion < 6) {
+                    const fixResources: Record<string, { gain: number, actionId: string }> = {
+                        "cat": { gain: 1, actionId: "find_cat" },
+                        "threads": { gain: 3, actionId: "trust_cat" },
+                        "ashes": { gain: 4, actionId: "reject_cat" }
+                    };
+                    for (const [rid, info] of Object.entries(fixResources)) {
+                        if ((incoming.actions?.[info.actionId]?.executions ?? 0) > 0 && (migratedResources[rid]?.current ?? 0) === 0) {
+                            const hasMax = migratedModifiers.some(m => m.resourceId === rid && (m.property === 'max' || !m.property));
+                            if (hasMax) {
+                                migratedResources[rid] = { ...migratedResources[rid], current: info.gain };
+                            }
+                        }
+                    }
+                    // Also fix insight for trust_cat/reject_cat/exploit_cat if clamped
+                    const insightActions = ["trust_cat","reject_cat","exploit_cat"];
+                    const anyInsightAction = insightActions.some(a => (incoming.actions?.[a]?.executions ?? 0) > 0);
+                    if (anyInsightAction && (migratedResources["insight"]?.current ?? 0) === 0) {
+                        const hasInsightMax = migratedModifiers.some(m => m.resourceId === "insight" && (m.property === 'max' || !m.property));
+                        if (hasInsightMax) {
+                            // trust gives 6, reject 2, exploit 4 - grant minimal 2 to unblock
+                            const expected = (incoming.actions?.["trust_cat"]?.executions ?? 0) > 0 ? 6 : (incoming.actions?.["reject_cat"]?.executions ?? 0) > 0 ? 2 : 4;
+                            migratedResources["insight"] = { ...migratedResources["insight"], current: Math.min(expected, 6) };
+                        }
+                    }
+                }
                 return {
                     ...defaults,
                     ...incoming,
@@ -333,6 +360,49 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                     log: migratedLog,
                     maxConcurrentTasks: incoming.maxConcurrentTasks || defaults.maxConcurrentTasks,
                     activeTaskIds: [],
+                    restTaskId: (incoming as any).restTaskId ?? defaults.restTaskId,
+                    previousTaskId: (incoming as any).previousTaskId ?? defaults.previousTaskId
+                };
+            }
+
+            // v6 migration: fix 0/1 cat (and related) for saves at version 5
+            if (incomingVersion < 6) {
+                const fixResources: Record<string, { gain: number, actionId: string }> = {
+                    "cat": { gain: 1, actionId: "find_cat" },
+                    "threads": { gain: 3, actionId: "trust_cat" },
+                    "ashes": { gain: 4, actionId: "reject_cat" }
+                };
+                for (const [rid, info] of Object.entries(fixResources)) {
+                    if ((incoming.actions?.[info.actionId]?.executions ?? 0) > 0 && (migratedResources[rid]?.current ?? 0) === 0) {
+                        const hasMax = migratedModifiers.some(m => m.resourceId === rid && (m.property === 'max' || !m.property));
+                        if (hasMax) {
+                            migratedResources[rid] = { ...migratedResources[rid], current: info.gain };
+                        }
+                    }
+                }
+                const insightActions = ["trust_cat","reject_cat","exploit_cat"];
+                const anyInsightAction = insightActions.some(a => (incoming.actions?.[a]?.executions ?? 0) > 0);
+                if (anyInsightAction && (migratedResources["insight"]?.current ?? 0) === 0) {
+                    const hasInsightMax = migratedModifiers.some(m => m.resourceId === "insight" && (m.property === 'max' || !m.property));
+                    if (hasInsightMax) {
+                        const expected = (incoming.actions?.["trust_cat"]?.executions ?? 0) > 0 ? 6 : (incoming.actions?.["reject_cat"]?.executions ?? 0) > 0 ? 2 : 4;
+                        migratedResources["insight"] = { ...migratedResources["insight"], current: Math.min(expected, 6) };
+                    }
+                }
+                return {
+                    ...defaults,
+                    ...incoming,
+                    version: migratedVersion,
+                    resources: migratedResources,
+                    actions: migratedActions,
+                    tasks: migratedTasks,
+                    converters: { ...defaults.converters, ...(incoming.converters || {}) },
+                    inventory: migratedInventory,
+                    equipment: migratedEquipment,
+                    modifiers: migratedModifiers,
+                    log: migratedLog,
+                    maxConcurrentTasks: incoming.maxConcurrentTasks || defaults.maxConcurrentTasks,
+                    activeTaskIds: incoming.activeTaskIds || defaults.activeTaskIds,
                     restTaskId: (incoming as any).restTaskId ?? defaults.restTaskId,
                     previousTaskId: (incoming as any).previousTaskId ?? defaults.previousTaskId
                 };
@@ -520,10 +590,12 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 if (e.type === 'add_resource' && e.resourceId) {
                     const current = newResources[e.resourceId].current;
                     const rConfig = RESOURCES.find(r => r.id === e.resourceId);
-                    const max = calculateMax(e.resourceId, allModifiers, rConfig?.baseMax ?? 100);
+                    // Use live modifiers (newModifiers + equipment) so a preceding modify_max in the same action is respected (fixes cat 0/1)
+                    const liveModifiers = getActiveModifiers({ ...state, modifiers: newModifiers } as GameState);
+                    const max = calculateMax(e.resourceId, liveModifiers, rConfig?.baseMax ?? 100);
 
-                    // Use calculateYield
-                    const finalAmount = calculateYield(e.amount, config.id, 'action', e.resourceId, allModifiers);
+                    // Use calculateYield with live modifiers
+                    const finalAmount = calculateYield(e.amount, config.id, 'action', e.resourceId, liveModifiers);
 
                     newResources[e.resourceId].current = Math.min(current + finalAmount, max);
                 } else {
@@ -675,10 +747,11 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             let newPreviousTaskId = state.previousTaskId;
             let newActiveTaskIds = [...state.activeTaskIds]; // Use mutable copy for logic, update state at end
 
-            // Helper for calculating max within tick
+            // Helper for calculating max within tick (uses live modifiers so first-completion bumps are visible immediately)
             const getTickMax = (rid: string) => {
                 const r = RESOURCES.find(x => x.id === rid);
-                return r ? calculateMax(rid, allModifiers, r.baseMax) : 0;
+                const live = getActiveModifiers({ ...state, modifiers: newModifiers } as GameState);
+                return r ? calculateMax(rid, live, r.baseMax) : 0;
             };
 
             // Helper to apply effects (Shared logic for completion/first-completion)
@@ -703,12 +776,13 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                         }
                     }
 
-                    // Apply Yield Calculation
-                    amount = calculateYield(amount, taskId, 'task', e.resourceId, allModifiers);
+                    // Apply Yield Calculation with live modifiers
+                    const liveModifiers = getActiveModifiers({ ...state, modifiers: newModifiers } as GameState);
+                    amount = calculateYield(amount, taskId, 'task', e.resourceId, liveModifiers);
 
                     const current = newResources[e.resourceId].current;
                     const rConfig = RESOURCES.find(r => r.id === e.resourceId);
-                    const max = calculateMax(e.resourceId, allModifiers, rConfig?.baseMax ?? 100);
+                    const max = calculateMax(e.resourceId, liveModifiers, rConfig?.baseMax ?? 100);
                     newResources[e.resourceId].current = Math.min(current + amount, max);
                 } else if (e.type === 'modify_max_resource_flat' && e.resourceId) {
                     newModifiers.push({ sourceId: TASKS.find(t => t.id === e.taskId)?.name || "Task", resourceId: e.resourceId, type: 'flat', value: e.amount, property: 'max' });
@@ -808,17 +882,19 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 if (tid === newRestTaskId && newPreviousTaskId) {
                     const prevConfig = TASKS.find(t => t.id === newPreviousTaskId);
                     if (prevConfig) {
-                        // Check if ALL resources required by previous task are MAXED
-                        const allMaxed = prevConfig.costPerSecond.every(c => {
+                        // Wait until ALL costPerSecond resources are essentially full (99% to avoid floating point + passive drain issues)
+                        // Evening Shift was stuck at "Rest" because Time max 12 with insanity drain never hit exactly 11.99
+                        const allRecovered = prevConfig.costPerSecond.every(c => {
                             const rState = newResources[c.resourceId];
                             const rConfig = RESOURCES.find(r => r.id === c.resourceId);
                             if (!rState || !rConfig) return true; // Should not happen
-                            const max = calculateMax(c.resourceId, allModifiers, rConfig.baseMax);
-                            // Use small epsilon or just check >= max
-                            return rState.current >= max - 0.01;
+                            const live = getActiveModifiers({ ...state, modifiers: newModifiers } as GameState);
+                            const max = calculateMax(c.resourceId, live, rConfig.baseMax);
+                            if (max <= 0) return true;
+                            return rState.current >= max - 0.5;
                         });
 
-                        if (allMaxed) {
+                        if (allRecovered) {
                             // Switch Back!
                             newTasks[tid] = { ...tState, active: false };
                             newActiveTaskIds = newActiveTaskIds.filter(id => id !== tid);
@@ -895,15 +971,13 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 config.effectsPerSecond.forEach(e => {
                     // Chance check for ticks
                     if (e.chance !== undefined) {
-                        // Probability per second: chance * dt
-                        // To make it frame independent for small dt:
-                        // Random < chance * dtSeconds
                         if (Math.random() > (e.chance * dtSeconds)) return;
                         // If triggered, grant FULL amount (discrete event)
                         if (e.type === 'add_resource' && e.resourceId) {
                             const current = newResources[e.resourceId].current;
                             const rConfig = RESOURCES.find(r => r.id === e.resourceId);
-                            const max = calculateMax(e.resourceId, allModifiers, rConfig?.baseMax ?? 100);
+                            const live = getActiveModifiers({ ...state, modifiers: newModifiers } as GameState);
+                            const max = calculateMax(e.resourceId, live, rConfig?.baseMax ?? 100);
                             newResources[e.resourceId].current = Math.min(current + e.amount, max);
                         }
                     } else {
@@ -927,27 +1001,12 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                             }
                             amount = amount * dtSeconds;
 
-                            // Apply Per-Second Yield
-                            // NOTE: Flat yield usually means "per completion" or "per chunk".
-                            // For continuous streamed effects, flat yield per second might be powerful.
-                            // We will scale flat yield by dtSeconds as well to keep it consistent with "per second" definition.
-
-                            // To use calculateYield, we first calculate base per second, then apply yield.
-                            // But calculateYield adds FLATS directly.
-                            // If I have +1 Flat Yield, does it mean +1 per second? Yes.
-                            // So (Base + Flat) * Percent * dtSeconds?
-                            // OR (Base * dt) + (Flat * dt)? -> (Base + Flat) * dt
-                            // calculateYield does (Base + Flat) * Mul.
-                            // So we should pass "amount per second" to calculateYield?
-                            // If Base is 0.1/sec, Flat is 1.0 (meaning +1/sec).
-                            // calculateYield(0.1, ...) -> returns 1.1.
-                            // Then multiply by dtSeconds -> 1.1 * dt. Correct.
-
-                            amount = calculateYield(amount / dtSeconds, tid, 'task', e.resourceId, allModifiers) * dtSeconds;
+                            const live = getActiveModifiers({ ...state, modifiers: newModifiers } as GameState);
+                            amount = calculateYield(amount / dtSeconds, tid, 'task', e.resourceId, live) * dtSeconds;
 
                             const current = newResources[e.resourceId].current;
                             const rConfig = RESOURCES.find(r => r.id === e.resourceId);
-                            const max = calculateMax(e.resourceId, allModifiers, rConfig?.baseMax ?? 100);
+                            const max = calculateMax(e.resourceId, live, rConfig?.baseMax ?? 100);
 
                             newResources[e.resourceId].current = Math.min(current + amount, max);
                         }
@@ -991,7 +1050,8 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                     const targetConfig = RESOURCES.find(r => r.id === gen.targetResourceId);
 
                     if (targetConfig) {
-                        const max = calculateMax(gen.targetResourceId, allModifiers, targetConfig.baseMax ?? 0);
+                        const live = getActiveModifiers({ ...state, modifiers: newModifiers } as GameState);
+                        const max = calculateMax(gen.targetResourceId, live, targetConfig.baseMax ?? 0);
                         const currentTarget = newResources[gen.targetResourceId].current;
                         newResources[gen.targetResourceId].current = Math.min(currentTarget + delta, max);
                     }
@@ -1002,12 +1062,13 @@ const gameReducer = (state: GameState, action: Action): GameState => {
 
 
             // 3. Process Modifier-based Passive Generation
-            allModifiers.forEach(m => {
+            getActiveModifiers({ ...state, modifiers: newModifiers } as GameState).forEach(m => {
                 if (m.resourceId && m.property === 'gen' && m.type === 'flat') {
                     const rConfig = RESOURCES.find(r => r.id === m.resourceId);
                     if (rConfig) {
                         const current = newResources[m.resourceId]?.current || 0;
-                        const max = calculateMax(m.resourceId, allModifiers, rConfig.baseMax ?? 0);
+                        const live = getActiveModifiers({ ...state, modifiers: newModifiers } as GameState);
+                        const max = calculateMax(m.resourceId, live, rConfig.baseMax ?? 0);
                         const delta = m.value * dtSeconds;
                         newResources[m.resourceId].current = Math.min(current + delta, max);
                     }
@@ -1047,20 +1108,22 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                     if (e.type === 'add_resource' && e.resourceId) {
                         const current = newResources[e.resourceId].current;
                         const rConfig = RESOURCES.find(r => r.id === e.resourceId);
-                        const max = calculateMax(e.resourceId, allModifiers, rConfig?.baseMax ?? 100);
+                        const live = getActiveModifiers({ ...state, modifiers: newModifiers } as GameState);
+                        const max = calculateMax(e.resourceId, live, rConfig?.baseMax ?? 100);
                         newResources[e.resourceId].current = Math.min(current + (e.amount * dtSeconds), max);
                     }
                 });
             });
 
-            // Cap resources at 0 and enforce max limits
+            // Cap resources at 0 and enforce max limits (use live max)
             Object.keys(newResources).forEach(rid => {
                 if (newResources[rid].current < 0) newResources[rid].current = 0;
 
                 // If max is 0, set current to 0 as well
                 const rConfig = RESOURCES.find(r => r.id === rid);
                 if (rConfig) {
-                    const max = calculateMax(rid, allModifiers, rConfig.baseMax);
+                    const live = getActiveModifiers({ ...state, modifiers: newModifiers } as GameState);
+                    const max = calculateMax(rid, live, rConfig.baseMax);
                     if (max <= 0) {
                         newResources[rid].current = 0;
                     } else if (newResources[rid].current > max) {
@@ -1158,7 +1221,9 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 log: logUpdates.slice(0, 50),
                 totalTimePlayed: state.totalTimePlayed + action.dt,
                 activeTaskIds: nextActiveTaskIds,
-                maxConcurrentTasks: newMaxTasks
+                maxConcurrentTasks: newMaxTasks,
+                restTaskId: newRestTaskId,
+                previousTaskId: newPreviousTaskId
             };
         }
 
