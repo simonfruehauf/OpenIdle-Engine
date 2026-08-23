@@ -144,14 +144,14 @@ export const ACTIONS: ActionConfig[] = [
     effects: [{ type: 'add_resource', resourceId: 'insanity', amount: -0.5 }],
     prerequisites: [{ resourceId: 'cat', minMax: 1 }]
   },
-  {
-    id: "DEBUG",
-    name: "DEBUG",
-    description: "DEBUG",
-    category: "basic",
-    costs: [],
-    effects: [{ type: 'add_resource', resourceId: 'insanity', amount: 0.1 }],
-  },
+  // {
+  //   id: "DEBUG",
+  //   name: "DEBUG",
+  //   description: "DEBUG",
+  //   category: "basic",
+  //   costs: [],
+  //   effects: [{ type: 'add_resource', resourceId: 'insanity', amount: 0.1 }],
+  // },
   {
     id: "bookstore",
     name: "Visit the bookstore",
