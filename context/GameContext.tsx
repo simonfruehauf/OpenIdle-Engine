@@ -899,9 +899,9 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                             newTasks[tid] = { ...tState, active: false };
                             newActiveTaskIds = newActiveTaskIds.filter(id => id !== tid);
 
-                            // Start Previous Task
+                            // Start Previous Task — resume same run, don't re-charge startCosts
                             const prevTaskState = newTasks[newPreviousTaskId];
-                            newTasks[newPreviousTaskId] = { ...prevTaskState, active: true, paid: false };
+                            newTasks[newPreviousTaskId] = { ...prevTaskState, active: true, paid: true };
                             newActiveTaskIds.push(newPreviousTaskId);
 
                             logUpdates.unshift(makeLog(`Resources recovered. Returning to ${prevConfig.name}.`, 'other'));
