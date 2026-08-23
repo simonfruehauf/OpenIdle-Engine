@@ -17,6 +17,20 @@ export const CONVERTERS: ConverterConfig[] = [
     ],
     prerequisites: [{ actionId: "appartment", minExecutions: 1 }]
   },
+ {
+    id: "clock",
+    name: "Old Clock",
+    description: "Tock-tick. You wind it up and it winds down. Time is running out, but you can make a little more of it.",
+    cost: [{ resourceId: "money", amount: 100 }],
+    canBeToggled: false,
+    costPerSecond: [
+      { resourceId: "health", amount: 0.01 }
+    ],
+    effectsPerSecond: [
+      { type: "add_resource", resourceId: "time", amount: 0.01 }
+    ],
+    prerequisites: [{ actionId: "get_job", minExecutions: 1 }]
+  },
   {
     id: "dryer",
     name: "Laundromat Dryer",
