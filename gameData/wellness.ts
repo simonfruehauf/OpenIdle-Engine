@@ -160,5 +160,102 @@ export const ACTIONS: ActionConfig[] = [
     maxExecutions: 1,
     logMessage: "Your bag now holds two charms. The second pouch hangs light."
   },
+  {
+    id: "wellness_claim_yoga_mat",
+    name: "Claim Yoga Mat",
+    description: "The studio gifts you a mat.",
+    category: "wellness",
+    costs: [],
+    effects: [{ type: "add_item", itemId: "yoga_mat", amount: 1 }, { type: "modify_max_resource_flat", resourceId: "health", amount: 4 }],
+    prerequisites: [{ taskId: "rest_yoga", minLevel: 3 }],
+    maxExecutions: 1,
+    logMessage: "You unroll the mat. It remembers your shape."
+  },
+  {
+    id: "wellness_master_yoga",
+    name: "Master the Breath",
+    description: "Inhale four, hold four, exhale six. The room thins.",
+    category: "wellness",
+    costs: [{ resourceId: "mana", amount: 20 }],
+    effects: [{ type: "modify_passive_gen", resourceId: "mana", amount: 0.06 }, { type: "add_item", itemId: "yoga_bracelet", amount: 1 }],
+    prerequisites: [{ taskId: "rest_yoga", minLevel: 5 }],
+    maxExecutions: 1,
+    logMessage: "Your breath steadies the room."
+  },
+  {
+    id: "wellness_claim_trail_shoes",
+    name: "Claim Trail Shoes",
+    description: "The running shop slides you a pair, broken in just enough.",
+    category: "wellness",
+    costs: [],
+    effects: [{ type: "add_item", itemId: "trail_shoes", amount: 1 }, { type: "modify_max_resource_flat", resourceId: "health", amount: 4 }],
+    prerequisites: [{ taskId: "rest_running", minLevel: 3 }],
+    maxExecutions: 1,
+    logMessage: "New tread, old streets."
+  },
+  {
+    id: "wellness_master_running",
+    name: "Master the Pace",
+    description: "You find the rhythm where effort disappears.",
+    category: "wellness",
+    costs: [{ resourceId: "mana", amount: 20 }],
+    effects: [{ type: "modify_passive_gen", resourceId: "time", amount: 0.05 }, { type: "add_item", itemId: "race_bib", amount: 1 }],
+    prerequisites: [{ taskId: "rest_running", minLevel: 5 }],
+    maxExecutions: 1,
+    logMessage: "Race day never ends."
+  },
+  {
+    id: "wellness_claim_swim_goggles",
+    name: "Claim Swim Goggles",
+    description: "A spare pair from the lost-and-found, now yours.",
+    category: "wellness",
+    costs: [],
+    effects: [{ type: "add_item", itemId: "swim_goggles", amount: 1 }, { type: "modify_max_resource_flat", resourceId: "health", amount: 4 }],
+    prerequisites: [{ taskId: "rest_swimming", minLevel: 3 }],
+    maxExecutions: 1,
+    logMessage: "The lenses clear."
+  },
+  {
+    id: "wellness_master_swimming",
+    name: "Master the Stroke",
+    description: "Water parts exactly as you intend.",
+    category: "wellness",
+    costs: [{ resourceId: "mana", amount: 20 }],
+    effects: [{ type: "modify_passive_gen", resourceId: "health", amount: 0.06 }, { type: "add_item", itemId: "pool_key", amount: 1 }],
+    prerequisites: [{ taskId: "rest_swimming", minLevel: 5 }],
+    maxExecutions: 1,
+    logMessage: "The pool is yours after hours."
+  },
+  {
+    id: "wellness_claim_trekking_poles",
+    name: "Claim Trekking Poles",
+    description: "Carbon, cork grips, a little too long until you adjust them.",
+    category: "wellness",
+    costs: [],
+    effects: [{ type: "add_item", itemId: "trekking_poles", amount: 1 }, { type: "modify_max_resource_flat", resourceId: "health", amount: 4 }],
+    prerequisites: [{ taskId: "rest_hiking", minLevel: 3 }],
+    maxExecutions: 1,
+    logMessage: "Click-clack, up the trail."
+  },
+  {
+    id: "wellness_master_hiking",
+    name: "Master the Ascent",
+    description: "The summit is not the point. You go anyway.",
+    category: "wellness",
+    costs: [{ resourceId: "mana", amount: 20 }],
+    effects: [{ type: "modify_passive_gen", resourceId: "mana", amount: 0.04 }, { type: "add_item", itemId: "summit_patch", amount: 1 }],
+    prerequisites: [{ taskId: "rest_hiking", minLevel: 5 }],
+    maxExecutions: 1,
+    logMessage: "You sew the patch on."
+  },
 ];
-export const ITEMS: ItemConfig[] = [];
+export const ITEMS: ItemConfig[] = [
+  { id: "yoga_mat", name: "Woven Yoga Mat", description: "Slightly indented where you kneel. Smells of cedar.", slot: "accessory", effects: [{ type: "modify_passive_gen", resourceId: "mana", amount: 0.08 }] },
+  { id: "yoga_bracelet", name: "Breath Beads", description: "Wooden beads, worn smooth.", slot: "accessory_2", effects: [{ type: "modify_passive_gen", resourceId: "mana", amount: 0.04 }, { type: "modify_max_resource_flat", resourceId: "health", amount: 6 }] },
+  { id: "trail_shoes", name: "Trail Shoes", description: "Mud in the tread even after cleaning.", slot: "accessory", effects: [{ type: "modify_yield_pct", taskId: "rest_running", amount: 0.12 }] },
+  { id: "race_bib", name: "Race Bib #204", description: "You kept it. You earned the number.", slot: "accessory_2", effects: [{ type: "modify_max_resource_flat", resourceId: "time", amount: 3 }] },
+  { id: "swim_goggles", name: "Fogged Goggles", description: "You see better with them off, somehow.", slot: "accessory", effects: [{ type: "modify_max_resource_flat", resourceId: "health", amount: 6 }] },
+  { id: "pool_key", name: "Pool Key", description: "After-hours access, unofficially.", slot: "accessory_2", effects: [{ type: "modify_passive_gen", resourceId: "health", amount: 0.03 }] },
+  { id: "trekking_poles", name: "Trekking Poles", description: "Click-clack on stone.", slot: "accessory", effects: [{ type: "modify_yield_pct", taskId: "rest_hiking", amount: 0.15 }] },
+  { id: "summit_patch", name: "Summit Patch", description: "Sew it on. You were there.", slot: "accessory_2", effects: [{ type: "modify_max_resource_flat", resourceId: "mana", amount: 7 }] },
+];
