@@ -11,6 +11,7 @@ import * as BelthaneModule from './belthane';
 import * as LibraryModule from './library';
 import * as NightMarketModule from './nightmarket';
 import * as EndgameModule from './endgame';
+import * as WellnessModule from './wellness';
 
 // Seasonal content
 // import * as ChristmasModule from './christmas';
@@ -26,7 +27,8 @@ const modules: any[] = [
     BelthaneModule,
     LibraryModule,
     NightMarketModule,
-    EndgameModule
+    EndgameModule,
+    WellnessModule
 ];
 
 // Add quest modules
