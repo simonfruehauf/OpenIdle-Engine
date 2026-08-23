@@ -222,7 +222,7 @@ export const ACTIONS: ActionConfig[] = [
   {
     id: "wellness_stitch_pouch_yoga",
     name: "Stitch Second Pouch (Yoga)",
-    description: "You sew a second pocket onto your bag. It takes time, money, and the discipline you learned from yoga.",
+    description: "You sew a second pocket onto your bag. It takes time, money, and the mental clarity you learned from yoga.",
     category: "wellness",
     costs: [{ resourceId: "money", amount: 80 }, { resourceId: "mana", amount: 15 }],
     effects: [{ type: "modify_max_resource_flat", resourceId: "health", amount: 4 }],
@@ -234,7 +234,7 @@ export const ACTIONS: ActionConfig[] = [
   {
     id: "wellness_stitch_pouch_running",
     name: "Stitch Second Pouch (Running)",
-    description: "You sew a second pocket onto your bag. It takes time, money, and the discipline you learned from running.",
+    description: "You sew a second pocket onto your bag. It takes time, money, and the endurance you learned from running.",
     category: "wellness",
     costs: [{ resourceId: "money", amount: 80 }, { resourceId: "mana", amount: 15 }],
     effects: [{ type: "modify_max_resource_flat", resourceId: "health", amount: 4 }],
@@ -258,7 +258,7 @@ export const ACTIONS: ActionConfig[] = [
   {
     id: "wellness_stitch_pouch_hiking",
     name: "Stitch Second Pouch (Hiking)",
-    description: "You sew a second pocket onto your bag. It takes time, money, and the discipline you learned from hiking.",
+    description: "You sew a second pocket onto your bag. It takes time, money, and the patience you learned from hiking.",
     category: "wellness",
     costs: [{ resourceId: "money", amount: 80 }, { resourceId: "mana", amount: 15 }],
     effects: [{ type: "modify_max_resource_flat", resourceId: "health", amount: 4 }],
