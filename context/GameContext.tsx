@@ -440,10 +440,21 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             const item = ITEMS.find(i => i.id === action.itemId);
             if (!item) return state;
 
-            const currentEquipped = state.equipment[item.slot];
+            let targetSlot = item.slot;
+
+            if (item.slot === "accessory") {
+                const accessorySlots = ["accessory", "accessory_2"];
+                const availableSlot = accessorySlots.find(slot => !state.equipment[slot]);
+                if (availableSlot) {
+                    targetSlot = availableSlot;
+                } else {
+                    targetSlot = "accessory";
+                }
+            }
+
+            const currentEquipped = state.equipment[targetSlot];
             let newInventory = state.inventory.filter(id => id !== action.itemId);
 
-            // If something is already equipped, swap it back to inventory
             if (currentEquipped) {
                 newInventory.push(currentEquipped);
             }
@@ -451,7 +462,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             return {
                 ...state,
                 inventory: newInventory,
-                equipment: { ...state.equipment, [item.slot]: action.itemId },
+                equipment: { ...state.equipment, [targetSlot]: action.itemId },
                 log: [makeLog(`Equipped ${item.name}`, 'other'), ...state.log].slice(0, 50)
             };
         }
@@ -611,6 +622,8 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                         newModifiers = newModifiers.filter(m => m.resourceId !== e.resourceId);
                     } else if (e.type === 'modify_passive_gen' && e.resourceId) {
                         newModifiers.push({ sourceId: config.name, resourceId: e.resourceId, type: 'flat', value: e.amount, property: 'gen' });
+                    } else if (e.type === 'add_passive_gen_per_unit' && e.sourceResourceId && e.targetResourceId) {
+                        newModifiers.push({ sourceId: config.name, resourceId: e.targetResourceId, type: 'flat', value: e.amount, property: 'gen_per_unit', sourceResourceId: e.sourceResourceId, targetResourceId: e.targetResourceId });
                     } else if (e.type === 'modify_yield_pct') {
                         if (e.taskId) newModifiers.push({ sourceId: config.name, taskId: e.taskId, type: 'percent', value: e.amount, property: 'yield', resourceId: e.resourceId });
                         if (e.actionId) newModifiers.push({ sourceId: config.name, actionId: e.actionId, type: 'percent', value: e.amount, property: 'yield', resourceId: e.resourceId });
@@ -794,6 +807,8 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                     newModifiers = newModifiers.filter(m => m.resourceId !== e.resourceId);
                 } else if (e.type === 'modify_passive_gen' && e.resourceId) {
                     newModifiers.push({ sourceId: TASKS.find(t => t.id === e.taskId)?.name || "Task", resourceId: e.resourceId, type: 'flat', value: e.amount, property: 'gen' });
+                } else if (e.type === 'add_passive_gen_per_unit' && e.sourceResourceId && e.targetResourceId) {
+                    newModifiers.push({ sourceId: TASKS.find(t => t.id === e.taskId)?.name || "Task", resourceId: e.targetResourceId, type: 'flat', value: e.amount, property: 'gen_per_unit', sourceResourceId: e.sourceResourceId, targetResourceId: e.targetResourceId });
                 } else if (e.type === 'modify_yield_pct') {
                     if (e.taskId) newModifiers.push({ sourceId: TASKS.find(t => t.id === e.taskId)?.name || "Task", taskId: e.taskId, type: 'percent', value: e.amount, property: 'yield', resourceId: e.resourceId });
                     if (e.actionId) newModifiers.push({ sourceId: TASKS.find(t => t.id === e.taskId)?.name || "Task", actionId: e.actionId, type: 'percent', value: e.amount, property: 'yield', resourceId: e.resourceId });
@@ -1071,6 +1086,22 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                         const max = calculateMax(m.resourceId, live, rConfig.baseMax ?? 0);
                         const delta = m.value * dtSeconds;
                         newResources[m.resourceId].current = Math.min(current + delta, max);
+                    }
+                }
+                // 3b. Process gen_per_unit modifiers (generate target per unit of source)
+                if (m.property === 'gen_per_unit' && m.sourceResourceId && m.targetResourceId && m.type === 'flat') {
+                    const sourceAmount = newResources[m.sourceResourceId]?.current || 0;
+                    if (sourceAmount >= 1) {
+                        const targetConfig = RESOURCES.find(r => r.id === m.targetResourceId);
+                        if (targetConfig) {
+                            const live = getActiveModifiers({ ...state, modifiers: newModifiers } as GameState);
+                            const max = calculateMax(m.targetResourceId, live, targetConfig.baseMax ?? 0);
+                            const currentTarget = newResources[m.targetResourceId]?.current || 0;
+                            // Use full units of source resource
+                            const fullUnits = Math.floor(sourceAmount);
+                            const delta = fullUnits * m.value * dtSeconds;
+                            newResources[m.targetResourceId].current = Math.min(currentTarget + delta, max);
+                        }
                     }
                 }
             });
@@ -1522,6 +1553,21 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     source: `${m.sourceId} (Passive)`,
                     amount: m.value
                 });
+            }
+        });
+
+        // Passive Modifier Rates (gen_per_unit - generate target per unit of source)
+        activeModifiers.forEach(m => {
+            if (m.property === 'gen_per_unit' && m.targetResourceId === resourceId && m.sourceResourceId && m.type === 'flat') {
+                const sourceAmount = state.resources[m.sourceResourceId]?.current || 0;
+                if (sourceAmount >= 1) {
+                    const sourceConfig = RESOURCES.find(r => r.id === m.sourceResourceId);
+                    const fullUnits = Math.floor(sourceAmount);
+                    rates.push({
+                        source: `${m.sourceId} (${sourceConfig?.name || m.sourceResourceId}: ${fullUnits} × ${m.value}/s)`,
+                        amount: fullUnits * m.value
+                    });
+                }
             }
         });
 

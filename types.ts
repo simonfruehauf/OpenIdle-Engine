@@ -44,7 +44,7 @@ export interface Cost {
 }
 
 export interface Effect {
-  type: 'add_resource' | 'modify_max_resource_flat' | 'modify_max_resource_pct' | 'modify_yield_pct' | 'modify_yield_flat' | 'add_item' | 'modify_passive_gen' | 'increase_max_tasks' | 'increase_max_executions' | 'set_max_resource' | 'reset_resource_modifiers';
+  type: 'add_resource' | 'modify_max_resource_flat' | 'modify_max_resource_pct' | 'modify_yield_pct' | 'modify_yield_flat' | 'add_item' | 'modify_passive_gen' | 'increase_max_tasks' | 'increase_max_executions' | 'set_max_resource' | 'reset_resource_modifiers' | 'add_passive_gen_per_unit';
   amount: number;
   resourceId?: ResourceID;
   taskId?: TaskID;
@@ -54,6 +54,9 @@ export interface Effect {
   scaleFactor?: number;
   chance?: number; // 0-1 probability for effect to trigger (default 1)
   hidden?: boolean; // If true, effect is calculated but not shown in tooltips
+  // For add_passive_gen_per_unit:
+  sourceResourceId?: ResourceID; // Resource to count units of
+  targetResourceId?: ResourceID; // Resource to generate
 }
 
 // Items & Equipment
@@ -175,7 +178,10 @@ export interface Modifier {
   resourceId?: ResourceID;
   taskId?: TaskID;
   actionId?: ActionID;
-  property?: 'max' | 'gen' | 'max_exec' | 'yield'; // 'max' (default) affects capacity, 'gen' affects passive generation, 'max_exec' affects execution limit
+  property?: 'max' | 'gen' | 'max_exec' | 'yield' | 'gen_per_unit'; // 'max' (default) affects capacity, 'gen' affects passive generation, 'gen_per_unit' generates target per unit of source
+  // For gen_per_unit:
+  sourceResourceId?: ResourceID; // Resource to count units of
+  targetResourceId?: ResourceID; // Resource to generate
 }
 
 export interface ActionState {

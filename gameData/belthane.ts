@@ -125,6 +125,27 @@ export const TASKS: TaskConfig[] = [
     ],
     prerequisites: [{ taskId: "belthane_dance_maypole", minLevel: 2 }],
     maxExecutions: 10
+  },
+  {
+    id: "belthane_savor_vintage",
+    name: "Savor the Vintage",
+    description: "You sit with the last bottle of the season. Each sip lingers—honey, cut grass, the memory of the bonfire. The wine doesn't just heal; it teaches your body to remember the warmth.",
+    category: "belthane",
+    costPerSecond: [{ resourceId: "time", amount: 0.5 }],
+    effectsPerSecond: [],
+    startCosts: [{ resourceId: "may_wine", amount: 10 }],
+    progressRequired: 30,
+    autoRestart: false,
+    completionEffects: [],
+    firstCompletionEffects: [
+      { type: "add_passive_gen_per_unit", sourceResourceId: "may_wine", targetResourceId: "health", amount: 0.01 }
+    ],
+    prerequisites: [
+      { taskId: "belthane_tend_bonfire", minLevel: 3 },
+      { actionId: "belthane_taste_wine", minExecutions: 1 }
+    ],
+    maxExecutions: 1,
+    xpPerSecond: 8
   }
 ];
 
