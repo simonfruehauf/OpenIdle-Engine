@@ -1,4 +1,7 @@
 import React, { createContext, useContext, useEffect, useReducer, useRef } from "react";
+
+const TICK_RATE_MS = 100;
+const TICK_RATE_SECONDS = TICK_RATE_MS / 1000;
 import { ACTIONS, CATEGORIES, RESOURCES, TASKS, SLOTS, ITEMS, CONVERTERS } from "../gameData/index";
 import { ActionConfig, GameContextType, GameState, Modifier, TaskConfig, ResourceID, Cost, ActionID, TaskID, Prerequisite, SlotID, ItemID, ItemConfig, SlotConfig, CategoryConfig, TaskState, Effect, ConverterID, ConverterConfig, LogEntry, LogCategory } from "../types";
 
@@ -1553,7 +1556,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Check if converter can afford to run (same check as TICK)
             const canAfford = converter.costPerSecond.every(c => {
                 const available = state.resources[c.resourceId]?.current || 0;
-                const needed = c.amount * 0.1; // ~100ms tick
+                const needed = c.amount * TICK_RATE_SECONDS; // ~100ms tick
                 return available >= needed;
             });
             if (!canAfford) return;

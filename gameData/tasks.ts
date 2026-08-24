@@ -3,7 +3,7 @@ import { TaskConfig } from "../types";
 export const TASKS: TaskConfig[] = [
     {
         id: "rest_bench",
-        name: "Rest on Park Bench",
+        name: "Rest: Park Bench",
         description: "Rest on a park bench.",
         category: "basic",
         type: "rest",
@@ -20,7 +20,7 @@ export const TASKS: TaskConfig[] = [
     },
     {
         id: "rest_bed",
-        name: "Rest in Apartment Bed",
+        name: "Rest: Apartment Bed",
         description: "Rest on a bed.",
         category: "basic",
         type: "rest",

@@ -55,10 +55,10 @@ npm run build # type-check + production bundle → dist/
 
 ## 4. Known Bugs / Sharp Edges (Check Before Claiming "Done")
 
-1. **Duplicate `Rest` names:** `gameData/tasks.ts:5` `rest_bench` and `:22` `rest_bed` both display “Rest” — HUD ambiguous. Rename for clarity before adding more rest tasks.
+1. **Duplicate `Rest` names:** [FIXED] `gameData/tasks.ts:5` `rest_bench` and `:22` `rest_bed` both display “Rest” — HUD ambiguous. Renamed for clarity.
 2. **TaskCard yield display:** `components/TaskCard.tsx:282` computed `val` with flat/pct but rendered `e.amount`; boosted values not shown. Fixed in current plan, verify after merge.
 3. **`cooldownMs` enforced:** `GameContext.tsx:561` default `200ms` blocks spam via `lastUsed`; long cooldowns (≥1s) log remaining. `ActionCard.tsx:72` dims when on cooldown — not a TODO anymore.
-4. **Converter / breakdown drift:** `getResourceBreakdown` (`GameContext.tsx:1469`) now scales drains but converter afford probe uses `*0.1` vs `dtSeconds`; tiny mismatch when converter near-affordable.
+4. **Converter / breakdown drift:** [FIXED] `getResourceBreakdown` (`GameContext.tsx:1469`) now scales drains and converter afford probe uses `TICK_RATE_SECONDS`.
 5. **`exclusiveWith` is action-only** and blocks purchase but doesn't hide. Show blocker name in UI (`ActionCard.tsx:282`). Use `locks` for task branching.
 6. **Save version is `6`:** `GameState.version` (`types.ts:211`) + `LOAD_GAME` migrations (`GameContext.tsx:229`). Additive merge still orphans removed/renamed IDs — bump version + add migration if you rename.
 7. **Locale/format:** `toFixed(1)`/`toFixed(2)` on resources; large numbers (1e6+) not abbreviated. Add `formatNumber` if needed.
@@ -98,3 +98,4 @@ npm run build
 - [ ] `baseMax:0` resources have a `modify_max_resource_flat/pct/set` unlock path and are tested hidden→visible.
 - [ ] `prerequisites`/`locks`/`exclusiveWith`/`hideWhenComplete` behave as intended (check both main and Completed tabs).
 - [ ] `npm run build` passes; game loads in dev, save/export/import/reset still work.
+</EOF>

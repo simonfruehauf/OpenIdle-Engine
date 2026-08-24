@@ -10,7 +10,7 @@
 - [x] **Fix `getScaledCost` action branching** - `GameContext.tsx:195` heuristic now uses `level>0` (not `resourceId`) so action costs scale with `executions`; fixes `trash_search` decay.
 - [x] **Expand `getActiveModifiers`** - now covers `set_max_resource`/`add_passive_gen_per_unit` and generic `modify_yield_*` for equipment; `TRIGGER_ACTION`/`TICK` no longer drop resource-only yield mods.
 - [x] **Unify prerequisite checks** - `evaluatePrereq`/`checkPrereqsList` (`GameContext.tsx:126`) handles `minAmount/maxAmount/minMax/minLevel/completions` uniformly; internal latch and UI `checkPrerequisites` agree.
-- [ ] **Duplicate “Rest” names** - `gameData/tasks.ts:5`+`:22` both “Rest”; rename to distinct bench/bed labels before adding more rest tasks.
+- [x] **Duplicate “Rest” names** - `gameData/tasks.ts:5`+`:22` both “Rest”; rename to distinct bench/bed labels before adding more rest tasks.
 - [ ] **TaskCard yield display** - computes `val` with buffs but renders `e.amount`; fix tooltip to show final amount (`TaskCard.tsx:282`).
 
 ## P1 - Validation & Safety
