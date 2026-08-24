@@ -42,10 +42,11 @@ gameData/*.ts  ──(import)──>  gameData/index.ts  ──(aggregates)─�
 | `components/*` | Pure presentational cards/rows | UI tweak, tooltip, styling |
 | `vite.config.ts` / `tsconfig.json` | Tooling | Build config |
 
-## 3. State Shape (`types.ts:196`)
+## 3. State Shape (`types.ts:210`)
 
 ```ts
 GameState {
+  version:    number              // save migration version (current 6)
   resources:  Record<ResourceID, { current, unlocked }>
   actions:    Record<ActionID,   { executions, unlocked, lastUsed? }>
   tasks:      Record<TaskID,     { active, level, xp, unlocked, progress?, completions?, paid? }>
@@ -53,7 +54,7 @@ GameState {
   inventory:  ItemID[]
   equipment:  Record<SlotID, ItemID>
   modifiers:  Modifier[]          // permanent buffs from actions/tasks/items
-  log: string[]                   // last 50 entries, newest first
+  log: LogEntry[]                 // last 50 entries {msg, category}, newest first
   activeTaskIds: string[]         // ordered running tasks
   maxConcurrentTasks: number      // multitasking cap
   restTaskId / previousTaskId     // auto-rest fallback
@@ -61,7 +62,7 @@ GameState {
 }
 ```
 
-`createInitialState()` (`GameContext.tsx:104`) builds this from config. `LOAD_GAME` merges saved JSON over defaults so schema migrations are additive.
+`createInitialState()` (`GameContext.tsx:129`) builds this from config. `LOAD_GAME` (`:229`) merges saved JSON over defaults and runs versioned migrations (e.g. v5→v6 fixes cat/insight clamping) so schema stays forward-compatible.
 
 ## 4. Game Loop (`GameContext.tsx:1098`)
 
@@ -121,10 +122,10 @@ Applied in:
 ## 7. Persistence
 
 * Key: `openidle_save` in `localStorage`.
-* `saveGame()` serializes `stateRef.current` raw JSON; no version field (migration risk).
-* `loadGame()` on mount via `GameContext.tsx:1163`; `LOAD_GAME` merges over `createInitialState()` to backfill missing fields.
-* Auto-save every 30s (`GameContext.tsx:1170`); manual Save/Export/Import/Reset in header.
-* Export = `btoa(encodeURIComponent(JSON.stringify(state)))` via `utf8_to_b64`; Import is reverse. Unicode-safe.
+* `saveGame()` serializes `stateRef.current` raw JSON including `version`.
+* `loadGame()` on mount via `GameContext.tsx:1360`; `LOAD_GAME` merges over `createInitialState()` to backfill fields and runs migrations by version (see `GameContext.tsx:229`).
+* Auto-save every 30s (`GameContext.tsx:1366`); manual Save/Export/Import/Reset in header.
+* Export = `btoa(encodeURIComponent(JSON.stringify(state)))` via `utf8_to_b64`; Import is reverse. Unicode-safe (emoji). Log migration (`migrateLog`) normalizes legacy `string[]` saves to `LogEntry[]`.
 
 ## 8. UI Layout (`App.tsx:36`)
 
@@ -145,13 +146,13 @@ Header (Title + Save/Export/Import/Reset)
 
 ## 9. Known Gotchas for Contributors
 
-1. **Dead code** in `GameContext.tsx:668` (`fester` branch) and duplicated `applyEffect` (`:375` vs `:417`) - do not extend; clean up first.
-2. **`cooldownMs` is a no-op** (`types.ts:102` TODO). Do not rely on it.
-3. **Converter costs are unscaled** - unlike tasks/actions, purchase cost is flat.
-4. **`getResourceBreakdown` cost math** (`GameContext.tsx:1288`) ignores `scaleFactor` for active task drain display - tooltip rate differs from actual tick rate after leveling.
-5. **Action tier heuristic** (`ActionCard.tsx:74`): `maxExecutions < 100` → styled as Upgrade. Keep limits under 100 for yellow styling or change the heuristic.
-6. **Resource `category` vs `CategoryConfig`**: basic resources group by `CategoryConfig.id` match; mismatch → bucketed under "Other" (`App.tsx:145`). Always register the category.
-7. **`allModifiers` snapshot**: captured at reducer entry; effects that add modifiers inside the same tick still use the old snapshot for `calculateYield`/`calculateMax` that tick - next tick picks them up.
+1. **`getScaledCost` branching** (`GameContext.tsx:195`) now uses `level>0` heuristic to distinguish task vs action; card mirrors (`ActionCard.tsx:33`, `TaskCard.tsx:34`) must stay in sync. Old `resourceId` heuristic caused action costs to decay.
+2. **`getActiveModifiers` partial coverage** (`GameContext.tsx:15`) — now includes `set_max_resource` and `add_passive_gen_per_unit`; `increase_max_*` still handled via direct state, not modifiers. Keep in sync when adding new `Effect.type`.
+3. **`cooldownMs` is enforced** (`GameContext.tsx:561`, `types.ts:106`, `ActionCard.tsx:72`): default `200ms`, blocks spam with `lastUsed` check; long cooldowns (≥1s) log remaining time. Short cooldowns silently drop.
+4. **Converter costs are unscaled** - unlike tasks/actions, purchase cost is flat. `getResourceBreakdown` now correctly scales active task drains (`:1469`), but converter toggle afford check uses `*0.1` probe vs `dtSeconds`.
+5. **Action tier heuristic** (`ActionCard.tsx:76`): `maxExecutions < 100` → styled as Upgrade (yellow). Keep limits under 100 for yellow styling or change the heuristic.
+6. **Resource `category` vs `CategoryConfig`**: basic resources group by `CategoryConfig.id` match; mismatch → bucketed under "Other" (`App.tsx:168`). Always register the category.
+7. **`allModifiers` live recomputed** inside each completion via `getActiveModifiers({...state, modifiers:newModifiers})` so preceding `modify_max` in same action is visible; streamed tick effects still compute per-resource max live.
 
 ## 10. Extension Points
 
