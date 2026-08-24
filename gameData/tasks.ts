@@ -48,7 +48,7 @@ export const TASKS: TaskConfig[] = [
             { type: 'add_resource', resourceId: 'money', amount: 10 }
         ],
         prerequisites: [{ actionId: 'get_job', minExecutions: 1 }],
-        locks: ['search_trash']
+        locks: ['trash_search']
     },
     {
         id: "subways_job_2",
