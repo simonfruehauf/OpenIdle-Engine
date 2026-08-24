@@ -11,6 +11,7 @@ export const TASKS: TaskConfig[] = [
     costPerSecond: [{ resourceId: "time", amount: 0.4 }, { resourceId: "health", amount: 0.05 }],
     effectsPerSecond: [],
     completionEffects: [{ type: "add_resource", resourceId: "money", amount: 2 }],
+    firstCompletionEffects: [{ type: "modify_max_resource_flat", resourceId: "favor", amount: 6 }],
     prerequisites: [{ actionId: "trash_search", minExecutions: 3 }],
     drops: [
       { itemId: "scrap_metal", chancePerSecond: 0.008 },
@@ -46,7 +47,7 @@ export const TASKS: TaskConfig[] = [
     autoRestart: true,
     costPerSecond: [{ resourceId: "time", amount: 0.2 }],
     effectsPerSecond: [],
-    completionEffects: [{ type: "add_resource", resourceId: "favor", amount: 0.1 }],
+    completionEffects: [{ type: "add_resource", resourceId: "favor", amount: 0.8 }],
     startCosts: [{ resourceId: "favor", amount: 1 }],
     prerequisites: [{ taskId: "scav_alleys", minLevel: 2 }],
     drops: [

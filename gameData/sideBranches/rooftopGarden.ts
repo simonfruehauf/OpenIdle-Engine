@@ -37,7 +37,7 @@ export const TASKS: TaskConfig[] = [
     category: "rooftop",
     progressRequired: 25,
     autoRestart: true,
-    startCosts: [{ resourceId: "sunlight", amount: 10 }, { resourceId: "seeds", amount: 3 }],
+    startCosts: [{ resourceId: "sunlight", amount: 6 }, { resourceId: "seeds", amount: 3 }],
     costPerSecond: [{ resourceId: "time", amount: 0.3 }],
     effectsPerSecond: [],
     completionEffects: [

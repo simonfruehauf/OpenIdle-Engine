@@ -23,7 +23,7 @@ export const TASKS: TaskConfig[] = [
       { type: "modify_max_resource_flat", resourceId: "blood_money", amount: 20 },
       { type: "modify_max_resource_flat", resourceId: "reputation", amount: 6 }
     ],
-    prerequisites: [{ resourceId: "health", minMax: 20 }],
+    prerequisites: [{ resourceId: "health", minMax: 15 }],
     xpPerSecond: 8,
   },
   {

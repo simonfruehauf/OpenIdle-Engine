@@ -35,7 +35,7 @@ export const TASKS: TaskConfig[] = [
     category: "tunnels",
     progressRequired: 25,
     autoRestart: true,
-    startCosts: [{ resourceId: "echoes", amount: 5 }],
+    startCosts: [{ resourceId: "echoes", amount: 3 }],
     costPerSecond: [{ resourceId: "time", amount: 0.3 }],
     effectsPerSecond: [],
     completionEffects: [

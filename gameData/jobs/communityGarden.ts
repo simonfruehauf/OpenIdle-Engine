@@ -35,7 +35,7 @@ export const TASKS: TaskConfig[] = [
     category: "garden",
     progressRequired: 30,
     autoRestart: true,
-    startCosts: [{ resourceId: "seeds", amount: 5 }, { resourceId: "produce", amount: 3 }],
+    startCosts: [{ resourceId: "seeds", amount: 3 }, { resourceId: "produce", amount: 3 }],
     costPerSecond: [{ resourceId: "time", amount: 0.35 }],
     effectsPerSecond: [],
     completionEffects: [

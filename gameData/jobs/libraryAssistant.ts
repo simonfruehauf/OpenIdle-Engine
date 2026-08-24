@@ -27,7 +27,7 @@ export const TASKS: TaskConfig[] = [
     category: "library_job",
     progressRequired: 18,
     autoRestart: true,
-    startCosts: [{ resourceId: "quiet", amount: 5 }],
+    startCosts: [{ resourceId: "quiet", amount: 3 }],
     costPerSecond: [{ resourceId: "time", amount: 0.3 }],
     effectsPerSecond: [],
     completionEffects: [
