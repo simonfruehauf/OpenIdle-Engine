@@ -192,23 +192,23 @@ const gameReducer = (state: GameState, action: Action): GameState => {
     const allModifiers = getActiveModifiers(state);
 
     // Helper function for calculating scaled costs
+    // Correctly distinguishes task vs action via currentLevel heuristic (tasks pass level>=1, actions pass 0).
+    // Also respects scalesByCompletion for tasks.
     const getScaledCost = (
         costConfig: Cost,
         currentExecutions: number, // For actions
-        currentLevel: number,      // For tasks (default)
+        currentLevel: number,      // For tasks (0 for actions)
         currentCompletions: number // For tasks (if scalesByCompletion)
     ): number => {
-        if (!costConfig.scaleFactor) return costConfig.amount; // No scaling if no scaleFactor
+        if (!costConfig.scaleFactor) return costConfig.amount;
 
         let exponent: number;
-        // Determine exponent based on context (Action vs Task) and scalesByCompletion flag
-        // If it's a task cost and scalesByCompletion is true, use completions
         if (costConfig.scalesByCompletion) {
             exponent = currentCompletions;
-        } else if (costConfig.resourceId) { // Assume it's a task cost based on resourceId if no scalesByCompletion
-            exponent = currentLevel - 1; // Default task scaling
-        } else { // Assume it's an action cost
-            exponent = currentExecutions;
+        } else if (currentLevel > 0) {
+            exponent = currentLevel - 1; // Task path
+        } else {
+            exponent = currentExecutions; // Action path
         }
 
         switch (costConfig.scaleType) {
