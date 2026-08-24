@@ -16,6 +16,7 @@ export const TASKS: TaskConfig[] = [
             { type: 'add_resource', resourceId: 'mana', amount: 0.05 }
         ],
         xpPerSecond: 5,
+        drops: [{ itemId: "park_feather", chancePerSecond: 0.001 }],
     },
     {
         id: "rest_bed",
@@ -48,7 +49,8 @@ export const TASKS: TaskConfig[] = [
             { type: 'add_resource', resourceId: 'money', amount: 10 }
         ],
         prerequisites: [{ actionId: 'get_job', minExecutions: 1 }],
-        locks: ['trash_search']
+        locks: ['trash_search'],
+        drops: [{ itemId: "crumpled_receipt", chancePerSecond: 0.005 }]
     },
     {
         id: "subways_job_2",
@@ -68,6 +70,7 @@ export const TASKS: TaskConfig[] = [
         prerequisites: [{ actionId: 'subways_promotion', minExecutions: 1 }],
         locks: ['subways_job'],
         xpPerSecond: 10,
+        drops: [{ itemId: "manager_memo", chancePerSecond: 0.003 }],
     },
     {
         id: "subways_job_3",
@@ -128,7 +131,8 @@ export const TASKS: TaskConfig[] = [
             { type: 'modify_max_resource_flat', resourceId: 'insanity', amount: 2 }
         ],
         maxExecutions: 10,
-        hideWhenComplete: true
+        hideWhenComplete: true,
+        drops: [{ itemId: "wall_dust", chancePerSecond: 0.004 }]
     },
     {
         id: "explore_neighborhood",
@@ -147,7 +151,8 @@ export const TASKS: TaskConfig[] = [
             { type: 'modify_max_resource_flat', resourceId: 'lore', amount: 2 }
         ],
         prerequisites: [{ resourceId: 'cat', minMax: 1 }],
-        maxExecutions: 5
+        maxExecutions: 5,
+        drops: [{ itemId: "neighborhood_map", chancePerSecond: 0.002 }]
     }
 ];
 

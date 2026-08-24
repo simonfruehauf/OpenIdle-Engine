@@ -12,6 +12,13 @@ import * as LibraryModule from './library';
 import * as NightMarketModule from './nightmarket';
 import * as EndgameModule from './endgame';
 import * as WellnessModule from './wellness';
+import * as ScavengingModule from './scavenging';
+import * as LibraryAssistantModule from './jobs/libraryAssistant';
+import * as BaristaModule from './jobs/barista';
+import * as CommunityGardenModule from './jobs/communityGarden';
+import * as SubwayTunnelsModule from './sideBranches/subwayTunnels';
+import * as RooftopGardenModule from './sideBranches/rooftopGarden';
+import * as FightingRingModule from './sideBranches/fightingRing';
 
 // Seasonal content
 // import * as ChristmasModule from './christmas';
@@ -28,7 +35,14 @@ const modules: any[] = [
     LibraryModule,
     NightMarketModule,
     EndgameModule,
-    WellnessModule
+    WellnessModule,
+    ScavengingModule,
+    LibraryAssistantModule,
+    BaristaModule,
+    CommunityGardenModule,
+    SubwayTunnelsModule,
+    RooftopGardenModule,
+    FightingRingModule
 ];
 
 // Add quest modules
