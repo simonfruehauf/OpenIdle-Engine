@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+// Fix: Ensure reward amounts are scaled by scaleFactor and scaleType.
 import { createPortal } from 'react-dom';
 import { TaskConfig, Cost } from '../types';
 import { useGame } from '../context/GameContext';

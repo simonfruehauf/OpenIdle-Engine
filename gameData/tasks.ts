@@ -3,7 +3,7 @@ import { TaskConfig } from "../types";
 export const TASKS: TaskConfig[] = [
     {
         id: "rest_bench",
-        name: "Park Bench Rest",
+        name: "Rest: Park Bench",
         description: "Rest on a park bench.",
         category: "basic",
         type: "rest",
@@ -20,7 +20,7 @@ export const TASKS: TaskConfig[] = [
     },
     {
         id: "rest_bed",
-        name: "Apartment Bed Rest",
+        name: "Rest: Apartment Bed",
         description: "Rest on a bed.",
         category: "basic",
         type: "rest",
@@ -155,4 +155,3 @@ export const TASKS: TaskConfig[] = [
         drops: [{ itemId: "neighborhood_map", chancePerSecond: 0.002 }]
     }
 ];
-

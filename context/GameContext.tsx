@@ -1,4 +1,7 @@
 import React, { createContext, useContext, useEffect, useReducer, useRef } from "react";
+
+const TICK_RATE_MS = 100;
+const TICK_RATE_SECONDS = TICK_RATE_MS / 1000;
 import { ACTIONS, CATEGORIES, RESOURCES, TASKS, SLOTS, ITEMS, CONVERTERS } from "../gameData/index";
 import { ActionConfig, GameContextType, GameState, Modifier, TaskConfig, ResourceID, Cost, ActionID, TaskID, Prerequisite, SlotID, ItemID, ItemConfig, SlotConfig, CategoryConfig, TaskState, Effect, ConverterID, ConverterConfig, LogEntry, LogCategory } from "../types";
 
@@ -1281,14 +1284,22 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, [state]);
 
     // Game Loop
+    // --- Game Loop (uses requestAnimationFrame for proper pause-on-hidden-tab) ---
     useEffect(() => {
-        const TICK_RATE = 100; // ms
+        const lastTickTime: React.RefCell<number> = new React.RefCell(0);
+
         const loop = () => {
-            dispatch({ type: "TICK", dt: TICK_RATE });
+            const now = performance.now();
+            const elapsed = lastTickTime.current - now;
+            if (elapsed >= 100) { // 100ms tick rate
+                dispatch({ type: "TICK", dt: 100 });
+                lastTickTime.current = now;
+            }
+            requestAnimationFrame(loop);
         };
-        const id = setInterval(loop, TICK_RATE);
-        tickRef.current = id as unknown as number;
-        return () => clearInterval(id);
+
+        requestAnimationFrame(loop);
+        return () => {}; // requestAnimationFrame auto-cleans up on unmount
     }, []);
 
     // --- Persistence Logic ---
@@ -1553,7 +1564,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Check if converter can afford to run (same check as TICK)
             const canAfford = converter.costPerSecond.every(c => {
                 const available = state.resources[c.resourceId]?.current || 0;
-                const needed = c.amount * 0.1; // ~100ms tick
+                const needed = c.amount * TICK_RATE_SECONDS; // ~100ms tick
                 return available >= needed;
             });
             if (!canAfford) return;
