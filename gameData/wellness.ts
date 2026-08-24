@@ -274,7 +274,7 @@ export const ACTIONS: ActionConfig[] = [
     category: "wellness",
     costs: [],
     effects: [{ type: "add_item", itemId: "yoga_mat", amount: 1 }, { type: "modify_max_resource_flat", resourceId: "health", amount: 4 }],
-    prerequisites: [{ taskId: "rest_yoga", minLevel: 3 }],
+    prerequisites: [{ taskId: "rest_yoga", minLevel: 4 }],
     maxExecutions: 1,
     logMessage: "You unroll the mat. It remembers your shape."
   },
@@ -285,7 +285,7 @@ export const ACTIONS: ActionConfig[] = [
     category: "wellness",
     costs: [{ resourceId: "mana", amount: 20 }],
     effects: [{ type: "modify_passive_gen", resourceId: "mana", amount: 0.06 }, { type: "add_item", itemId: "yoga_bracelet", amount: 1 }],
-    prerequisites: [{ taskId: "rest_yoga", minLevel: 5 }],
+    prerequisites: [{ taskId: "rest_yoga", minLevel: 8 }],
     maxExecutions: 1,
     logMessage: "Your breath steadies the room."
   },
@@ -296,18 +296,18 @@ export const ACTIONS: ActionConfig[] = [
     category: "wellness",
     costs: [],
     effects: [{ type: "add_item", itemId: "trail_shoes", amount: 1 }, { type: "modify_max_resource_flat", resourceId: "health", amount: 4 }],
-    prerequisites: [{ taskId: "rest_running", minLevel: 3 }],
+    prerequisites: [{ taskId: "rest_running", minLevel: 4 }],
     maxExecutions: 1,
     logMessage: "New tread, old streets."
   },
   {
     id: "wellness_master_running",
     name: "Master the Pace",
-    description: "You find the rhythm where effort disappears.",
+    description: "You find the rhythm where effort disappears. You even win a race, though you don't remember the finish line.",
     category: "wellness",
     costs: [{ resourceId: "mana", amount: 20 }],
     effects: [{ type: "modify_passive_gen", resourceId: "time", amount: 0.05 }, { type: "add_item", itemId: "race_bib", amount: 1 }],
-    prerequisites: [{ taskId: "rest_running", minLevel: 5 }],
+    prerequisites: [{ taskId: "rest_running", minLevel: 8 }],
     maxExecutions: 1,
     logMessage: "Race day never ends."
   },
@@ -318,7 +318,7 @@ export const ACTIONS: ActionConfig[] = [
     category: "wellness",
     costs: [],
     effects: [{ type: "add_item", itemId: "swim_goggles", amount: 1 }, { type: "modify_max_resource_flat", resourceId: "health", amount: 4 }],
-    prerequisites: [{ taskId: "rest_swimming", minLevel: 3 }],
+    prerequisites: [{ taskId: "rest_swimming", minLevel: 4 }],
     maxExecutions: 1,
     logMessage: "The lenses clear."
   },
@@ -329,7 +329,7 @@ export const ACTIONS: ActionConfig[] = [
     category: "wellness",
     costs: [{ resourceId: "mana", amount: 20 }],
     effects: [{ type: "modify_passive_gen", resourceId: "health", amount: 0.06 }, { type: "add_item", itemId: "pool_key", amount: 1 }],
-    prerequisites: [{ taskId: "rest_swimming", minLevel: 5 }],
+    prerequisites: [{ taskId: "rest_swimming", minLevel: 8 }],
     maxExecutions: 1,
     logMessage: "The pool is yours after hours."
   },
@@ -340,7 +340,7 @@ export const ACTIONS: ActionConfig[] = [
     category: "wellness",
     costs: [],
     effects: [{ type: "add_item", itemId: "trekking_poles", amount: 1 }, { type: "modify_max_resource_flat", resourceId: "health", amount: 4 }],
-    prerequisites: [{ taskId: "rest_hiking", minLevel: 3 }],
+    prerequisites: [{ taskId: "rest_hiking", minLevel: 4 }],
     maxExecutions: 1,
     logMessage: "Click-clack, up the trail."
   },
@@ -350,8 +350,8 @@ export const ACTIONS: ActionConfig[] = [
     description: "The summit is not the point. You go anyway.",
     category: "wellness",
     costs: [{ resourceId: "mana", amount: 20 }],
-    effects: [{ type: "modify_passive_gen", resourceId: "mana", amount: 0.04 }, { type: "add_item", itemId: "summit_patch", amount: 1 }],
-    prerequisites: [{ taskId: "rest_hiking", minLevel: 5 }],
+    effects: [{ type: "modify_passive_gen", resourceId: "mana", amount: 0.01 }, { type: "add_item", itemId: "summit_patch", amount: 1 }],
+    prerequisites: [{ taskId: "rest_hiking", minLevel: 8 }],
     maxExecutions: 1,
     logMessage: "You sew the patch on."
   },

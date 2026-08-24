@@ -88,6 +88,28 @@ export const ACTIONS: ActionConfig[] = [
     maxExecutions: 1,
     locks: ['subways_job']
   },
+    {
+    id: "subways_promotion_2",
+    name: "Another Promotion?",
+    description: "Subway's says this time its a real promotion.",
+    category: "starting",
+    costs: [],
+    effects: [],
+    prerequisites: [{ taskId: 'subways_job_2', minExecutions: 15 }],
+    maxExecutions: 1,
+    locks: ['subways_job_2', 'subways_promotion_2_deny']
+  },
+    {
+    id: "subways_promotion_2_deny",
+    name: "Decline Promotion...",
+    description: "Subway's ALWAYS says its a real promotion.",
+    category: "starting",
+    costs: [],
+    effects: [],
+    prerequisites: [{ taskId: 'subways_job_2', minExecutions: 15 }],
+    maxExecutions: 1,
+    locks: ['subways_job_2', 'subways_promotion_2']
+  },
   // Oddness
   {
     id: "scratch",

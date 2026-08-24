@@ -38,10 +38,10 @@ export const TASKS: TaskConfig[] = [
         description: "Work a shift at Subway's.",
         category: "basic",
         type: "normal",
-        progressRequired: 5,
+        progressRequired: 4,
         autoRestart: true,
         costPerSecond: [
-            { resourceId: 'time', amount: 0.6 }
+            { resourceId: 'time', amount: 0.5 }
         ],
         effectsPerSecond: [],
         completionEffects: [
@@ -56,7 +56,7 @@ export const TASKS: TaskConfig[] = [
         description: "They said it was a promotion...",
         category: "basic",
         type: "normal",
-        progressRequired: 4,
+        progressRequired: 5,
         autoRestart: true,
         costPerSecond: [
             { resourceId: 'time', amount: 0.8, scaleFactor: 0.95, scaleType: 'exponential' }
@@ -68,6 +68,46 @@ export const TASKS: TaskConfig[] = [
         prerequisites: [{ actionId: 'subways_promotion', minExecutions: 1 }],
         locks: ['subways_job'],
         xpPerSecond: 10,
+    },
+    {
+        id: "subways_job_3",
+        name: "Manager",
+        description: "It still doesn't feel like a promotion.",
+        category: "basic",
+        type: "normal",
+        progressRequired: 6,
+        autoRestart: true,
+        costPerSecond: [
+            { resourceId: 'time', amount: 0.8, scaleFactor: 0.95, scaleType: 'exponential' }
+        ],
+        effectsPerSecond: [],
+        completionEffects: [
+            { type: 'add_resource', resourceId: 'money', amount: 15, scaleFactor: 2, scaleType: 'fixed' }
+        ],
+        prerequisites: [{ actionId: 'subways_promotion_2', minExecutions: 1 }],
+        locks: ['subways_job_2'],
+        xpPerSecond: 10,
+    },
+    {
+        id: "oddjobs",
+        name: "Odd Jobs",
+        description: "Doing odd jobs around the neighborhood. Feels freeing after Subway's.",
+        category: "basic",
+        type: "normal",
+        progressRequired: 10,
+        autoRestart: true,
+        costPerSecond: [
+            { resourceId: 'time', amount: 0.5, scaleFactor: 0.95, scaleType: 'exponential' }
+        ],
+        effectsPerSecond: [
+            { type: "add_resource", resourceId: "money", amount: 0.1 }
+        ],
+        completionEffects: [
+            { type: 'add_resource', resourceId: 'money', amount: 15, scaleFactor: 1, scaleType: 'fixed' }
+        ],
+        prerequisites: [{ actionId: 'subways_promotion_2_deny', minExecutions: 1 }],
+        locks: ['subways_job_2', 'subways_promotion_2_deny'],
+        xpPerSecond: 15,
     },
     // Oddness
     {
