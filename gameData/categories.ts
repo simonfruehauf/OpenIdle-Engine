@@ -13,4 +13,5 @@ export const CATEGORIES: CategoryConfig[] = [
   { id: "rooftop", name: "Rooftop Garden" },
   { id: "fighting", name: "Fighting Ring" },
   { id: "scavenging", name: "Scavenging" },
+  { id: "leads", name: "Leads" },
 ];

@@ -11,7 +11,7 @@ import { CategoryConfig, ResourceConfig, TaskConfig, ActionConfig, ItemConfig } 
 // Unlock: early-mid (requires money 10 or trash_search 5), never locks main.
 
 export const CATEGORIES: CategoryConfig[] = [
-  { id: "belthane", name: "Belthane - Spring Festival" }
+  { id: "belthane", name: "Spring Festival" }
 ];
 
 export const RESOURCES: ResourceConfig[] = [
@@ -153,9 +153,9 @@ export const ACTIONS: ActionConfig[] = [
   {
     id: "belthane_hear_festival",
     name: "Notice the Blossom on the Wind",
-    description: "Every crosswalk has petals. A hand-painted sign on the laundromat: BELTHANE - TONIGHT - PARK - BRING NOTHING. You have time, if you want it.",
-    category: "belthane",
-    costs: [{ resourceId: "time", amount: 2 }],
+    description: "Every crosswalk has petals. A hand-painted sign on the laundromat door: BELTHANE - TONIGHT - PARK - BRING NOTHING. You have time, if you want it.",
+    category: "leads",
+    costs: [{ resourceId: "time", amount: 6 }],
     effects: [
       { type: "modify_max_resource_flat", resourceId: "petals", amount: 25 },
       { type: "add_resource", resourceId: "petals", amount: 5 },

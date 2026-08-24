@@ -10,7 +10,7 @@ export const TASKS: TaskConfig[] = [
   {
     id: "garden_tend_beds",
     name: "Tend the Beds",
-    description: "Water, weed, thin. The soil is warm.",
+    description: "Water, weed, thin. The soil is warm under your hands.",
     category: "garden",
     progressRequired: 10,
     autoRestart: true,
@@ -25,7 +25,7 @@ export const TASKS: TaskConfig[] = [
       { type: "modify_max_resource_flat", resourceId: "produce", amount: 12 },
       { type: "modify_max_resource_flat", resourceId: "seeds", amount: 10 }
     ],
-    prerequisites: [{ actionId: "appartment", minExecutions: 1 }],
+    prerequisites: [{ actionId: "appartment", minExecutions: 1 }, {resourceId: "mana", minAmount: 1}],
     xpPerSecond: 4,
   },
   {

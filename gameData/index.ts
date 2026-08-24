@@ -7,12 +7,11 @@ import * as ActionsModule from './actions';
 import * as EquipmentModule from './equipment';
 import * as ConvertersModule from './converters';
 import * as CatModule from './cat/catpaths';
-import * as BelthaneModule from './belthane';
+import * as BelthaneModule from './seasonal/belthane';
 import * as LibraryModule from './library';
-import * as NightMarketModule from './nightmarket';
+import * as NightMarketModule from './seasonal/nightmarket';
 import * as EndgameModule from './endgame';
 import * as WellnessModule from './wellness';
-import * as ScavengingModule from './scavenging';
 import * as LibraryAssistantModule from './jobs/libraryAssistant';
 import * as BaristaModule from './jobs/barista';
 import * as CommunityGardenModule from './jobs/communityGarden';
@@ -46,7 +45,6 @@ const modules: GameModule[] = [
     NightMarketModule,
     EndgameModule,
     WellnessModule,
-    ScavengingModule,
     LibraryAssistantModule,
     BaristaModule,
     CommunityGardenModule,

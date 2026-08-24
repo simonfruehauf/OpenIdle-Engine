@@ -1,4 +1,4 @@
-import { CategoryConfig, ResourceConfig, TaskConfig, ActionConfig, ItemConfig, ConverterConfig } from "../types";
+import { CategoryConfig, ResourceConfig, TaskConfig, ActionConfig, ItemConfig, ConverterConfig } from "../../types";
 
 // Night Market - side-branch
 // Flavor: a market that only opens when you are tired enough to see it.
@@ -95,10 +95,10 @@ export const TASKS: TaskConfig[] = [
 export const ACTIONS: ActionConfig[] = [
   {
     id: "market_hear",
-    name: "Hear of the Night Market",
+    name: "Night Market Flyer",
     description: "The Subway regular with ink on his fingers tells you: 'After midnight, behind the laundromat, if you are already out.'",
-    category: "nightmarket",
-    costs: [{ resourceId: "money", amount: 20 }],
+    category: "leads",
+    costs: [{ resourceId: "money", amount: 25 }],
     effects: [
       { type: "modify_max_resource_flat", resourceId: "tokens", amount: 12 },
       { type: "add_resource", resourceId: "tokens", amount: 6 },
