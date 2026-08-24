@@ -124,6 +124,40 @@ const calculateYield = (baseAmount: number, sourceId: string, sourceType: 'task'
     return (baseAmount + flats) * (1 + percents);
 };
 
+// --- Helper: Unified Prerequisite Evaluation ---
+const evaluatePrereq = (
+    p: Prerequisite,
+    ctx: { resources: GameState["resources"]; actions: GameState["actions"]; tasks: GameState["tasks"]; getMax: (rid: string) => number }
+): boolean => {
+    if (p.resourceId) {
+        const res = ctx.resources[p.resourceId];
+        if (!res) return false;
+        if (p.minAmount !== undefined && res.current < p.minAmount) return false;
+        if (p.maxAmount !== undefined && res.current > p.maxAmount) return false;
+        if (p.minMax !== undefined && ctx.getMax(p.resourceId) < p.minMax) return false;
+    }
+    if (p.actionId) {
+        const act = ctx.actions[p.actionId];
+        const needed = p.minExecutions ?? 1;
+        if (!act || act.executions < needed) return false;
+    }
+    if (p.taskId) {
+        const t = ctx.tasks[p.taskId];
+        if (!t || !t.unlocked) return false;
+        if (p.minLevel !== undefined && t.level < p.minLevel) return false;
+        if (p.minAmount !== undefined && (t.completions || 0) < p.minAmount) return false;
+        if (p.minExecutions !== undefined && (t.completions || 0) < p.minExecutions) return false;
+    }
+    return true;
+};
+
+const checkPrereqsList = (
+    list: Prerequisite[] | undefined,
+    ctx: { resources: GameState["resources"]; actions: GameState["actions"]; tasks: GameState["tasks"]; getMax: (rid: string) => number }
+): boolean => {
+    if (!list || list.length === 0) return true;
+    return list.every(p => evaluatePrereq(p, ctx));
+};
 
 // --- Initial State ---
 const createInitialState = (): GameState => {
@@ -1167,39 +1201,8 @@ const gameReducer = (state: GameState, action: Action): GameState => {
 
             // --- 4. Process Unlocks (Latch Mechanism) ---
 
-            const checkPrereqsInternal = (pList?: Prerequisite[]) => {
-                if (!pList || pList.length === 0) return true;
-                return pList.every(p => {
-                    if (p.resourceId) {
-                        const res = newResources[p.resourceId];
-                        if (!res) return false;
-                        if (p.minAmount !== undefined && res.current < p.minAmount) return false;
-                        if (p.maxAmount !== undefined && res.current > p.maxAmount) return false;
-                        if (p.minMax !== undefined) {
-                            const max = getTickMax(p.resourceId);
-                            if (max < p.minMax) return false;
-                        }
-                    }
-                    if (p.actionId) {
-                        const act = newActions[p.actionId];
-                        const minExec = p.minExecutions || 1;
-                        if (!act || act.executions < minExec) return false;
-                    }
-                    if (p.taskId) {
-                        const task = newTasks[p.taskId];
-                        if (!task) return false;
-                        // Require task to be unlocked first - otherwise level 1 is true at start and bypasses chain
-                        if (!task.unlocked) return false;
-                        // minLevel checks task level
-                        if (p.minLevel !== undefined && task.level < p.minLevel) return false;
-                        // minAmount checks task completions (legacy)
-                        if (p.minAmount !== undefined && (task.completions || 0) < p.minAmount) return false;
-                        // minExecutions checks task completions
-                        if (p.minExecutions !== undefined && (task.completions || 0) < p.minExecutions) return false;
-                    }
-                    return true;
-                });
-            };
+            const checkPrereqsInternal = (pList?: Prerequisite[]) =>
+                checkPrereqsList(pList, { resources: newResources, actions: newActions, tasks: newTasks, getMax: getTickMax });
 
             TASKS.forEach(t => {
                 if (!newTasks[t.id].unlocked) {
@@ -1396,32 +1399,16 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const activeModifiers = getActiveModifiers(state);
 
-    const checkPrerequisites = (prereqs?: Prerequisite[]) => {
-        if (!prereqs || prereqs.length === 0) return true;
-        return prereqs.every(p => {
-            if (p.resourceId) {
-                const amount = state.resources[p.resourceId]?.current || 0;
-                if (p.minAmount !== undefined && amount < p.minAmount) return false;
-                if (p.maxAmount !== undefined && amount > p.maxAmount) return false;
-                if (p.minMax !== undefined) {
-                    const rConfig = RESOURCES.find(r => r.id === p.resourceId);
-                    const modifiers = getActiveModifiers(state);
-                    const max = calculateMax(p.resourceId, modifiers, rConfig?.baseMax ?? 0);
-                    if (max < p.minMax) return false;
-                }
+    const checkPrerequisites = (prereqs?: Prerequisite[]) =>
+        checkPrereqsList(prereqs, {
+            resources: state.resources,
+            actions: state.actions,
+            tasks: state.tasks,
+            getMax: (rid) => {
+                const rConfig = RESOURCES.find(r => r.id === rid);
+                return calculateMax(rid, activeModifiers, rConfig?.baseMax ?? 0);
             }
-            if (p.actionId) {
-                const executions = state.actions[p.actionId]?.executions || 0;
-                if (p.minExecutions !== undefined && executions < p.minExecutions) return false;
-            }
-            if (p.taskId) {
-                const tState = state.tasks[p.taskId];
-                if (!tState?.unlocked) return false;
-                if (p.minLevel !== undefined && (tState?.level || 1) < p.minLevel) return false;
-            }
-            return true;
         });
-    };
 
     const checkIsVisible = (id: string, prereqs?: Prerequisite[]) => {
         // 1. Check Global Locks (Actions)
