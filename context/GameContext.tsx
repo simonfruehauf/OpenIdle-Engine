@@ -309,9 +309,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 for (const sid of sideBranchIds) {
                     if (migratedActions[sid]) migratedActions[sid] = { ...migratedActions[sid], unlocked: !!defaults.actions[sid]?.unlocked };
                     if (migratedTasks[sid]) migratedTasks[sid] = { ...migratedTasks[sid], unlocked: !!defaults.tasks[sid]?.unlocked, active: false, progress: 0, paid: false };
-                    if ((migratedActions[sid] && defaults.actions[sid]?.prerequisites) || (migratedTasks[sid] && defaults.tasks[sid]?.prerequisites)) {
-                        // Will be re-unlocked via TICK latch if prerequisites actually met
-                    }
                 }
                 // Also reset converters unlock
                 const sideConverters = ["market_stall_tokens","market_stall_favor","threshold_brazier","kettle","dryer","incense_burner"];
@@ -816,8 +813,10 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                     if (e.taskId) newModifiers.push({ sourceId: TASKS.find(t => t.id === e.taskId)?.name || "Task", taskId: e.taskId, type: 'flat', value: e.amount, property: 'yield', resourceId: e.resourceId });
                     if (e.actionId) newModifiers.push({ sourceId: TASKS.find(t => t.id === e.taskId)?.name || "Task", actionId: e.actionId, type: 'flat', value: e.amount, property: 'yield', resourceId: e.resourceId });
                 } else if (e.type === 'add_item' && e.itemId) {
-                    newInventory.push(e.itemId);
-                    logUpdates.unshift(`Obtained: ${ITEMS.find(i => i.id === e.itemId)?.name}`);
+                    for (let i = 0; i < e.amount; i++) {
+                        newInventory.push(e.itemId);
+                    }
+                    logUpdates.unshift(makeLog(`Obtained: ${ITEMS.find(i => i.id === e.itemId)?.name}`, 'loot'));
                 } else if (e.type === 'increase_max_tasks') {
                     newMaxTasks += e.amount;
                 }

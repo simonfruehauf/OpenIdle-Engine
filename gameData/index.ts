@@ -64,8 +64,6 @@ const allActions: ActionConfig[] = [];
 const allItems: ItemConfig[] = [];
 const allSlots: SlotConfig[] = [];
 const allConverters: ConverterConfig[] = [];
-const now = new Date();
-
 
 modules.forEach(mod => {
     if (mod.CATEGORIES) allCategories.push(...mod.CATEGORIES);
