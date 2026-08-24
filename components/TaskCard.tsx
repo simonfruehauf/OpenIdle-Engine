@@ -276,10 +276,10 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, isLocked = false }) =>
 
                                 val = (val + flats) * (1 + percents);
                             }
-return (
+                            return (
                                 <div key={idx} className="flex justify-between text-gray-800">
                                     <span>{e.resourceId ? getName(e.resourceId) : e.itemId ? getName(e.itemId) : 'Effect'}</span>
-                                    <span className="font-mono text-green-700">{e.amount > 0 ? "+" : ""}{e.amount}</span>
+                                    <span className="font-mono text-green-700">{val > 0 ? "+" : ""}{Number.isInteger(val) ? val : val.toFixed(2)}/s</span>
                                 </div>
                             );
                         })}

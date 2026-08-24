@@ -159,6 +159,36 @@ const checkPrereqsList = (
     return list.every(p => evaluatePrereq(p, ctx));
 };
 
+// --- Helper: v6 migration fix for cat/threads/ashes + insight clamping ---
+const applyV6CatInsightFix = (
+    migratedResources: GameState["resources"],
+    incoming: GameState,
+    migratedModifiers: Modifier[]
+) => {
+    const fixResources: Record<string, { gain: number; actionId: string }> = {
+        "cat": { gain: 1, actionId: "find_cat" },
+        "threads": { gain: 3, actionId: "trust_cat" },
+        "ashes": { gain: 4, actionId: "reject_cat" }
+    };
+    for (const [rid, info] of Object.entries(fixResources)) {
+        if ((incoming.actions?.[info.actionId]?.executions ?? 0) > 0 && (migratedResources[rid]?.current ?? 0) === 0) {
+            const hasMax = migratedModifiers.some(m => m.resourceId === rid && (m.property === 'max' || !m.property));
+            if (hasMax) {
+                migratedResources[rid] = { ...migratedResources[rid], current: info.gain };
+            }
+        }
+    }
+    const insightActions = ["trust_cat", "reject_cat", "exploit_cat"];
+    const anyInsightAction = insightActions.some(a => (incoming.actions?.[a]?.executions ?? 0) > 0);
+    if (anyInsightAction && (migratedResources["insight"]?.current ?? 0) === 0) {
+        const hasInsightMax = migratedModifiers.some(m => m.resourceId === "insight" && (m.property === 'max' || !m.property));
+        if (hasInsightMax) {
+            const expected = (incoming.actions?.["trust_cat"]?.executions ?? 0) > 0 ? 6 : (incoming.actions?.["reject_cat"]?.executions ?? 0) > 0 ? 2 : 4;
+            migratedResources["insight"] = { ...migratedResources["insight"], current: Math.min(expected, 6) };
+        }
+    }
+};
+
 // --- Initial State ---
 const createInitialState = (): GameState => {
     const resources: GameState["resources"] = {};
@@ -358,32 +388,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                     if (migratedConverters[cid]) migratedConverters[cid] = { ...migratedConverters[cid], unlocked: !!defaults.converters[cid]?.unlocked, owned: false, active: false };
                 }
                 // v6 fix: cat 0/1 bug - find_cat gave max but current stayed 0 due to stale max clamp
-                if (incomingVersion < 6) {
-                    const fixResources: Record<string, { gain: number, actionId: string }> = {
-                        "cat": { gain: 1, actionId: "find_cat" },
-                        "threads": { gain: 3, actionId: "trust_cat" },
-                        "ashes": { gain: 4, actionId: "reject_cat" }
-                    };
-                    for (const [rid, info] of Object.entries(fixResources)) {
-                        if ((incoming.actions?.[info.actionId]?.executions ?? 0) > 0 && (migratedResources[rid]?.current ?? 0) === 0) {
-                            const hasMax = migratedModifiers.some(m => m.resourceId === rid && (m.property === 'max' || !m.property));
-                            if (hasMax) {
-                                migratedResources[rid] = { ...migratedResources[rid], current: info.gain };
-                            }
-                        }
-                    }
-                    // Also fix insight for trust_cat/reject_cat/exploit_cat if clamped
-                    const insightActions = ["trust_cat","reject_cat","exploit_cat"];
-                    const anyInsightAction = insightActions.some(a => (incoming.actions?.[a]?.executions ?? 0) > 0);
-                    if (anyInsightAction && (migratedResources["insight"]?.current ?? 0) === 0) {
-                        const hasInsightMax = migratedModifiers.some(m => m.resourceId === "insight" && (m.property === 'max' || !m.property));
-                        if (hasInsightMax) {
-                            // trust gives 6, reject 2, exploit 4 - grant minimal 2 to unblock
-                            const expected = (incoming.actions?.["trust_cat"]?.executions ?? 0) > 0 ? 6 : (incoming.actions?.["reject_cat"]?.executions ?? 0) > 0 ? 2 : 4;
-                            migratedResources["insight"] = { ...migratedResources["insight"], current: Math.min(expected, 6) };
-                        }
-                    }
-                }
+                if (incomingVersion < 6) applyV6CatInsightFix(migratedResources, incoming as any, migratedModifiers);
                 return {
                     ...defaults,
                     ...incoming,
@@ -405,28 +410,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
 
             // v6 migration: fix 0/1 cat (and related) for saves at version 5
             if (incomingVersion < 6) {
-                const fixResources: Record<string, { gain: number, actionId: string }> = {
-                    "cat": { gain: 1, actionId: "find_cat" },
-                    "threads": { gain: 3, actionId: "trust_cat" },
-                    "ashes": { gain: 4, actionId: "reject_cat" }
-                };
-                for (const [rid, info] of Object.entries(fixResources)) {
-                    if ((incoming.actions?.[info.actionId]?.executions ?? 0) > 0 && (migratedResources[rid]?.current ?? 0) === 0) {
-                        const hasMax = migratedModifiers.some(m => m.resourceId === rid && (m.property === 'max' || !m.property));
-                        if (hasMax) {
-                            migratedResources[rid] = { ...migratedResources[rid], current: info.gain };
-                        }
-                    }
-                }
-                const insightActions = ["trust_cat","reject_cat","exploit_cat"];
-                const anyInsightAction = insightActions.some(a => (incoming.actions?.[a]?.executions ?? 0) > 0);
-                if (anyInsightAction && (migratedResources["insight"]?.current ?? 0) === 0) {
-                    const hasInsightMax = migratedModifiers.some(m => m.resourceId === "insight" && (m.property === 'max' || !m.property));
-                    if (hasInsightMax) {
-                        const expected = (incoming.actions?.["trust_cat"]?.executions ?? 0) > 0 ? 6 : (incoming.actions?.["reject_cat"]?.executions ?? 0) > 0 ? 2 : 4;
-                        migratedResources["insight"] = { ...migratedResources["insight"], current: Math.min(expected, 6) };
-                    }
-                }
+                applyV6CatInsightFix(migratedResources, incoming as any, migratedModifiers);
                 return {
                     ...defaults,
                     ...incoming,
