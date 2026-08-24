@@ -1284,14 +1284,22 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, [state]);
 
     // Game Loop
+    // --- Game Loop (uses requestAnimationFrame for proper pause-on-hidden-tab) ---
     useEffect(() => {
-        const TICK_RATE = 100; // ms
+        const lastTickTime: React.RefCell<number> = new React.RefCell(0);
+
         const loop = () => {
-            dispatch({ type: "TICK", dt: TICK_RATE });
+            const now = performance.now();
+            const elapsed = lastTickTime.current - now;
+            if (elapsed >= 100) { // 100ms tick rate
+                dispatch({ type: "TICK", dt: 100 });
+                lastTickTime.current = now;
+            }
+            requestAnimationFrame(loop);
         };
-        const id = setInterval(loop, TICK_RATE);
-        tickRef.current = id as unknown as number;
-        return () => clearInterval(id);
+
+        requestAnimationFrame(loop);
+        return () => {}; // requestAnimationFrame auto-cleans up on unmount
     }, []);
 
     // --- Persistence Logic ---
