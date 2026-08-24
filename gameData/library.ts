@@ -29,7 +29,7 @@ export const RESOURCES: ResourceConfig[] = [
     baseMax: 0,
     initialAmount: 0,
     description: "Notes in other people's handwriting. Some of them are answers to questions you haven't asked.",
-    passiveGen: [{ targetResourceId: 'knowledge', ratePerUnit: 0.005 }]
+    passiveGen: [{ targetResourceId: 'lore', ratePerUnit: 0.005 }]
 
   }
 ];

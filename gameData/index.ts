@@ -23,7 +23,17 @@ import * as FightingRingModule from './sideBranches/fightingRing';
 // Seasonal content
 // import * as ChristmasModule from './christmas';
 
-const modules: any[] = [
+export interface GameModule {
+    CATEGORIES?: CategoryConfig[];
+    RESOURCES?: ResourceConfig[];
+    TASKS?: TaskConfig[];
+    ACTIONS?: ActionConfig[];
+    ITEMS?: ItemConfig[];
+    SLOTS?: SlotConfig[];
+    CONVERTERS?: ConverterConfig[];
+}
+
+const modules: GameModule[] = [
     CategoriesModule,
     ResourcesModule,
     TasksModule,
