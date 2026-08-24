@@ -24,16 +24,23 @@ const getActiveModifiers = (state: GameState): Modifier[] => {
                     mods.push({ sourceId: item.name, type: 'flat', value: e.amount, resourceId: e.resourceId, property: 'max' });
                 } else if (e.type === 'modify_max_resource_pct' && e.resourceId) {
                     mods.push({ sourceId: item.name, type: 'percent', value: e.amount, resourceId: e.resourceId, property: 'max' });
+                } else if (e.type === 'set_max_resource' && e.resourceId) {
+                    mods.push({ sourceId: item.name, type: 'set', value: e.amount, resourceId: e.resourceId, property: 'max' });
                 } else if (e.type === 'modify_yield_pct') {
+                    // Support task-specific, action-specific, resource-specific, and global (no target) variants
                     if (e.taskId) mods.push({ sourceId: item.name, type: 'percent', value: e.amount, taskId: e.taskId, property: 'yield', resourceId: e.resourceId });
                     else if (e.actionId) mods.push({ sourceId: item.name, type: 'percent', value: e.amount, actionId: e.actionId, property: 'yield', resourceId: e.resourceId });
                     else if (e.resourceId) mods.push({ sourceId: item.name, type: 'percent', value: e.amount, resourceId: e.resourceId, property: 'yield' });
+                    else mods.push({ sourceId: item.name, type: 'percent', value: e.amount, property: 'yield' });
                 } else if (e.type === 'modify_yield_flat') {
                     if (e.taskId) mods.push({ sourceId: item.name, type: 'flat', value: e.amount, taskId: e.taskId, property: 'yield', resourceId: e.resourceId });
                     else if (e.actionId) mods.push({ sourceId: item.name, type: 'flat', value: e.amount, actionId: e.actionId, property: 'yield', resourceId: e.resourceId });
                     else if (e.resourceId) mods.push({ sourceId: item.name, type: 'flat', value: e.amount, resourceId: e.resourceId, property: 'yield' });
+                    else mods.push({ sourceId: item.name, type: 'flat', value: e.amount, property: 'yield' });
                 } else if (e.type === 'modify_passive_gen' && e.resourceId) {
                     mods.push({ sourceId: item.name, type: 'flat', value: e.amount, resourceId: e.resourceId, property: 'gen' });
+                } else if (e.type === 'add_passive_gen_per_unit' && e.sourceResourceId && e.targetResourceId) {
+                    mods.push({ sourceId: item.name, type: 'flat', value: e.amount, property: 'gen_per_unit', sourceResourceId: e.sourceResourceId, targetResourceId: e.targetResourceId, resourceId: e.targetResourceId });
                 }
             });
         }
@@ -622,11 +629,9 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                     } else if (e.type === 'add_passive_gen_per_unit' && e.sourceResourceId && e.targetResourceId) {
                         newModifiers.push({ sourceId: config.name, resourceId: e.targetResourceId, type: 'flat', value: e.amount, property: 'gen_per_unit', sourceResourceId: e.sourceResourceId, targetResourceId: e.targetResourceId });
                     } else if (e.type === 'modify_yield_pct') {
-                        if (e.taskId) newModifiers.push({ sourceId: config.name, taskId: e.taskId, type: 'percent', value: e.amount, property: 'yield', resourceId: e.resourceId });
-                        if (e.actionId) newModifiers.push({ sourceId: config.name, actionId: e.actionId, type: 'percent', value: e.amount, property: 'yield', resourceId: e.resourceId });
+                        newModifiers.push({ sourceId: config.name, taskId: e.taskId, actionId: e.actionId, type: 'percent', value: e.amount, property: 'yield', resourceId: e.resourceId });
                     } else if (e.type === 'modify_yield_flat') {
-                        if (e.taskId) newModifiers.push({ sourceId: config.name, taskId: e.taskId, type: 'flat', value: e.amount, property: 'yield', resourceId: e.resourceId });
-                        if (e.actionId) newModifiers.push({ sourceId: config.name, actionId: e.actionId, type: 'flat', value: e.amount, property: 'yield', resourceId: e.resourceId });
+                        newModifiers.push({ sourceId: config.name, taskId: e.taskId, actionId: e.actionId, type: 'flat', value: e.amount, property: 'yield', resourceId: e.resourceId });
                     } else if (e.type === 'add_item' && e.itemId) {
                         for (let i = 0; i < e.amount; i++) {
                             newInventory.push(e.itemId);
@@ -807,11 +812,9 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 } else if (e.type === 'add_passive_gen_per_unit' && e.sourceResourceId && e.targetResourceId) {
                     newModifiers.push({ sourceId: TASKS.find(t => t.id === e.taskId)?.name || "Task", resourceId: e.targetResourceId, type: 'flat', value: e.amount, property: 'gen_per_unit', sourceResourceId: e.sourceResourceId, targetResourceId: e.targetResourceId });
                 } else if (e.type === 'modify_yield_pct') {
-                    if (e.taskId) newModifiers.push({ sourceId: TASKS.find(t => t.id === e.taskId)?.name || "Task", taskId: e.taskId, type: 'percent', value: e.amount, property: 'yield', resourceId: e.resourceId });
-                    if (e.actionId) newModifiers.push({ sourceId: TASKS.find(t => t.id === e.taskId)?.name || "Task", actionId: e.actionId, type: 'percent', value: e.amount, property: 'yield', resourceId: e.resourceId });
+                    newModifiers.push({ sourceId: TASKS.find(t => t.id === (e.taskId || taskId))?.name || "Task", taskId: e.taskId, actionId: e.actionId, type: 'percent', value: e.amount, property: 'yield', resourceId: e.resourceId });
                 } else if (e.type === 'modify_yield_flat') {
-                    if (e.taskId) newModifiers.push({ sourceId: TASKS.find(t => t.id === e.taskId)?.name || "Task", taskId: e.taskId, type: 'flat', value: e.amount, property: 'yield', resourceId: e.resourceId });
-                    if (e.actionId) newModifiers.push({ sourceId: TASKS.find(t => t.id === e.taskId)?.name || "Task", actionId: e.actionId, type: 'flat', value: e.amount, property: 'yield', resourceId: e.resourceId });
+                    newModifiers.push({ sourceId: TASKS.find(t => t.id === (e.taskId || taskId))?.name || "Task", taskId: e.taskId, actionId: e.actionId, type: 'flat', value: e.amount, property: 'yield', resourceId: e.resourceId });
                 } else if (e.type === 'add_item' && e.itemId) {
                     for (let i = 0; i < e.amount; i++) {
                         newInventory.push(e.itemId);
