@@ -7,18 +7,22 @@
 - [x] **Fix `cat/catpaths.ts` dangling refs** - Added `insight` resource (`gameData/resources.ts`) and `strange` category (`gameData/categories.ts`).
 - [x] **Remove dead code in `GameContext.tsx`** - removed empty `else if (tid === 'fester')` and duplicated `applyEffect` (kept `applyEffectWithYield`).
 - [x] **`getResourceBreakdown` scaling** - active task `costPerSecond` drain now uses `scaleFactor`/`scaleType`/`scalesByCompletion` like TICK.
-- [ ] **Heuristic visibility bug** - `checkIsVisible` latches `unlocked` even when prerequisite uses `minMax` on a hidden resource; verify hidden→visible transition.
+- [x] **Fix `getScaledCost` action branching** - `GameContext.tsx:195` heuristic now uses `level>0` (not `resourceId`) so action costs scale with `executions`; fixes `trash_search` decay.
+- [x] **Expand `getActiveModifiers`** - now covers `set_max_resource`/`add_passive_gen_per_unit` and generic `modify_yield_*` for equipment; `TRIGGER_ACTION`/`TICK` no longer drop resource-only yield mods.
+- [x] **Unify prerequisite checks** - `evaluatePrereq`/`checkPrereqsList` (`GameContext.tsx:126`) handles `minAmount/maxAmount/minMax/minLevel/completions` uniformly; internal latch and UI `checkPrerequisites` agree.
+- [ ] **Duplicate “Rest” names** - `gameData/tasks.ts:5`+`:22` both “Rest”; rename to distinct bench/bed labels before adding more rest tasks.
+- [ ] **TaskCard yield display** - computes `val` with buffs but renders `e.amount`; fix tooltip to show final amount (`TaskCard.tsx:282`).
 
 ## P1 - Validation & Safety
 
-- [ ] **GameData validator** - `scripts/validateGameData.ts`: check duplicate IDs across modules, dangling `resourceId`/`category`/`taskId`/`actionId`/`itemId` refs, hidden resources without unlock path, `exclusiveWith` targets that don't exist. Wire as `npm run validate` and CI gate. See `docs/ENGINE_API.md` §3.
-- [ ] **Save versioning** - add `version: number` to `GameState` and migration harness in `LOAD_GAME` (`GameContext.tsx:210`). Current merge is additive; renames orphan.
+- [x] **GameData validator** - `scripts/validateGameData.ts`: checks duplicate IDs, dangling `resourceId`/`category`/`taskId`/`actionId`/`itemId`/`slot` refs, hidden (`baseMax 0`) unlock path, `exclusiveWith` targets. Wired as `npm run validate` and CI gate. See `docs/ENGINE_API.md` §3.
+- [x] **Save versioning** - added `version: number` to `GameState` (`types.ts:211`) and migration harness in `LOAD_GAME` (`GameContext.tsx:229`, current `6`). Handles `cat`/`insight` clamping fixes.
 - [ ] **Error boundaries** - wrap `GameProvider` with React error boundary; don't crash entire app on one bad config.
 
 ## P2 - Missing Engine Features
 
-- [ ] **`cooldownMs` enforcement** - field parsed (`types.ts:102`) + `lastUsed` set, but reducer never checks. Should gate `TRIGGER_ACTION`.
-- [ ] **Improve `exclusiveWith`** - currently action-only, block-not-hide. Consider task branching or auto-hiding losers; surface reason in tooltip (already done in `ActionCard`).
+- [x] **`cooldownMs` enforcement** - field parsed (`types.ts:106`) + `lastUsed` gated in `TRIGGER_ACTION` (`GameContext.tsx:561`, default `200ms`, ≥1s logs); `ActionCard.tsx:72` dims.
+- [ ] **Improve `exclusiveWith`** - currently action-only, block-not-hide. Consider task branching or auto-hiding losers; surface reason in tooltip (already done in `ActionCard:282`).
 - [ ] **Converter cost scaling** - `ConverterConfig.cost` is flat; consider `scaleFactor` support or explicit note that converters are one-shot.
 - [ ] **Offline progress** - save `lastTick` timestamp, on load compute `delta = now - lastSave`, apply `TICK` in bulk (respect caps & `canBeToggled`).
 - [ ] **Large-number formatting** - beyond `toFixed(1/2)`; add `formatNumber` (K/M/B, or 1e6) for `ResourceRow` and tooltips.

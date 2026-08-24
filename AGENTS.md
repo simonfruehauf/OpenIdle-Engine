@@ -36,10 +36,10 @@ npm run build # type-check + production bundle → dist/
 
 | Path | Do | Don't |
 |------|----|-------|
-| `context/GameContext.tsx` | Keep `getScaledCost`, `calculateMax`, `calculateYield`, `getActiveModifiers` pure and unit-testable (extract if adding tests) | Add game content directly; duplicate `applyEffect` logic (clean the dead `applyEffect` at `:375`) |
+| `context/GameContext.tsx` | Keep `getScaledCost`, `calculateMax`, `calculateYield`, `getActiveModifiers`, `evaluatePrereq` pure and unit-testable (extract if adding tests) | Add game content directly; duplicate `applyEffect` logic |
 | `App.tsx` | Keep header persistence buttons; tabs route via `activeTab` state | Grow past 600 lines - extract `Header`, `LeftPanel`, `MiddlePanel`, `RightPanel`, `SaveModals` |
-| `components/*` | Tooltip = `createPortal` + `hoverRect`; filter `hidden` effects in tooltip, not reducer | Assume `cooldownMs` works (it's a TODO at `types.ts:102`) |
-| `gameData/cat/catpaths.ts` | Valid pattern for branching packs (`exclusiveWith`) | Forget to define the resource/category you reference (current bug: `insight` + `strange` missing - see §4) |
+| `components/*` | Tooltip = `createPortal` + `hoverRect`; filter `hidden` effects in tooltip, not reducer | Forget `prerequisitesAny` for slots; `TaskCard` yield display uses `val` not `e.amount` |
+| `gameData/cat/catpaths.ts` | Valid pattern for branching packs (`exclusiveWith` + `locks`) | Forget to define the resource/category you reference (now fixed: `insight`/`strange` exist in `resources.ts`/`categories.ts`) |
 
 ## 3. Common Tasks - Where to Look
 
@@ -55,13 +55,15 @@ npm run build # type-check + production bundle → dist/
 
 ## 4. Known Bugs / Sharp Edges (Check Before Claiming "Done")
 
-1. **`cat/catpaths.ts` references missing IDs:** `insight` resource and `strange` category don't exist. Any new module must define every `resourceId`/`category`/`taskId`/`actionId` it touches, or the UI will show placeholders and logic will operate on a hidden 0-max resource. Create them or remove the refs.
-2. **Dead code:** `GameContext.tsx:668` empty `else if (tid === 'fester')`, duplicated `applyEffect` at `:375`. Clean before extending.
-3. **`cooldownMs` not implemented** (`types.ts:102`): field exists, reducer ignores it.
-4. **Converter / breakdown display mismatch:** `getResourceBreakdown` (`GameContext.tsx:1288`) omits scaling; shown drain rate diverges after task levels up.
-5. **`exclusiveWith` is action-only** and blocks purchase but doesn't hide. Document the block reason in UI (`ActionCard.tsx:270`).
-6. **Save has no version:** `localStorage` JSON merge in `LOAD_GAME` is additive but field removals/renames will orphan data. Add `version` if you change `GameState`.
-7. **Locale/format:** `toFixed(1)`/`toFixed(2)` on resources; large numbers (1e6+) not abbreviated.
+1. **Duplicate `Rest` names:** `gameData/tasks.ts:5` `rest_bench` and `:22` `rest_bed` both display “Rest” — HUD ambiguous. Rename for clarity before adding more rest tasks.
+2. **TaskCard yield display:** `components/TaskCard.tsx:282` computed `val` with flat/pct but rendered `e.amount`; boosted values not shown. Fixed in current plan, verify after merge.
+3. **`cooldownMs` enforced:** `GameContext.tsx:561` default `200ms` blocks spam via `lastUsed`; long cooldowns (≥1s) log remaining. `ActionCard.tsx:72` dims when on cooldown — not a TODO anymore.
+4. **Converter / breakdown drift:** `getResourceBreakdown` (`GameContext.tsx:1469`) now scales drains but converter afford probe uses `*0.1` vs `dtSeconds`; tiny mismatch when converter near-affordable.
+5. **`exclusiveWith` is action-only** and blocks purchase but doesn't hide. Show blocker name in UI (`ActionCard.tsx:282`). Use `locks` for task branching.
+6. **Save version is `6`:** `GameState.version` (`types.ts:211`) + `LOAD_GAME` migrations (`GameContext.tsx:229`). Additive merge still orphans removed/renamed IDs — bump version + add migration if you rename.
+7. **Locale/format:** `toFixed(1)`/`toFixed(2)` on resources; large numbers (1e6+) not abbreviated. Add `formatNumber` if needed.
+8. **`getScaledCost` heuristic:** reducer uses `level>0` to distinguish task vs action (`GameContext.tsx:195`); cards must mirror. Verify after leveling.
+9. **`prerequisitesAny`:** `SlotConfig` (`types.ts:74`) only used for `accessory_2` (`gameData/wellness.ts:13`); evaluated in `EquipmentView.tsx:118`. Don’t assume it works elsewhere without wiring `evaluatePrereq`.
 
 ## 5. Agent Workflow
 

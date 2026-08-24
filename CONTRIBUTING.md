@@ -52,20 +52,22 @@ Requirements: Node 16+ (Node 20 recommended), npm 8+.
 ## 5. Verification (required before PR)
 
 ```bash
-npm run build   # type-check + vite build; must pass
+npm run build   # tsc --noEmit + vite build; must pass
+npm run validate # duplicate-ID & reference checks; must pass
 # manual QA
 npm run dev
 # open http://localhost:3000, verify:
 #  - new content appears/disappears per prerequisites/locks
-#  - costs scale as expected; tooltips show correct amounts
+#  - costs scale as expected; tooltips show correct amounts (including yield buffs)
 #  - save → reload → same state; export → reset → import → same state
 #  - Completed tab shows maxed actions/tasks; hideWhenComplete truly hides
+#  - Rest tasks distinct (bench vs bed) and auto-rest fallback works
 ```
 
-**Future:** `npm test` (vitest) and `npm run lint` do not exist yet. When adding them, add at least:
+**Current tooling:** `npm run validate` (`scripts/validateGameData.ts`) now exists. `npm test` (vitest) and `npm run lint` do not exist yet. When adding them, add at least:
 
 * `calculateMax`, `calculateYield`, `getScaledCost` unit tests.
-* `scripts/validateGameData.ts` - checks duplicate IDs & missing references.
+* Extended `validate` checks for hidden-resource unlock paths.
 
 ## 6. Commit & PR Guidelines
 
@@ -89,16 +91,18 @@ Feature proposals: describe the data shape first (new `types.ts` fields), then U
 
 ## 8. Known Gaps - Good First Contributions
 
-* [ ] `cooldownMs` actually enforce a cooldown (`types.ts:102` is TODO).
-* [ ] Fix `insight`/`strange` missing definitions in `cat/catpaths.ts` (or remove the refs).
-* [ ] Remove dead code: `fester` branch & duplicated `applyEffect` in `GameContext.tsx`.
-* [ ] Extract pure helpers for testability; add `vitest` + coverage for them.
-* [ ] Add `scripts/validateGameData.ts` (duplicate-ID & dangling-reference linter).
-* [ ] Save versioning + migration harness.
+* [x] `cooldownMs` enforced (`types.ts:106`, `GameContext.tsx:561`, default 200ms).
+* [x] Fix `insight`/`strange` missing definitions (`gameData/resources.ts:74`, `gameData/categories.ts:8`).
+* [x] Remove dead `fester` branch & dedup `applyEffect` → `applyEffectWithYield`.
+* [x] `getResourceBreakdown` scaling uses `scaleFactor/scaleType/scalesByCompletion` like TICK.
+* [x] Add `scripts/validateGameData.ts` (duplicate-ID & dangling-reference linter, `npm run validate`).
+* [x] Save versioning + migration harness (`GameState.version:6`, `LOAD_GAME`).
+* [ ] Extract pure helpers for testability; add `vitest` + coverage for `calculateMax/Yield/getScaledCost/checkPrereqs`.
 * [ ] Offline progress (wall-clock delta + `visibilitychange`).
 * [ ] Large-number formatting (K/M/B) beyond `toFixed`.
 * [ ] Extract `App.tsx` subcomponents (`Header`, `LeftPanel`, `MiddlePanel`, `RightPanel`, `SaveModals`).
-* [ ] Shared `getName`/`renderEffect` helper to de-duplicate tooltip logic.
+* [ ] Shared `getName`/`renderEffect` helper to de-duplicate tooltip logic (`components/tooltipHelpers.tsx`).
+* [ ] Rename duplicate “Rest” tasks (`rest_bench` vs `rest_bed`) and fix `TaskCard` yield display (`val` vs `e.amount`).
 
 ## 9. License
 

@@ -128,7 +128,8 @@ Items you can equip into slots for passive bonuses.
 interface SlotConfig {
   id: string;   // e.g. "head", "hand_r"
   name: string;
-  prerequisites?: Prerequisite[];  // Unlock conditions (e.g. mutation)
+  prerequisites?: Prerequisite[];  // AND unlock (e.g. mutation)
+  prerequisitesAny?: Prerequisite[]; // OR unlock: at least one must pass (used for accessory_2)
 }
 ```
 
@@ -140,7 +141,7 @@ interface ItemConfig {
   name: string;
   description: string;
   slot: string;      // Must match a slot ID
-  effects: Effect[]; // Passive bonuses while equipped
+  effects: Effect[]; // Passive bonuses while equipped (max/yield/gen/set/gen_per_unit supported via getActiveModifiers)
 }
 ```
 
@@ -202,9 +203,13 @@ interface Prerequisite {
   
   // Task conditions
   taskId?: string;
-  minLevel?: number;  // default: 1
+  minLevel?: number;       // default: 1, requires unlocked
+  minAmount?: number;      // completions >= X (legacy)
+  minExecutions?: number;  // completions >= X
 }
 ```
+
+All checks are AND within one `Prerequisite` entry and across the array via `evaluatePrereq` (`context/GameContext.tsx:126`); unlock latches true forever. For slots, `prerequisitesAny` is OR (see Equipment above).
 
 **Note:** If any prerequisite references a hidden resource (capacity = 0), the item stays hidden until that resource is unlocked.
 
@@ -212,16 +217,17 @@ interface Prerequisite {
 
 | Type | Target Property | Description |
 |------|-----------------|-------------|
-| `add_resource` | `resourceId` | Add/subtract amounts. Scales with task level. |
-| `modify_max_resource_flat` | `resourceId` | Increase capacity by a flat amount. |
-| `modify_max_resource_pct` | `resourceId` | Multiply capacity by (1 + amount). |
-| `set_max_resource` | `resourceId` | Set max capacity to a fixed value. Overrides baseMax but stacks with flat/pct modifiers. |
-| `reset_resource_modifiers` | `resourceId` | Removes all persistent modifiers for this resource (flat, pct, set). Does not affect equipment bonuses. |
-| `modify_yield_pct` | `taskId` / `actionId` / `resourceId` | Multiply output by (1 + amount). Can target specific resources. |
-| `modify_yield_flat` | `taskId` / `actionId` / `resourceId` | Add flat bonus to output. Can target specific resources. |
-| `modify_passive_gen` | `resourceId` | Add permanent passive generation per second. |
-| `increase_max_tasks` | - | Raise concurrent task limit by `amount`. |
-| `increase_max_executions` | `taskId` / `actionId` | Raise execution cap. |
+| `add_resource` | `resourceId` | Add/subtract amounts. Scales with task level via `scaleFactor/scaleType`; yielded via `calculateYield`. |
+| `modify_max_resource_flat` | `resourceId` | Increase capacity by a flat amount (`property:'max'`). |
+| `modify_max_resource_pct` | `resourceId` | Multiply capacity by (1 + amount) (`property:'max'`). |
+| `set_max_resource` | `resourceId` | Set max capacity to a fixed value (`property:'max' type:'set'`). Max `set` wins, then flats/pct apply. |
+| `reset_resource_modifiers` | `resourceId` | Removes all persistent modifiers for that resource (flat, pct, set). Does not affect equipment bonuses. |
+| `modify_yield_pct` | `taskId` / `actionId` / `resourceId` (or global if none) | Multiply output by (1 + amount). `taskId`/`actionId` exact source match, `resourceId` narrows, none = global. |
+| `modify_yield_flat` | `taskId` / `actionId` / `resourceId` (or global) | Add flat bonus to output. Same matching as above. |
+| `modify_passive_gen` | `resourceId` | Add permanent passive generation per second (`property:'gen'`). |
+| `add_passive_gen_per_unit` | `sourceResourceId` + `targetResourceId` | Generate `amount` of target per full unit of source per sec (`property:'gen_per_unit'`). |
+| `increase_max_tasks` | - | Raise concurrent task limit by `amount` (direct state). |
+| `increase_max_executions` | `taskId` / `actionId` | Raise execution cap by `amount` (`property:'max_exec'`). |
 | `add_item` | `itemId` | Grant an item to inventory. |
 
 **Effect properties:**
@@ -235,6 +241,8 @@ interface Effect {
   taskId?: string;
   actionId?: string;
   itemId?: string;
+  sourceResourceId?: string; // for add_passive_gen_per_unit
+  targetResourceId?: string; // for add_passive_gen_per_unit
   
   // Scaling
   scaleFactor?: number;
