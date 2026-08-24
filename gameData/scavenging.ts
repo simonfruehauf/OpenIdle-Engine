@@ -11,7 +11,7 @@ export const TASKS: TaskConfig[] = [
     costPerSecond: [{ resourceId: "time", amount: 0.4 }, { resourceId: "health", amount: 0.05 }],
     effectsPerSecond: [],
     completionEffects: [{ type: "add_resource", resourceId: "money", amount: 2 }],
-    firstCompletionEffects: [{ type: "modify_max_resource_flat", resourceId: "favor", amount: 6 }],
+    firstCompletionEffects: [{ type: "modify_max_resource_flat", resourceId: "money", amount: 12 }],
     prerequisites: [{ actionId: "trash_search", minExecutions: 3 }],
     drops: [
       { itemId: "scrap_metal", chancePerSecond: 0.008 },
@@ -47,8 +47,8 @@ export const TASKS: TaskConfig[] = [
     autoRestart: true,
     costPerSecond: [{ resourceId: "time", amount: 0.2 }],
     effectsPerSecond: [],
-    completionEffects: [{ type: "add_resource", resourceId: "favor", amount: 0.8 }],
-    startCosts: [{ resourceId: "favor", amount: 1 }],
+    completionEffects: [{ type: "add_resource", resourceId: "money", amount: 1.2 }, { type: "add_resource", resourceId: "lore", amount: 0.3 }],
+    startCosts: [{ resourceId: "money", amount: 3 }],
     prerequisites: [{ taskId: "scav_alleys", minLevel: 2 }],
     drops: [
       { itemId: "misplaced_ring", chancePerSecond: 0.005 },
@@ -68,7 +68,7 @@ export const ITEMS: ItemConfig[] = [
   { id: "scrap_metal", name: "Scrap Metal", description: "A bent piece of something. Heavy enough to be useful.", slot: "accessory", effects: [{ type: "modify_yield_pct", taskId: "tunnel_explore", amount: 0.08 }] },
   { id: "discarded_book", name: "Discarded Book", description: "Water-damaged, but readable. Someone underlined the good parts.", slot: "accessory", effects: [{ type: "modify_yield_pct", taskId: "scav_dumpster", amount: 0.05 }] },
   { id: "moldy_sandwich", name: "Moldy Sandwich", description: "You don't eat it. You keep it to remind you to eat something else.", slot: "accessory", effects: [{ type: "modify_max_resource_flat", resourceId: "health", amount: 2 }] },
-  { id: "lost_token", name: "Lost Token", description: "A token from somewhere you haven't been. It fits your hand.", slot: "accessory", effects: [{ type: "modify_passive_gen", resourceId: "favor", amount: 0.01 }] },
+  { id: "lost_token", name: "Lost Token", description: "A token from somewhere you haven't been. It fits your hand.", slot: "accessory", effects: [{ type: "modify_passive_gen", resourceId: "money", amount: 0.02 }] },
   { id: "strange_charm", name: "Strange Charm", description: "It doesn't match anything you own. It wants to be kept.", slot: "accessory", effects: [{ type: "modify_passive_gen", resourceId: "insight", amount: 0.008 }] },
   { id: "whisper_paper", name: "Whisper Paper", description: "Thin paper, folded many times. The creases spell something.", slot: "accessory", effects: [{ type: "modify_yield_pct", taskId: "scav_alleys", amount: 0.08 }] },
   { id: "misplaced_ring", name: "Misplaced Ring", description: "Too small or too large. You wear it on a chain.", slot: "accessory_2", effects: [{ type: "modify_max_resource_flat", resourceId: "health", amount: 2 }] },
