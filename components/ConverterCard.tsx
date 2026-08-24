@@ -129,7 +129,7 @@ export const ConverterCard: React.FC<ConverterCardProps> = ({ converter, isOwned
                         {converter.effectsPerSecond.filter(e => e.type === 'add_resource').map((e, idx) => (
                             <div key={idx} className="flex justify-between text-gray-800">
                                 <span>{getName(e.resourceId!)}</span>
-                                <span className="font-mono text-green-700">+{e.amount}</span>
+                                <span className="font-mono text-green-700">{e.amount > 0 ? "+" : ""}{e.amount}</span>
                             </div>
                         ))}
                     </>

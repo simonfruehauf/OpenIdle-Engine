@@ -440,12 +440,10 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             const item = ITEMS.find(i => i.id === action.itemId);
             if (!item) return state;
 
-            const accessorySlots = ["accessory", "accessory_2"];
-            const isAccessoryItem = accessorySlots.includes(item.slot);
-
             let targetSlot = item.slot;
 
-            if (isAccessoryItem) {
+            if (item.slot === "accessory") {
+                const accessorySlots = ["accessory", "accessory_2"];
                 const availableSlot = accessorySlots.find(slot => !state.equipment[slot]);
                 if (availableSlot) {
                     targetSlot = availableSlot;
