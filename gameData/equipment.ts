@@ -55,5 +55,40 @@ export const ITEMS: ItemConfig[] = [
         description: "A small enamel pin from the library. It asks you to be quiet without saying anything.",
         slot: "accessory",
         effects: [{ type: 'modify_passive_gen', resourceId: 'mana', amount: 0.025 }]
+    },
+    {
+        id: "park_feather",
+        name: "Park Feather",
+        description: "A soft feather caught on the fence near the park bench.",
+        slot: "accessory",
+        effects: [{ type: 'modify_yield_pct', taskId: 'rest_bench', amount: 0.03 }]
+    },
+    {
+        id: "crumpled_receipt",
+        name: "Crumpled Receipt",
+        description: "A receipt from your last shift at Subway, creased by nervous hands.",
+        slot: "accessory",
+        effects: [{ type: 'modify_yield_flat', taskId: 'subways_job', amount: 1, resourceId: 'money' }]
+    },
+    {
+        id: "manager_memo",
+        name: "Manager Memo",
+        description: "The manager's sticky note. It seems to know things it shouldn't.",
+        slot: "accessory",
+        effects: [{ type: 'modify_yield_pct', taskId: 'subways_job_2', amount: 0.15 }]
+    },
+    {
+        id: "wall_dust",
+        name: "Wall Dust",
+        description: "Gray dust from the walls. It clings to everything.",
+        slot: "hand_r",
+        effects: [{ type: 'modify_yield_pct', taskId: 'wall_destroy', amount: 0.1 }]
+    },
+    {
+        id: "neighborhood_map",
+        name: "Neighborhood Map",
+        description: "A hand-drawn map of the odd streets in the neighborhood.",
+        slot: "head",
+        effects: [{ type: 'modify_yield_pct', taskId: 'explore_neighborhood', amount: 0.2 }]
     }
 ];
