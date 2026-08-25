@@ -13,11 +13,20 @@ export interface PassiveGen {
   ratePerUnit: number; // Amount of target generated per 1 unit of source per second
 }
 
+/**
+ * Defines a category, which can have a parent to create hierarchy.
+ */
+export interface CategoryConfig {
+  id: CategoryID;
+  name: string;
+  parentCategoryId?: CategoryID | null; // Null if it's a root category
+}
+
 export interface ResourceConfig {
   id: ResourceID;
   name: string;
   type: 'basic' | 'stat'; // 'basic' = Left Col, 'stat' = Right Col
-  category?: string; // Grouping for the UI (matches CategoryID usually)
+  category?: CategoryID; // Grouping for the UI (references a specific category ID)
   baseMax: number;
   initialAmount?: number;
   color?: string; // CSS class for bar color
@@ -141,11 +150,6 @@ export interface TaskConfig {
   hideWhenComplete?: boolean; // If true, task is hidden when maxExecutions reached (default: show in Completed tab)
 }
 
-export interface CategoryConfig {
-  id: CategoryID;
-  name: string;
-}
-
 export interface ConverterConfig {
   id: ConverterID;
   name: string;
@@ -230,7 +234,7 @@ export interface GameContextType {
     resources: ResourceConfig[];
     actions: ActionConfig[];
     tasks: TaskConfig[];
-    categories: CategoryConfig[];
+    categories: CategoryConfig[]; // Now contains the tree structure
     items: ItemConfig[];
     slots: SlotConfig[];
     converters: ConverterConfig[];

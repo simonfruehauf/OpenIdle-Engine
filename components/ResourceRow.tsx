@@ -3,8 +3,6 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ResourceConfig } from '../types';
 import { useGame } from '../context/GameContext';
-import { ProgressBar } from './ProgressBar';
-import { formatNumber, formatRate } from '../utils/format';
 
 interface ResourceRowProps {
     resource: ResourceConfig;
@@ -143,37 +141,32 @@ export const ResourceRow: React.FC<ResourceRowProps> = ({ resource }) => {
 
             {/* Display Logic */}
             {resource.type === 'basic' ? (
-                <div className="flex justify-between items-start border-b border-gray-200 pb-1 last:border-0 hover:bg-gray-100 px-1 cursor-help transition-colors py-1">
-                    <span className="font-semibold text-gray-700 mt-0.5">{resource.name}</span>
-                    <div className="flex flex-col items-end">
+                <div className="grid h-8 grid-cols-[1fr_auto] items-center gap-x-2 border-b border-gray-200 px-1 hover:bg-gray-100 last:border-0 cursor-help transition-colors">
+                    <span className="font-semibold text-gray-700">{resource.name}</span>
+                    <div className="flex h-full flex-col items-end justify-center">
                         <span className="font-mono text-gray-600">
                             {current.toFixed(1)}<span className="text-gray-400">/{max}</span>
                         </span>
-                        {totalRate !== 0 && (
-                            <span className={`text-[10px] font-mono leading-none ${totalRate > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                {totalRate > 0 ? '+' : ''}{totalRate.toFixed(2)}/s
-                            </span>
-                        )}
+                        <span className={`h-3 text-[10px] font-mono leading-none ${totalRate !== 0 ? (totalRate > 0 ? 'text-green-600' : 'text-red-600') : 'invisible'}`}>
+                            {totalRate > 0 ? '+' : ''}{totalRate.toFixed(2)}/s
+                        </span>
                     </div>
                 </div>
             ) : (
-                <div className="cursor-help">
-                    <div className="flex justify-between items-end mb-1 text-xs px-1">
-                        <span className="font-bold text-gray-700">{resource.name}</span>
-                        <span className="font-mono text-gray-600">{current.toFixed(1)} / {max}</span>
+                <div className="grid grid-cols-[5rem_minmax(0,1fr)] items-center gap-x-2 gap-y-0.5 cursor-help">
+                    <span className="truncate text-xs font-medium text-gray-700">{resource.name}</span>
+                    <div className="relative h-5 min-w-0 w-full overflow-hidden rounded-md border border-gray-600 bg-gray-300">
+                        <div
+                            className={`h-full ${resource.color || 'bg-blue-500'} transition-all duration-200 ease-linear`}
+                            style={{ width: `${Math.min(100, Math.max(0, (current / max) * 100))}%` }}
+                        />
+                        <span className="absolute right-1 top-1/2 flex -translate-y-1/2 items-center whitespace-nowrap rounded bg-white/60 px-1.5 text-[10px] font-semibold text-gray-800 drop-shadow-sm">
+                            {current.toFixed(2)} / {max.toFixed(2)}
+                        </span>
                     </div>
-                    <ProgressBar
-                        value={current}
-                        max={max}
-                        colorClass={resource.color || 'bg-blue-500'}
-                        showValue={false}
-                        height="h-3"
-                    />
-                    {totalRate !== 0 && (
-                        <div className={`text-[10px] text-right font-mono -mt-1 ${totalRate > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {totalRate > 0 ? '+' : ''}{totalRate.toFixed(2)}/s
-                        </div>
-                    )}
+                    <div className={`col-start-2 h-3 text-right font-mono text-[10px] leading-none ${totalRate !== 0 ? (totalRate > 0 ? 'text-green-600' : 'text-red-600') : 'invisible'}`}>
+                        {totalRate > 0 ? '+' : ''}{totalRate.toFixed(2)}/s
+                    </div>
                 </div>
             )}
         </div>

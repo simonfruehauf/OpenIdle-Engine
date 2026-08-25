@@ -135,7 +135,7 @@ Header (Title + Save/Export/Import/Reset)
 │ Left  (w-56) │ Middle (flex)                │ Right (w-64) │
 │ Resources    │ Auto-Rest select             │ Active Tasks │
 │  grouped by  │ Tabs: Activity / Equipment / │  (if max>1)  │
-│  category    │       Converters / Completed │ Body & Stats │
+│  category    │       Converters / Completed │    Stats     │
 │ Game Log     │ Cards grid (2-3 cols)        │  stat bars   │
 └──────────────┴──────────────────────────────┴──────────────┘
 ```
