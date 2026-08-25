@@ -8,17 +8,18 @@
 npm install
 npm run dev   # Vite on http://localhost:3000
 npm run build # type-check + production bundle → dist/
+npm run validate # duplicate-ID & reference checks (useful before PRs)
 ```
 
-* **No tests, no linter** in `package.json` yet. Do not run `npm test` / `npm run lint` - they don't exist.
-* **No `.opencode` / `.vscode` config** in repo. Use vanilla `bash` / `read` / `edit` tools.
-* **Entry points:** `index.tsx` → `App.tsx` (layout) → `context/GameContext.tsx` (state + loop) → `gameData/index.ts` (content).
+* **One validation script** (`npm run validate`) exists. No unit tests or linters yet.
+* **No `.vscode` config** in repo. Use vanilla tools.
+* Entry points: `index.tsx` → `App.tsx` (layout) → `context/GameContext.tsx` (state + loop) → `gameData/index.ts` (content).
 
 ## 1. Project Conventions
 
 ### 1.1 Data-driven content belongs in `gameData/`
 
-* **Never edit `context/GameContext.tsx` to add content.** Add a module under `gameData/` exporting typed arrays (`RESOURCES`, `TASKS`, `ACTIONS`, `CATEGORIES`, `ITEMS`, `SLOTS`, `CONVERTERS`) and register it in `gameData/index.ts:14` (`modules` array). See `GAMEDATA_GUIDE.md` + `gameData/_template.ts`.
+* **Never edit** `context/GameContext.tsx` to add content. Add a module under `gameData/` exporting typed arrays (`RESOURCES`, `TASKS`, `ACTIONS`, `CATEGORIES`, `ITEMS`, `SLOTS`, `CONVERTERS`) and register it in `gameData/index.ts:14` (`modules` array). See `GAMEDATA_GUIDE.md` + `gameData/_template.ts`.
 * `types.ts` is the schema. If you add a new field/effect, update the interface there **and** the reducer **and** all four tooltip renderers (`TaskCard.tsx`, `ActionCard.tsx`, `ConverterCard.tsx`, `EquipmentView.tsx`).
 * IDs are global strings. Keep them `snake_case` and namespaced if needed (`myMod_gold`). Duplicates across modules silently collide - validate (see `docs/ENGINE_API.md`).
 
@@ -53,24 +54,26 @@ npm run build # type-check + production bundle → dist/
 | Tweak economy | Adjust `amount`/`scaleFactor`/`scaleType` in costs/effects | Test incrementally: one change → reload → verify `getResourceBreakdown` rates. |
 | Fix tooltip | `TaskCard.tsx:127`, `ActionCard.tsx:227`, `ConverterCard.tsx:53`, `EquipmentView.tsx:8` | Each duplicates `getName` + `renderEffect`. Keep in sync. |
 
-## 4. Known Bugs / Sharp Edges (Check Before Claiming "Done")
+## 4. Known Bugs / Sharp Edges (Status at Last Review)
 
-1. **Duplicate `Rest` names:** [FIXED] `gameData/tasks.ts:5` `rest_bench` and `:22` `rest_bed` both display “Rest” — HUD ambiguous. Renamed for clarity.
-2. **TaskCard yield display:** `components/TaskCard.tsx:282` computed `val` with flat/pct but rendered `e.amount`; boosted values not shown. Fixed in current plan, verify after merge.
-3. **`cooldownMs` enforced:** `GameContext.tsx:561` default `200ms` blocks spam via `lastUsed`; long cooldowns (≥1s) log remaining. `ActionCard.tsx:72` dims when on cooldown — not a TODO anymore.
-4. **Converter / breakdown drift:** [FIXED] `getResourceBreakdown` (`GameContext.tsx:1469`) now scales drains and converter afford probe uses `TICK_RATE_SECONDS`.
-5. **`exclusiveWith` is action-only** and blocks purchase but doesn't hide. Show blocker name in UI (`ActionCard.tsx:282`). Use `locks` for task branching.
-6. **Save version is `6`:** `GameState.version` (`types.ts:211`) + `LOAD_GAME` migrations (`GameContext.tsx:229`). Additive merge still orphans removed/renamed IDs — bump version + add migration if you rename.
-7. **Locale/format:** `toFixed(1)`/`toFixed(2)` on resources; large numbers (1e6+) not abbreviated. Add `formatNumber` if needed.
-8. **`getScaledCost` heuristic:** reducer uses `level>0` to distinguish task vs action (`GameContext.tsx:195`); cards must mirror. Verify after leveling.
-9. **`prerequisitesAny`:** `SlotConfig` (`types.ts:74`) only used for `accessory_2` (`gameData/wellness.ts:13`); evaluated in `EquipmentView.tsx:118`. Don’t assume it works elsewhere without wiring `evaluatePrereq`.
+| # | Issue | Status | Details |
+|---|-------|--------|---------|
+| 1 | Duplicate "Rest" names (`rest_bench` vs `rest_bed`) | ✅ FIXED | Renamed for HUD clarity |
+| 2 | TaskCard yield displays raw value, not boosted amount | ⏳ P0 | Computes `val` with buffs but renders `e.amount`; fix in `TaskCard.tsx:282` |
+| 3 | cooldownMs enforced (default 200ms, dims on timeout) | ✅ DONE | action card dims + lastUsed gate |
+| 4 | getResourceBreakdown scales active task drains | ✅ DONE | now uses scaleFactor/scaleType like TICK |
+| 5 | exclusiveWith blocks purchase but doesn't hide | ⚠️ Partial | Warning shown in ActionCard:282; use `locks` for tasks |
+| 6 | Save version is `6` with migration harness | ✅ DONE | VERSIONED migrations (LOAD_GAME:229) |
+| 7 | Locale/format | ⏳ P2 | Add `formatNumber` for 1e6+ values |
+| 8 | getScaledCost level>0 heuristic vs card mirrors | ✅ DONE | Cards use executions/level correctly |
+| 9 | prerequisitesAny only used for accessory_2 | ✅ Done | types.ts:74 + EquipmentView.tsx:118 |
 
 ## 5. Agent Workflow
 
 1. **Read** `README.md` (user-facing quick start) + `ARCHITECTURE.md` + `GAMEDATA_GUIDE.md` (content schema) before editing.
-2. **Inspect** `types.ts` fully (242 lines) - it's the contract. Grep for the ID you plan to use to avoid collisions (`rg '"my_id"' gameData`).
+2. **Inspect** `types.ts` fully - it's the contract. Grep for the ID you plan to use to avoid collisions (`rg '"my_id"' gameData`).
 3. **Make minimal edits:** prefer editing existing gameData modules or adding a new file + one line in `gameData/index.ts`. Don't refactor reducer unless the feature truly requires it.
-4. **Verify by execution:** `npm run build` must pass (type-check). Manual QA: `npm run dev`, open browser, check visibility, affordability, progression. For reducer math, inline a quick sanity check via `bash` `python3 -c` or a vitest stub once tests exist.
+4. **Verify by execution:** `npm run build` must pass (type-check). Manual QA: `npm run dev`, open browser, check visibility, affordability, progression. For reducer math, inline a quick sanity check via bash or a vitest stub once tests exist.
 5. **No secrets in saves/commits:** `exportSave` is base64, not encrypted. Don't commit local saves.
 
 ## 6. When to Ask vs Act
@@ -78,7 +81,7 @@ npm run build # type-check + production bundle → dist/
 * **Ask first:** changing `types.ts` effect/cost shape, altering `TICK` order, bumping `maxConcurrentTasks` default, adding a build tool (e.g., vitest, eslint) with config changes.
 * **Act directly:** adding/modifying `gameData/*` content, fixing tooltip copy, adding a template doc, extracting a component from `App.tsx` with no behavior change, adding validation script.
 
-## 7. Useful Commands (Powershell)
+## 7. Useful Commands
 
 ```powershell
 # Find where an ID is referenced
@@ -87,15 +90,27 @@ Select-String -Pattern '"money"' -Path gameData\*.ts -Recurse
 # Verify no duplicate action IDs
 python -c "import re,glob; ids=[]; [ids.extend(re.findall(r'id:\s*\"([^\"]+)\"',open(f).read())) for f in glob.glob('gameData/**/*.ts',recursive=True)]; print([x for x in set(ids) if ids.count(x)>1])"
 
-# Build check (type + vite)
+# Build check
 npm run build
 ```
 
 ## 8. Definition of Done (for content PRs)
 
-- [ ] New IDs are unique across `gameData/` (manual or future `scripts/validateGameData.ts`).
-- [ ] Every referenced `resourceId`/`category`/`taskId`/`actionId`/`itemId` exists and its category is registered.
-- [ ] `baseMax:0` resources have a `modify_max_resource_flat/pct/set` unlock path and are tested hidden→visible.
-- [ ] `prerequisites`/`locks`/`exclusiveWith`/`hideWhenComplete` behave as intended (check both main and Completed tabs).
-- [ ] `npm run build` passes; game loads in dev, save/export/import/reset still work.
-</EOF>
+- [ ] New IDs are unique across `gameData/` (run `npm run validate`)
+- [ ] Every referenced `resourceId`/`category`/`taskId`/`actionId`/`itemId` exists and its category is registered
+- [ ] `baseMax:0` resources have a `modify_max_resource_flat/pct/set` unlock path and are tested hidden→visible
+- [ ] `prerequisites`/`locks`/`exclusiveWith`/`hideWhenComplete` behave as intended (check both main and Completed tabs)
+- [ ] `npm run build` passes; game loads in dev, save/export/import/reset still work
+
+## 9. Validation Script (`scripts/validateGameData.ts`)
+
+This script checks: duplicate IDs across modules, dangling references to undefined resources/categories/tasks/actions/items/slots, hidden resource unlock paths, and `exclusiveWith` target existence. Run with `npm run validate`. Full spec in `docs/ENGINE_API.md §3`.
+
+## 10. Documentation Audit (for future contributors)
+
+- **AGENTS.md** - AI-agent working guide
+- **ARCHITECTURE.md** - Engine internals map  
+- **GAMEDATA_GUIDE.md** - Tutorial: defining resources/tasks/actions/items/converters
+- **CONTRIBUTING.md** - Setup, style, verification, PR process
+- **docs/ENGINE_API.md** - Field-by-field API reference + validation checklist
+- **README.md** - User-facing quick start

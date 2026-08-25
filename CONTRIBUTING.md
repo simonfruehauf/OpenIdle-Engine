@@ -52,8 +52,8 @@ Requirements: Node 16+ (Node 20 recommended), npm 8+.
 ## 5. Verification (required before PR)
 
 ```bash
-npm run build   # tsc --noEmit + vite build; must pass
-npm run validate # duplicate-ID & reference checks; must pass
+npm run build        # tsc --noEmit + vite build; must pass
+npm run validate     # duplicate-ID & reference checks; must pass
 # manual QA
 npm run dev
 # open http://localhost:3000, verify:
@@ -64,10 +64,7 @@ npm run dev
 #  - Rest tasks distinct (bench vs bed) and auto-rest fallback works
 ```
 
-**Current tooling:** `npm run validate` (`scripts/validateGameData.ts`) now exists. `npm test` (vitest) and `npm run lint` do not exist yet. When adding them, add at least:
-
-* `calculateMax`, `calculateYield`, `getScaledCost` unit tests.
-* Extended `validate` checks for hidden-resource unlock paths.
+**Current tooling:** `npm run validate` (`scripts/validateGameData.ts`) now exists. No unit tests or linters yet - add them as P3 DX work when ready.
 
 ## 6. Commit & PR Guidelines
 
@@ -87,27 +84,22 @@ Open an issue with:
 * **Game state** (export string or `localStorage` JSON redacted if needed).
 * **Logs**: `state.log` tail + browser console.
 
-Feature proposals: describe the data shape first (new `types.ts` fields), then UI, then example content. Check `Known Gaps` (§8) to avoid duplicates.
+Feature proposals: describe the data shape first (new `types.ts` fields), then UI, then example content. Check "Known Gaps" (§8) to avoid duplicates.
 
 ## 8. Known Gaps - Good First Contributions
 
-* [x] `cooldownMs` enforced (`types.ts:106`, `GameContext.tsx:561`, default 200ms).
-* [x] Fix `insight`/`strange` missing definitions (`gameData/resources.ts:74`, `gameData/categories.ts:8`).
-* [x] Remove dead `fester` branch & dedup `applyEffect` → `applyEffectWithYield`.
-* [x] `getResourceBreakdown` scaling uses `scaleFactor/scaleType/scalesByCompletion` like TICK.
-* [x] Add `scripts/validateGameData.ts` (duplicate-ID & dangling-reference linter, `npm run validate`).
-* [x] Save versioning + migration harness (`GameState.version:6`, `LOAD_GAME`).
-* [ ] Extract pure helpers for testability; add `vitest` + coverage for `calculateMax/Yield/getScaledCost/checkPrereqs`.
-* [ ] Offline progress (wall-clock delta + `visibilitychange`).
-* [ ] Large-number formatting (K/M/B) beyond `toFixed`.
-* [ ] Extract `App.tsx` subcomponents (`Header`, `LeftPanel`, `MiddlePanel`, `RightPanel`, `SaveModals`).
-* [ ] Shared `getName`/`renderEffect` helper to de-duplicate tooltip logic (`components/tooltipHelpers.tsx`).
-* [ ] Rename duplicate “Rest” tasks (`rest_bench` vs `rest_bed`) and fix `TaskCard` yield display (`val` vs `e.amount`).
-
-## 9. License
-
-MIT. By contributing you agree your changes are under the same license.
-
-## 10. For AI Agents
-
-Read `AGENTS.md` before bulk edits. It documents sharp edges, file-level do/don't rules, and the Definition of Done checklist reviewers will hold you to.
+* ✅ `cooldownMs` enforced (`types.ts:106`, `GameContext.tsx:561`, default 200ms).
+* ✅ Fix `insight`/`strange` missing definitions (`gameData/resources.ts:74`, `gameData/categories.ts:8`).
+* ✅ Remove dead `fester` branch & dedup `applyEffect` → `applyEffectWithYield`.
+* ✅ `getResourceBreakdown` scaling uses `scaleFactor/scaleType/scalesByCompletion` like TICK.
+* ✅ Add `scripts/validateGameData.ts` (duplicate-ID & dangling-reference linter, `npm run validate`).
+* ✅ Save versioning + migration harness (`GameState.version:6`, `LOAD_GAME`).
+* ⏳ Extract pure helpers for testability; add `vitest` + coverage for `calculateMax/Yield/getScaledCost/checkPrereqs`.
+* ⏳ Add `eslint` + `prettier` + `npm run lint` / `npm run format`.
+* ⏳ Extract shared tooltip helpers (duplicated in 4 cards) into `components/tooltipHelpers.tsx`.
+* ⏳ Split `App.tsx` into components (`Header`, `LeftPanel`, `MiddlePanel`, `RightPanel`, `SaveModals`).
+* ⏳ Notifications / toasts for unlocks, auto-switches, and max reaches.
+* ⏳ Settings persistence (collapse state + tab selection to `localStorage`).
+* ⏳ Accessibility: keyboard nav, aria labels, color-blind palette.
+* ⏳ Mobile responsive design (current sidebars overflow on narrow screens).
+* ⏳ Debug overlay (`?dev=1` flag showing active modifiers, raw `GameState`, fast-forward tick).

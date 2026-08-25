@@ -16,8 +16,7 @@ A flexible, data-driven idle game engine built with React and TypeScript. Define
 
 ### Prerequisites
 
-- Node.js v16+
-- npm
+- Node.js v16+ (Node 20 recommended), npm
 
 ### Installation
 
@@ -25,7 +24,9 @@ A flexible, data-driven idle game engine built with React and TypeScript. Define
 git clone https://github.com/simonfruehauf/OpenIdle-Engine.git
 cd OpenIdle-Engine
 npm install
-npm run dev
+npm run dev     # http://localhost:3000
+npm run build   # → dist/
+npm run validate # duplicate-ID & reference checks (useful before PRs)
 ```
 
 Open `http://localhost:3000` in your browser.
@@ -54,29 +55,18 @@ Output goes to `dist/`.
 │   ├── categories.ts
 │   └── index.ts      # Module registry
 ├── docs/             # Engine API, validation checklist, roadmap
-├── types.ts          # TypeScript interfaces
+├── scripts/          # `validateGameData.ts` - static checks for duplicate IDs & dangling references
+├── types.ts          # TypeScript interfaces (the contract)
 ├── App.tsx           # Main layout
 └── index.tsx         # Entry point
 ```
-
-## Documentation
-
-| Doc | For |
-|-----|-----|
-| `GAMEDATA_GUIDE.md` | Tutorial: how to define resources/tasks/actions/items/converters |
-| `gameData/_template.ts` | Copy-paste starter for a new content pack |
-| `ARCHITECTURE.md` | How the reducer, tick loop, and yield pipeline fit together |
-| `AGENTS.md` | AI-agent working guide: conventions, sharp edges, done checklist |
-| `CONTRIBUTING.md` | Setup, style, verification, PR process |
-| `docs/ENGINE_API.md` | Field-by-field API reference + validation checklist |
-| `docs/ROADMAP.md` | Prioritized TODOs / known gaps - good first contributions |
 
 ## Making Your Own Game
 
 The engine is entirely data-driven. You never *need* to touch the core logic (but you can).
 
 1. Create a new `.ts` file in `gameData/` (e.g., `pirates.ts`).
-2. Export typed arrays: `RESOURCES`, `TASKS`, `ACTIONS`, `CATEGORIES`, etc.
+2. Export typed arrays: `RESOURCES`, `TASKS`, `ACTIONS`, `CATEGORIES`, etc. Start from `gameData/_template.ts`.
 3. Register your module in `gameData/index.ts`:
 
 ```typescript
@@ -88,7 +78,14 @@ const modules = [
 ];
 ```
 
-See `GAMEDATA_GUIDE.md` for the full reference on data structures and mechanics. For API details and validation, see `docs/ENGINE_API.md` and `docs/ROADMAP.md`.
+See `GAMEDATA_GUIDE.md` for the full reference on data structures and mechanics. For API details, see `docs/ENGINE_API.md`.
+
+## Tools & Validation
+
+- `npm run dev` - Start Vite dev server at http://localhost:3000
+- `npm run build` - Type-check + production bundle → dist/
+- `npm run validate` - Static checks for duplicate IDs and dangling references (useful before PRs)
+- `npm run preview` - Preview the built output
 
 ## Technologies
 
