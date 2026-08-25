@@ -1,4 +1,4 @@
-import { ResourceConfig, TaskConfig, ActionConfig, ItemConfig } from "../../types";
+import { ResourceConfig, TaskConfig, ActionConfig, ItemConfig } from "@types";
 
 export const RESOURCES: ResourceConfig[] = [
   { id: "produce", name: "Produce", type: "basic", category: "garden", baseMax: 0, initialAmount: 0, description: "What the beds give back. Heavier than it looks." },

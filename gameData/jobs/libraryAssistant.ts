@@ -1,4 +1,4 @@
-import { TaskConfig, ActionConfig, ItemConfig } from "../../types";
+import { TaskConfig, ActionConfig, ItemConfig } from "@types";
 
 // Library Assistant — parallel job, independent of other jobs
 // Unlocks after library_find

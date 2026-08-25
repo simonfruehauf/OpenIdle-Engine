@@ -1,4 +1,4 @@
-import { ActionConfig, CategoryConfig, ResourceConfig, TaskConfig, ItemConfig } from "../../types";
+import { ActionConfig, CategoryConfig, ResourceConfig, TaskConfig, ItemConfig } from "@types";
 
 // This module is the first major narrative branch.
 // Act 2 "Oddness" funnels into a single choice (lore 5) that splits into three

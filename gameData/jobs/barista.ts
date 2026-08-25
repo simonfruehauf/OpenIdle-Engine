@@ -1,4 +1,4 @@
-import { TaskConfig, ActionConfig, ItemConfig } from "../../types";
+import { TaskConfig, ActionConfig, ItemConfig } from "@types";
 
 export const TASKS: TaskConfig[] = [
   {

@@ -1,4 +1,4 @@
-import { ResourceConfig, TaskConfig, ActionConfig, ItemConfig, ConverterConfig } from "../../types";
+import { ResourceConfig, TaskConfig, ActionConfig, ItemConfig, ConverterConfig } from "@types";
 
 export const RESOURCES: ResourceConfig[] = [
   { id: "blood_money", name: "Blood Money", type: "basic", category: "fighting", baseMax: 0, initialAmount: 0, description: "Folded, warm, counted twice." },

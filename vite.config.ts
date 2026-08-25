@@ -14,6 +14,7 @@ export default defineConfig(({ mode }) => {
       resolve: {
         alias: {
           '@': path.resolve(__dirname, '.'),
+          '@types': path.join(__dirname, 'types'),
         }
       }
     };

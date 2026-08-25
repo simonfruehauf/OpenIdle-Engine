@@ -1,4 +1,4 @@
-import { CategoryConfig, ResourceConfig, TaskConfig, ActionConfig, ItemConfig, ConverterConfig } from "../../types";
+import { CategoryConfig, ResourceConfig, TaskConfig, ActionConfig, ItemConfig, ConverterConfig } from "@types";
 
 // Night Market - side-branch
 // Flavor: a market that only opens when you are tired enough to see it.

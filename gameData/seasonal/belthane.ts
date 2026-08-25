@@ -1,4 +1,4 @@
-import { CategoryConfig, ResourceConfig, TaskConfig, ActionConfig, ItemConfig } from "../types";
+import { CategoryConfig, ResourceConfig, TaskConfig, ActionConfig, ItemConfig } from "@types";
 
 // Belthane - Spring Festival side-branch
 // Design goals (user request):

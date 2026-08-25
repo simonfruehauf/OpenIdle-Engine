@@ -5,25 +5,22 @@
     "useDefineForClassFields": false,
     "module": "ESNext",
     "lib": [
-      "ES2022",
-      "DOM",
-      "DOM.Iterable"
+      "ES2022"
     ],
     "skipLibCheck": true,
-    "types": [
-      "node"
-    ],
+    "types": [],
     "moduleResolution": "bundler",
-    "isolatedModules": true,
+    "isolatedModules": false,
     "moduleDetection": "force",
     "allowJs": true,
     "jsx": "react-jsx",
     "paths": {
       "@/*": [
         "./*"
-      ]
+      ],
+      "@types": ["./types"]
     },
     "allowImportingTsExtensions": true,
-    "noEmit": true
+    "noEmit": false
   }
 }

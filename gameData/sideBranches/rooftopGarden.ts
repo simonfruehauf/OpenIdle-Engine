@@ -1,4 +1,4 @@
-import { ResourceConfig, TaskConfig, ActionConfig, ItemConfig, ConverterConfig } from "../../types";
+import { ResourceConfig, TaskConfig, ActionConfig, ItemConfig, ConverterConfig } from "@types";
 
 export const RESOURCES: ResourceConfig[] = [
   { id: "sunlight", name: "Sunlight", type: "basic", category: "rooftop", baseMax: 0, initialAmount: 0, description: "You collect it without touching it. It collects you anyway." },
