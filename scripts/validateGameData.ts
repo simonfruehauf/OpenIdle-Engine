@@ -17,6 +17,12 @@ function collectFiles(dir: string, out: string[] = []) {
   return out;
 }
 
+function stripComments(src: string): string {
+  return src
+    .replace(/\/\*[\s\S]*?\*\//g, "") // block comments
+    .replace(/(^|[^:"'\\])\/\/.*$/gm, "$1"); // line comments (naive, fine for config files)
+}
+
 function extract(pattern: RegExp, content: string): string[] {
   const res: string[] = [];
   let m: RegExpExecArray | null;
@@ -58,7 +64,7 @@ function run(): CheckResult {
 
   // Also track ids by kind heuristically: check file content around export const RESOURCES etc.
   for (const f of files) {
-    const content = fs.readFileSync(f, "utf-8");
+    const content = stripComments(fs.readFileSync(f, "utf-8"));
     // Heuristic: determine which export is in file and map ids accordingly, but also keep global map
     const ids = extract(idPattern, content);
     for (const id of ids) {
@@ -90,7 +96,7 @@ function run(): CheckResult {
     CONVERTERS: definedConverters,
   };
   for (const f of files) {
-    const content = fs.readFileSync(f, "utf-8");
+    const content = stripComments(fs.readFileSync(f, "utf-8"));
     for (const kind of Object.keys(kindMap)) {
       if (new RegExp(`export\\s+const\\s+${kind}\\b`).test(content)) {
         // extract ids that appear after this export up to next export
@@ -144,7 +150,7 @@ function run(): CheckResult {
 
   // 2. Reference integrity
   for (const f of files) {
-    const content = fs.readFileSync(f, "utf-8");
+    const content = stripComments(fs.readFileSync(f, "utf-8"));
     // resourceId must exist in RESOURCES
     checkRefs(resourceIdPattern, content, f, definedResources, "Resource");
     checkRefs(sourceResPattern, content, f, definedResources, "Resource(source)");
@@ -170,7 +176,7 @@ function run(): CheckResult {
   // 3. Hidden resource unlock path: baseMax 0 must have a modify_max_resource effect targeting it
   const hiddenResources: string[] = [];
   for (const f of files) {
-    const content = fs.readFileSync(f, "utf-8");
+    const content = stripComments(fs.readFileSync(f, "utf-8"));
     // Only consider objects that look like ResourceConfig (contain baseMax: 0 within same brace block)
     // Use brace-limited capture to avoid category-id false positives
     const resBlockRe = /\{[^}]*id:\s*["']([^"']+)["'][^}]*baseMax:\s*0\b[^}]*\}/g;
@@ -183,7 +189,7 @@ function run(): CheckResult {
   // collect all modify_max_resource_* target ids
   const unlockTargets = new Set<string>();
   for (const f of files) {
-    const c = fs.readFileSync(f, "utf-8");
+    const c = stripComments(fs.readFileSync(f, "utf-8"));
     const re = /type:\s*["'](?:modify_max_resource_flat|modify_max_resource_pct|set_max_resource)["'][\s\S]*?resourceId:\s*["']([^"']+)["']/g;
     let m: RegExpExecArray | null;
     while ((m = re.exec(c))) unlockTargets.add(m[1]);
@@ -197,7 +203,7 @@ function run(): CheckResult {
 
   // 4. locks / exclusiveWith existence
   for (const f of files) {
-    const c = fs.readFileSync(f, "utf-8");
+    const c = stripComments(fs.readFileSync(f, "utf-8"));
     let m: RegExpExecArray | null;
     const lockRe = /locks:\s*\[([^\]]*)\]/g;
     while ((m = lockRe.exec(c))) {
