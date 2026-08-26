@@ -7,6 +7,11 @@ export type ItemID = string;
 export type SlotID = string;
 export type ConverterID = string;
 
+// --- SUNDERED IDs ---
+export type AspectID = 'ash' | 'root' | 'hush' | 'iron';
+export type BraidID = 'smolder' | 'dormancy' | 'heartwood' | 'temper';
+export type EndgamePath = 'warden' | 'mender' | 'wellspring';
+
 // --- Configuration Types ---
 export interface PassiveGen {
   targetResourceId: ResourceID;
@@ -53,7 +58,7 @@ export interface Cost {
 }
 
 export interface Effect {
-  type: 'add_resource' | 'modify_max_resource_flat' | 'modify_max_resource_pct' | 'modify_yield_pct' | 'modify_yield_flat' | 'add_item' | 'modify_passive_gen' | 'increase_max_tasks' | 'increase_max_executions' | 'set_max_resource' | 'reset_resource_modifiers' | 'add_passive_gen_per_unit';
+  type: 'add_resource' | 'modify_max_resource_flat' | 'modify_max_resource_pct' | 'modify_yield_pct' | 'modify_yield_flat' | 'add_item' | 'modify_passive_gen' | 'increase_max_tasks' | 'increase_max_executions' | 'set_max_resource' | 'reset_resource_modifiers' | 'add_passive_gen_per_unit' | 'set_flag' | 'modify_failure_chance' | 'unlock_casting_form' | 'modify_aspect_fluency' | 'modify_cooldown_flat';
   amount: number;
   resourceId?: ResourceID;
   taskId?: TaskID;
@@ -66,6 +71,79 @@ export interface Effect {
   // For add_passive_gen_per_unit:
   sourceResourceId?: ResourceID; // Resource to count units of
   targetResourceId?: ResourceID; // Resource to generate
+  // SUNDERED effects:
+  flagId?: string;          // set_flag
+  aspectId?: AspectID;      // modify_aspect_fluency / aspect-scoped effects
+  formId?: string;          // unlock_casting_form
+}
+
+// --- SUNDERED Config Types ---
+export interface SpellConfig {
+  id: string;
+  name: string;
+  description: string;
+  aspectId?: AspectID;
+  braidId?: BraidID;
+  workingId?: string;
+  tier: number;
+  baseManaCost: number;
+  baseMotesYield: number;
+  baseCooldownMs: number;
+  failureFlavor: string;
+  failureEffect?: Effect[];
+}
+
+export interface AspectConfig {
+  id: AspectID;
+  name: string;
+  description: string;
+  color: string;
+  costGrowthFactor: number;   // applied per tier for costs
+  yieldGrowthFactor: number;  // applied per tier for yields
+  failureFlavor: string;
+}
+
+export interface BraidWorking {
+  id: string;
+  name: string;
+  description: string;
+}
+
+export interface BraidConfig {
+  id: BraidID;
+  name: string;
+  parentAspects: [AspectID, AspectID];
+  description: string;
+  workings: BraidWorking[];
+  signatureQuirk: string;
+  unlockChapter: number;
+}
+
+export interface CastingFormModifier {
+  id: string;
+  axis: 'method' | 'duration' | 'target';
+  value: string;
+  displayName: string;
+  description: string;
+  costMultiplier: number;
+  effectMultiplier: number;
+  variance?: number;
+  reliabilityBonus?: number; // reduces failure chance (0-0.2 typical)
+  continuousDrainPerSecond?: number; // Sustained
+  triggerDelaySeconds?: number;      // Delayed
+  minTier?: number;                  // chapter gate
+}
+
+export interface UnlockPath {
+  id: string;
+  effect: 'modify_max_resource_flat' | 'increase_stat_flat' | 'set_flag' | 'unlock_braid' | 'unlock_form';
+  resourceId?: string;
+  target?: string;
+  amount: number;
+  condition?: {
+    type: 'tasksCompleted' | 'aspectFluencyLevel' | 'levelReached' | 'cleanCastings' | 'studySessions' | 'braidPractice' | 'sustainedCastings' | 'listeningTasks';
+    value: number;
+  };
 }
 
 // Items & Equipment
@@ -119,6 +197,7 @@ export interface ActionConfig {
   lockDescription?: string; // Text to display in UI about what is locked
   logMessage?: string; // Custom message to display in log when triggered
   hideWhenComplete?: boolean; // If true, action is hidden when maxExecutions reached (default: show in Completed tab)
+  spellId?: string; // If set, casting actions resolve this SpellConfig via CAST_SPELL
 }
 
 export interface TaskConfig {
@@ -226,6 +305,17 @@ export interface GameState {
   maxConcurrentTasks: number; // Cap on active tasks
   restTaskId: string | null; // Auto-selected task when resources run dry
   previousTaskId: string | null; // Task to return to after resting
+
+  // SUNDERED state
+  flags: Record<string, boolean>;
+  aspectFluency: Record<AspectID, number>;       // clean castings
+  failedCastings: Record<AspectID, number>;
+  castingFormsUnlocked: Record<string, boolean>;
+  activeFormSelection: { method?: string; duration?: string; target?: string };
+  chapter: number;
+  endgamePath?: EndgamePath;
+  sustainedSpells: { spellId: string; aspectId?: AspectID; remainingSeconds: number }[];
+  footprintCounter: number; // Unwitnessed challenge tracking
 }
 
 export interface GameContextType {
@@ -258,4 +348,9 @@ export interface GameContextType {
   exportSave: () => string;
   importSave: (saveData: string) => boolean;
   setRestTask: (taskId: string | null) => void;
+
+  // SUNDERED
+  castSpell: (actionId: ActionID) => void;
+  selectForm: (axis: 'method' | 'duration' | 'target', formId: string | null) => void;
+  getFailureChance: (spellId: string) => number;
 }
