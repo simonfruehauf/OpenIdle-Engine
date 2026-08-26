@@ -9,6 +9,9 @@ import * as CoreConverters from "./core/converters";
 import * as Ch1Tasks from "./chapter1/tasks";
 import * as Ch1Actions from "./chapter1/actions";
 import * as Ch1Equipment from "./chapter1/equipment";
+import * as Ch2Tasks from "./chapter2/tasks";
+import * as Ch2Actions from "./chapter2/actions";
+import * as Ch2Equipment from "./chapter2/equipment";
 
 export interface GameModule {
   CATEGORIES?: any[];
@@ -28,6 +31,7 @@ export interface GameModule {
 const modules: GameModule[] = [
   CoreCategories, CoreResources, CoreAspects, CoreBraids, CoreCastingForms,
   CoreEquipment, CoreConverters, Ch1Tasks, Ch1Actions, Ch1Equipment,
+  Ch2Tasks, Ch2Actions, Ch2Equipment,
 ];
 
 function collect<T>(key: keyof GameModule): T[] {

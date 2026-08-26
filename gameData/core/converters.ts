@@ -9,8 +9,7 @@ export const CONVERTERS: ConverterConfig[] = [
     canBeToggled: true,
     costPerSecond: [{ resourceId: "motes", amount: 0.5 }],
     effectsPerSecond: [{ type: "add_resource", resourceId: "mana", amount: 0.4 }],
-    // TODO(ch2): uncomment once mote_study action exists
-    // prerequisites: [{ actionId: "mote_study", minExecutions: 3 }],
+    prerequisites: [{ taskId: "mote_study", minExecutions: 3 }],
   },
   {
     id: "skyglass_tuner",
@@ -20,8 +19,7 @@ export const CONVERTERS: ConverterConfig[] = [
     canBeToggled: true,
     costPerSecond: [{ resourceId: "motes", amount: 2 }],
     effectsPerSecond: [{ type: "add_resource", resourceId: "mana", amount: 2 }],
-    // TODO(ch2): add { actionId: "mote_study", minExecutions: 3 } to this array once mote_study action exists
-    prerequisites: [{ resourceId: "skyglass", minMax: 1 }],
+    prerequisites: [{ resourceId: "skyglass", minMax: 1 }, { taskId: "mote_study", minExecutions: 3 }],
   },
   {
     id: "deep_current_tap",
