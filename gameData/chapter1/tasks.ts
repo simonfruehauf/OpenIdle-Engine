@@ -1,0 +1,59 @@
+import { TaskConfig } from "../../types";
+
+export const TASKS: TaskConfig[] = [
+  {
+    id: "catch_your_breath",
+    name: "Catch Your Breath",
+    description: "The first uncontrolled casting still crackles under your skin. Calming down — not casting harder — is the way through.",
+    category: "chapter1",
+    progressRequired: 10,
+    maxExecutions: 1,
+    hideWhenComplete: false,
+    costPerSecond: [],
+    effectsPerSecond: [],
+    completionEffects: [
+      { type: "add_resource", resourceId: "focus", amount: 5 },
+      { type: "modify_max_resource_flat", resourceId: "focus", amount: 5 },
+    ],
+    firstCompletionEffects: [
+      { type: "add_item", itemId: "millers_charm", amount: 1 },
+    ],
+  },
+  {
+    id: "ember_practice",
+    name: "Ember Practice",
+    description: "Coax a candle flame taller and shorter on command. Introductory Ash.",
+    category: "chapter1",
+    costPerSecond: [{ resourceId: "focus", amount: 0.3 }],
+    effectsPerSecond: [{ type: "add_resource", resourceId: "motes", amount: 0.4 }],
+    xpPerSecond: 5,
+  },
+  {
+    id: "hedge_practice",
+    name: "Hedge Practice",
+    description: "Encourage a hedge to grow half an inch and stop. Introductory Root.",
+    category: "chapter1",
+    costPerSecond: [{ resourceId: "focus", amount: 0.3 }],
+    effectsPerSecond: [{ type: "add_resource", resourceId: "motes", amount: 0.35 }],
+    xpPerSecond: 5,
+  },
+  {
+    id: "stillness_practice",
+    name: "Stillness Practice",
+    description: "Silence a ringing bell early. Introductory Hush.",
+    category: "chapter1",
+    costPerSecond: [{ resourceId: "focus", amount: 0.3 }],
+    effectsPerSecond: [{ type: "add_resource", resourceId: "motes", amount: 0.35 }],
+    xpPerSecond: 5,
+  },
+  {
+    id: "errand_running",
+    name: "Errand Running",
+    description: "Non-magical village chores that quietly build Focus through routine.",
+    category: "chapter1",
+    type: "rest",
+    costPerSecond: [],
+    effectsPerSecond: [{ type: "add_resource", resourceId: "focus", amount: 0.25 }],
+    xpPerSecond: 1,
+  },
+];
