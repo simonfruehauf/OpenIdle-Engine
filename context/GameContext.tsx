@@ -3,7 +3,9 @@ import React, { createContext, useContext, useEffect, useReducer, useRef } from 
 const TICK_RATE_MS = 100;
 const TICK_RATE_SECONDS = TICK_RATE_MS / 1000;
 import { ACTIONS, CATEGORIES, RESOURCES, TASKS, SLOTS, ITEMS, CONVERTERS } from "../gameData/index";
-import { ActionConfig, GameContextType, GameState, Modifier, TaskConfig, ResourceID, Cost, ActionID, TaskID, Prerequisite, SlotID, ItemID, ItemConfig, SlotConfig, CategoryConfig, TaskState, Effect, ConverterID, ConverterConfig, LogEntry, LogCategory } from "../types";
+import { SPELLS, ASPECTS } from "../gameData/core/aspects";
+import { CASTING_FORMS } from "../gameData/core/castingForms";
+import { ActionConfig, GameContextType, GameState, Modifier, TaskConfig, ResourceID, Cost, ActionID, TaskID, Prerequisite, SlotID, ItemID, ItemConfig, SlotConfig, CategoryConfig, TaskState, Effect, ConverterID, ConverterConfig, LogEntry, LogCategory, AspectID, SpellConfig, CastingFormModifier } from "../types";
 
 // --- Helper: Encoding for Unicode Support (Emojis) ---
 function utf8_to_b64(str: string) {
@@ -192,6 +194,30 @@ const applyV6CatInsightFix = (
     }
 };
 
+// --- SUNDERED Helpers: Spell Lookup & Casting Math ---
+const getSpellById = (id: string): SpellConfig | undefined => SPELLS.find(s => s.id === id);
+
+const getActiveForms = (selection: GameState["activeFormSelection"]): CastingFormModifier[] =>
+    (["method", "duration", "target"] as const)
+        .map(axis => selection[axis])
+        .filter((fid): fid is string => !!fid)
+        .map(fid => CASTING_FORMS.find(f => f.id === fid))
+        .filter((f): f is CastingFormModifier => !!f);
+
+const computeFailureChance = (
+    spell: SpellConfig,
+    focusCurrent: number,
+    focusMax: number,
+    forms: CastingFormModifier[]
+): number => {
+    const complexity = spell.tier * 10;
+    const focusRatio = focusMax > 0 ? focusCurrent / focusMax : 0;
+    const sufficient = focusRatio >= Math.min(1, complexity / 100);
+    let base = sufficient ? 0.05 : 0.15;
+    const reliability = forms.reduce((sum, f) => sum + (f.reliabilityBonus ?? 0), 0);
+    return Math.max(0.01, base - reliability);
+};
+
 // --- Initial State ---
 const createInitialState = (): GameState => {
     const resources: GameState["resources"] = {};
@@ -221,7 +247,7 @@ const createInitialState = (): GameState => {
     });
 
     return {
-        version: 6,
+        version: 7,
         resources,
         actions: actionsState,
         tasks: tasksState,
@@ -258,7 +284,9 @@ type Action =
     | { type: "ADD_LOG"; msg: string; category?: LogCategory }
     | { type: "LOAD_GAME"; state: GameState }
     | { type: "RESET_GAME" }
-    | { type: "SET_REST_TASK"; taskId: string | null };
+    | { type: "SET_REST_TASK"; taskId: string | null }
+    | { type: "CAST_SPELL"; actionId: string }
+    | { type: "SELECT_FORM"; axis: "method" | "duration" | "target"; formId: string };
 
 // --- Helper: Clone Resources to prevent mutation ---
 const cloneResources = (resources: GameState["resources"]) => {
@@ -324,6 +352,19 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             let migratedInventory = incoming.inventory || defaults.inventory;
             let migratedEquipment = incoming.equipment || defaults.equipment;
             const migratedLog = migrateLog((incoming as any).log);
+
+            // v7: Normalize SUNDERED fields on every load path (backfills pre-v7 saves)
+            const normalizeCastingFields = (merged: GameState): GameState => ({
+                ...merged,
+                flags: { ...(defaults.flags || {}), ...(merged.flags || {}) },
+                aspectFluency: { ash: 0, root: 0, hush: 0, iron: 0, ...(merged.aspectFluency || {}) },
+                failedCastings: { ash: 0, root: 0, hush: 0, iron: 0, ...(merged.failedCastings || {}) },
+                castingFormsUnlocked: merged.castingFormsUnlocked || {},
+                activeFormSelection: merged.activeFormSelection || defaults.activeFormSelection,
+                chapter: merged.chapter || 1,
+                sustainedSpells: merged.sustainedSpells || [],
+                footprintCounter: merged.footprintCounter || 0
+            });
 
             if (incomingVersion < 5) {
                 const sideBranchResources = ["petals", "ribbons", "may_wine", "quiet", "marginalia", "tokens", "favor", "echo", "resonance"];
@@ -400,7 +441,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 }
                 // v6 fix: cat 0/1 bug - find_cat gave max but current stayed 0 due to stale max clamp
                 if (incomingVersion < 6) applyV6CatInsightFix(migratedResources, incoming as any, migratedModifiers);
-                return {
+                return normalizeCastingFields({
                     ...defaults,
                     ...incoming,
                     version: migratedVersion,
@@ -416,13 +457,13 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                     activeTaskIds: [],
                     restTaskId: (incoming as any).restTaskId ?? defaults.restTaskId,
                     previousTaskId: (incoming as any).previousTaskId ?? defaults.previousTaskId
-                };
+                });
             }
 
             // v6 migration: fix 0/1 cat (and related) for saves at version 5
             if (incomingVersion < 6) {
                 applyV6CatInsightFix(migratedResources, incoming as any, migratedModifiers);
-                return {
+                return normalizeCastingFields({
                     ...defaults,
                     ...incoming,
                     version: migratedVersion,
@@ -438,10 +479,10 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                     activeTaskIds: incoming.activeTaskIds || defaults.activeTaskIds,
                     restTaskId: (incoming as any).restTaskId ?? defaults.restTaskId,
                     previousTaskId: (incoming as any).previousTaskId ?? defaults.previousTaskId
-                };
+                });
             }
 
-            return {
+            return normalizeCastingFields({
                 ...defaults,
                 ...incoming,
                 version: migratedVersion,
@@ -457,7 +498,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 activeTaskIds: incoming.activeTaskIds || defaults.activeTaskIds,
                 restTaskId: (incoming as any).restTaskId ?? defaults.restTaskId,
                 previousTaskId: (incoming as any).previousTaskId ?? defaults.previousTaskId
-            };
+            });
         }
 
         case "RESET_GAME":
@@ -701,6 +742,121 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 inventory: newInventory,
                 log: [makeLog(logMsg, logCat), ...state.log].slice(0, 20),
                 maxConcurrentTasks: newMaxTasks
+            };
+        }
+
+        case "CAST_SPELL": {
+            const config = ACTIONS.find(a => a.id === action.actionId);
+            if (!config || !config.spellId) return state;
+            const spell = getSpellById(config.spellId);
+            if (!spell) return state;
+
+            const aState = state.actions[action.actionId];
+            if (!aState?.unlocked) return state;
+
+            // Cooldown gate uses the spell's own cooldown; silently ignore while on cooldown
+            const effectiveCooldown = spell.baseCooldownMs;
+            if (aState.lastUsed) {
+                const elapsed = Date.now() - aState.lastUsed;
+                if (elapsed < effectiveCooldown) return state;
+            }
+
+            // Honor ActionConfig.costs if non-empty (all spell actions currently use [])
+            const pendingCosts: { c: Cost; amount: number }[] = [];
+            if (config.costs.length > 0) {
+                for (const c of config.costs) {
+                    const costAmount = getScaledCost(c, aState.executions, 0, 0);
+                    if ((state.resources[c.resourceId]?.current || 0) < costAmount) {
+                        return { ...state, log: [makeLog(`Not enough resources for ${config.name}`, 'other'), ...state.log].slice(0, 20) };
+                    }
+                    pendingCosts.push({ c, amount: costAmount });
+                }
+            }
+
+            const forms = getActiveForms(state.activeFormSelection);
+            const costMult = forms.reduce((m, f) => m * f.costMultiplier, 1);
+            const effMult = forms.reduce((m, f) => m * f.effectMultiplier, 1);
+            const variance = forms.reduce((v, f) => Math.max(v, f.variance ?? 0), 0);
+
+            // Cost: Mana scaled by form multipliers — tier growth handled by upgrade actions
+            const manaCost = Math.ceil(spell.baseManaCost * costMult);
+
+            const manaRes = state.resources["mana"];
+            if ((manaRes?.current ?? 0) < manaCost) {
+                return { ...state, log: [makeLog(`Not enough Mana for ${spell.name}`, 'other'), ...state.log].slice(0, 20) };
+            }
+
+            // Failure roll: Focus sufficiency vs spell complexity + form reliability bonuses
+            const focusMods = getActiveModifiers(state);
+            const focusMax = calculateMax("focus", focusMods, RESOURCES.find(r => r.id === "focus")?.baseMax ?? 0);
+            const failChance = computeFailureChance(spell, state.resources["focus"]?.current ?? 0, focusMax, forms);
+
+            const aspectKey: AspectID = (spell.aspectId ?? "ash") as AspectID;
+            const aspect = ASPECTS.find(a => a.id === aspectKey);
+
+            const newResources = cloneResources(state.resources);
+
+            // Deduct optional config costs
+            pendingCosts.forEach(({ c, amount }) => {
+                newResources[c.resourceId].current -= amount;
+            });
+
+            const manaState = newResources["mana"];
+            if (!manaState) return state;
+            manaState.current -= manaCost;
+
+            // Every cast attempt leaves a footprint (Unwitnessed challenge tracking)
+            const footprintCounter = state.footprintCounter + 1;
+
+            let newFluency = state.aspectFluency;
+            let newFailed = state.failedCastings;
+            let logUpdates: LogEntry[] = [...state.log];
+
+            if (Math.random() < failChance) {
+                // Failed casting: spent Mana stays spent, but grants residue Motes
+                const residue = Math.max(1, Math.floor(spell.baseMotesYield * 0.3));
+                const moteMax = calculateMax("motes", focusMods, RESOURCES.find(r => r.id === "motes")?.baseMax ?? 0);
+                const moteState = newResources["motes"];
+                if (moteState) moteState.current = Math.min(moteState.current + residue, moteMax);
+                newFailed = { ...newFailed, [aspectKey]: newFailed[aspectKey] + 1 };
+                logUpdates.unshift(makeLog(`${spell.name} fails — ${spell.failureFlavor || aspect?.failureFlavor || ""}`, 'flavour'));
+            } else {
+                let yieldAmount = spell.baseMotesYield * effMult;
+                if (variance > 0) {
+                    const roll = Math.random();
+                    // Wild variance: 0.4x .. (0.4 + variance*2)x output
+                    yieldAmount *= (0.4 + roll * variance * 2);
+                }
+                const moteMax = calculateMax("motes", focusMods, RESOURCES.find(r => r.id === "motes")?.baseMax ?? 0);
+                const moteState = newResources["motes"];
+                if (moteState) moteState.current = Math.min(moteState.current + Math.round(yieldAmount), moteMax);
+                newFluency = { ...newFluency, [aspectKey]: newFluency[aspectKey] + 1 };
+                logUpdates.unshift(makeLog(config.logMessage || `${spell.name} cast cleanly.`, 'flavour'));
+            }
+
+            const newActions = {
+                ...state.actions,
+                [action.actionId]: { ...aState, executions: aState.executions + 1, lastUsed: Date.now() }
+            };
+
+            return {
+                ...state,
+                resources: newResources,
+                actions: newActions,
+                aspectFluency: newFluency,
+                failedCastings: newFailed,
+                footprintCounter,
+                log: logUpdates.slice(0, 50)
+            };
+        }
+
+        case "SELECT_FORM": {
+            const form = CASTING_FORMS.find(f => f.id === action.formId);
+            if (!form || form.axis !== action.axis) return state;
+            if (!state.castingFormsUnlocked[form.id]) return state;
+            return {
+                ...state,
+                activeFormSelection: { ...state.activeFormSelection, [action.axis]: action.formId }
             };
         }
 
@@ -1082,7 +1238,24 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 }
             });
 
-            // 2. Process Passive Conversion (Resources generating other resources)
+            // 2. Process Sustained Spell Drain (inert until sustained spells exist — Chapter IV)
+            let newSustained = state.sustainedSpells;
+            if (newSustained.length > 0) {
+                const sustainedForms = CASTING_FORMS.filter(f => f.value === "sustained");
+                const drainPerSec = sustainedForms.reduce((m, f) => m + (f.continuousDrainPerSecond ?? 0), 0);
+                if (drainPerSec > 0) {
+                    const totalDrain = drainPerSec * newSustained.length * dtSeconds;
+                    if ((newResources["mana"]?.current ?? 0) >= totalDrain) {
+                        newResources["mana"].current -= totalDrain;
+                        newSustained = newSustained.map(s => ({ ...s }));
+                    } else {
+                        newSustained = [];
+                        logUpdates.unshift(makeLog("Sustained workings gutter out — Mana exhausted.", 'other'));
+                    }
+                }
+            }
+
+            // 3. Process Passive Conversion (Resources generating other resources)
             RESOURCES.forEach(sourceConfig => {
                 if (!sourceConfig.passiveGen) return;
                 const sourceAmount = newResources[sourceConfig.id]?.current || 0;
@@ -1254,7 +1427,8 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 activeTaskIds: nextActiveTaskIds,
                 maxConcurrentTasks: newMaxTasks,
                 restTaskId: newRestTaskId,
-                previousTaskId: newPreviousTaskId
+                previousTaskId: newPreviousTaskId,
+                sustainedSpells: newSustained
             };
         }
 
@@ -1391,6 +1565,11 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const toggleConverter = (converterId: ConverterID) => dispatch({ type: "TOGGLE_CONVERTER", converterId });
     const addLog = (msg: string, category?: LogCategory) => dispatch({ type: "ADD_LOG", msg, category });
     const setRestTask = (taskId: string | null) => dispatch({ type: "SET_REST_TASK", taskId });
+    const castSpell = (actionId: ActionID) => dispatch({ type: "CAST_SPELL", actionId });
+    const selectForm = (axis: 'method' | 'duration' | 'target', formId: string | null) => {
+        if (!formId) return;
+        dispatch({ type: "SELECT_FORM", axis, formId });
+    };
 
     const activeModifiers = getActiveModifiers(state);
 
@@ -1443,6 +1622,14 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const getMaxResource = (id: string) => {
         const res = RESOURCES.find(r => r.id === id);
         return res ? calculateMax(id, activeModifiers, res.baseMax) : 0;
+    };
+
+    const getFailureChance = (spellId: string): number => {
+        const spell = getSpellById(spellId);
+        if (!spell) return 0;
+        const forms = getActiveForms(state.activeFormSelection);
+        const focusMax = getMaxResource("focus");
+        return computeFailureChance(spell, state.resources["focus"]?.current ?? 0, focusMax, forms);
     };
 
     const getResourceBreakdown = (resourceId: string): ResourceBreakdown => {
@@ -1605,6 +1792,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 toggleConverter,
                 getMaxResource,
                 addLog,
+                castSpell,
+                selectForm,
+                getFailureChance,
                 checkPrerequisites,
                 checkIsVisible,
                 getActiveModifiers: () => activeModifiers,
