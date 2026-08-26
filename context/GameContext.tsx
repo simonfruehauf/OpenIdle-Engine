@@ -234,7 +234,15 @@ const createInitialState = (): GameState => {
         activeTaskIds: [],
         maxConcurrentTasks: 1,
         restTaskId: null,
-        previousTaskId: null
+        previousTaskId: null,
+        flags: {},
+        aspectFluency: { ash: 0, root: 0, hush: 0, iron: 0 },
+        failedCastings: { ash: 0, root: 0, hush: 0, iron: 0 },
+        castingFormsUnlocked: {},
+        activeFormSelection: { method: undefined, duration: undefined, target: undefined },
+        chapter: 1,
+        sustainedSpells: [],
+        footprintCounter: 0
     };
 };
 
