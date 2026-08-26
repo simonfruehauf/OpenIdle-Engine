@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ActionConfig, Cost } from '../types';
 import { useGame } from '../context/GameContext';
+import { SPELLS } from '../gameData/core/aspects';
 
 // --- Icons ---
 const ActionIcon = () => (
@@ -23,11 +24,12 @@ interface ActionCardProps {
 }
 
 export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false }) => {
-    const { triggerAction, state, config, checkPrerequisites, getMaxResource, getActiveModifiers } = useGame();
+    const { triggerAction, castSpell, getFailureChance, state, config, checkPrerequisites, getMaxResource, getActiveModifiers } = useGame();
     const [hoverRect, setHoverRect] = useState<DOMRect | null>(null);
     const [isHovered, setIsHovered] = useState(false);
 
     const actionState = state.actions[action.id];
+    const spell = action.spellId ? SPELLS.find(s => s.id === action.spellId) : undefined;
 
     // Helper function for calculating scaled costs (mirrors GameContext logic)
     const getScaledCost = (
@@ -69,9 +71,10 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
 
     const isLimited = action.maxExecutions !== undefined;
     const isCompleted = isLimited && actionState.executions >= (action.maxExecutions || 0);
-    const effectiveCooldown = action.cooldownMs ?? 200;
+    const effectiveCooldown = spell ? spell.baseCooldownMs : (action.cooldownMs ?? 200);
     const isOnCooldown = actionState.lastUsed ? (Date.now() - actionState.lastUsed < effectiveCooldown) : false;
-    const isDisabled = !canAfford || isCompleted || !!exclusiveBlocked || isLocked || isOnCooldown;
+    const canPayMana = !spell || (state.resources["mana"]?.current ?? 0) >= spell.baseManaCost; // form cost multipliers arrive with Ch IV UI; instants are 1.0x
+    const isDisabled = !canAfford || !canPayMana || isCompleted || !!exclusiveBlocked || isLocked || isOnCooldown;
 
     const isUpgrade = isLimited && (action.maxExecutions || 0) < 100; // Heuristic for "Upgrade" vs "Repeatable Action"
 
@@ -86,7 +89,11 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
 
     const handleClick = (e?: React.MouseEvent | React.KeyboardEvent) => {
         if (!isDisabled) {
-            triggerAction(action.id);
+            if (spell) {
+                castSpell(action.id);
+            } else {
+                triggerAction(action.id);
+            }
             // Drop focus so holding Enter doesn't fire repeated clicks via key repeat
             (e?.currentTarget as HTMLElement)?.blur();
         }
@@ -270,6 +277,24 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
                 </div>
 
                 <p className="text-gray-700 mb-2 leading-snug">{action.description}</p>
+
+                {spell && (
+                    <div className="mb-2">
+                        <div className="border-t border-gray-400 my-2"></div>
+                        <div className="flex justify-between text-gray-800">
+                            <span>Mana</span>
+                            <span className={`font-mono ${canPayMana ? 'text-red-700' : 'text-red-400'}`}>
+                                {Number.isInteger(spell.baseManaCost) ? spell.baseManaCost : spell.baseManaCost.toFixed(1)}
+                            </span>
+                        </div>
+                        <div className="text-amber-700">
+                            {Math.round(getFailureChance(spell.id) * 100)}% failure risk
+                        </div>
+                        <div className="text-green-700">
+                            +{spell.baseMotesYield} Motes on success
+                        </div>
+                    </div>
+                )}
 
                 {action.lockDescription && actionState.executions === 0 && (
                     <div className="mb-2 p-1 bg-red-100 border border-red-300 text-red-700 rounded text-center">
