@@ -61,6 +61,10 @@ function run(): CheckResult {
   const definedItems = new Set<string>();
   const definedSlots = new Set<string>();
   const definedConverters = new Set<string>();
+  const definedSpells = new Set<string>();
+  const definedAspects = new Set<string>();
+  const definedBraids = new Set<string>();
+  const definedForms = new Set<string>();
 
   // Also track ids by kind heuristically: check file content around export const RESOURCES etc.
   for (const f of files) {
@@ -94,14 +98,33 @@ function run(): CheckResult {
     ITEMS: definedItems,
     SLOTS: definedSlots,
     CONVERTERS: definedConverters,
+    SPELLS: definedSpells,
+    ASPECTS: definedAspects,
+    BRAIDS: definedBraids,
+    CASTING_FORMS: definedForms,
+  };
+  // id -> kind tags, and id -> kind -> files (for kind-aware duplicate detection)
+  const idKinds = new Map<string, Set<string>>();
+  const kindFiles = new Map<string, Map<string, Set<string>>>();
+  const tag = (id: string, kind: string, file: string) => {
+    if (!idKinds.has(id)) idKinds.set(id, new Set());
+    idKinds.get(id)!.add(kind);
+    if (!kindFiles.has(id)) kindFiles.set(id, new Map());
+    const km = kindFiles.get(id)!;
+    if (!km.has(kind)) km.set(kind, new Set());
+    km.get(kind)!.add(file);
   };
   for (const f of files) {
     const content = stripComments(fs.readFileSync(f, "utf-8"));
     for (const kind of Object.keys(kindMap)) {
       if (new RegExp(`export\\s+const\\s+${kind}\\b`).test(content)) {
         // extract ids that appear after this export up to next export
+        const rel = path.relative(".", f);
         const ids = extract(idPattern, content);
-        for (const id of ids) kindMap[kind].add(id);
+        for (const id of ids) {
+          kindMap[kind].add(id);
+          tag(id, kind, rel);
+        }
       }
     }
   }
@@ -115,12 +138,43 @@ function run(): CheckResult {
     ...definedItems,
     ...definedSlots,
     ...definedConverters,
+    ...definedSpells,
+    ...definedAspects,
+    ...definedBraids,
+    ...definedForms,
   ]);
 
-  // 1. Duplicate IDs across modules (global)
+  // 1. Duplicate IDs - kind-aware: cross-kind collisions are legitimate
+  // (state is kind-namespaced), so only flag:
+  //   a) same id twice within ONE file, or
+  //   b) two different files both tagging the id with the SAME kind.
   for (const [id, fileList] of allIds) {
-    if (fileList.length > 1) {
-      errors.push(`Duplicate id "${id}" in: ${fileList.join(", ")}`);
+    const seenFiles = new Set<string>();
+    let sameFileDup = false;
+    for (const f of fileList) {
+      if (seenFiles.has(f)) {
+        sameFileDup = true;
+        break;
+      }
+      seenFiles.add(f);
+    }
+    let dupKind: string | null = null;
+    const kindsForId = kindFiles.get(id);
+    if (kindsForId) {
+      for (const [kind, fsForKind] of kindsForId) {
+        if (fsForKind.size > 1) {
+          dupKind = kind;
+          break;
+        }
+      }
+    }
+    if (sameFileDup || dupKind) {
+      const uniqueFiles = [...new Set(fileList)].join(", ");
+      errors.push(
+        dupKind
+          ? `Duplicate ${dupKind.toLowerCase()} id "${id}" in: ${uniqueFiles}`
+          : `Duplicate id "${id}" in: ${uniqueFiles}`
+      );
     }
   }
 
