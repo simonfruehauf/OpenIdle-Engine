@@ -46,6 +46,10 @@ const getActiveModifiers = (state: GameState): Modifier[] => {
                     mods.push({ sourceId: item.name, type: 'flat', value: e.amount, resourceId: e.resourceId, property: 'gen' });
                 } else if (e.type === 'add_passive_gen_per_unit' && e.sourceResourceId && e.targetResourceId) {
                     mods.push({ sourceId: item.name, type: 'flat', value: e.amount, property: 'gen_per_unit', sourceResourceId: e.sourceResourceId, targetResourceId: e.targetResourceId, resourceId: e.targetResourceId });
+                } else if (e.type === 'modify_cooldown_flat') {
+                    mods.push({ sourceId: item.name, type: 'flat', value: e.amount, actionId: e.actionId, property: 'cooldown' });
+                } else if (e.type === 'modify_failure_chance') {
+                    mods.push({ sourceId: item.name, type: 'percent', value: e.amount, property: 'failure_chance' });
                 }
             });
         }
@@ -208,14 +212,18 @@ const computeFailureChance = (
     spell: SpellConfig,
     focusCurrent: number,
     focusMax: number,
-    forms: CastingFormModifier[]
+    forms: CastingFormModifier[],
+    extraMods: Modifier[] = []
 ): number => {
     const complexity = spell.tier * 10;
     const focusRatio = focusMax > 0 ? focusCurrent / focusMax : 0;
     const sufficient = focusRatio >= Math.min(1, complexity / 100);
     let base = sufficient ? 0.05 : 0.15;
     const reliability = forms.reduce((sum, f) => sum + (f.reliabilityBonus ?? 0), 0);
-    return Math.max(0.01, base - reliability);
+    const failureReduction = extraMods
+        .filter(m => m.property === 'failure_chance' && m.type === 'percent')
+        .reduce((sum, m) => sum + m.value, 0);
+    return Math.max(0.01, base - reliability - failureReduction);
 };
 
 // --- Initial State ---
@@ -667,6 +675,9 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             let newModifiers = [...state.modifiers];
             let newInventory = [...state.inventory];
             let newMaxTasks = state.maxConcurrentTasks;
+            let newFlags = { ...state.flags };
+            let newFormsUnlocked = { ...state.castingFormsUnlocked };
+            let newFluency = { ...state.aspectFluency };
 
             const applyEffectWithYield = (e: Effect) => {
                 // Check Probability
@@ -714,6 +725,17 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                         } else if (e.actionId) {
                             newModifiers.push({ sourceId: config.name, actionId: e.actionId, type: 'flat', value: e.amount, property: 'max_exec' });
                         }
+                    } else if (e.type === 'set_flag' && e.flagId) {
+                        newFlags = { ...newFlags, [e.flagId]: true };
+                    } else if (e.type === 'unlock_casting_form' && e.formId) {
+                        newFormsUnlocked = { ...newFormsUnlocked, [e.formId]: true };
+                    } else if (e.type === 'modify_aspect_fluency' && e.aspectId) {
+                        const k = e.aspectId;
+                        newFluency = { ...newFluency, [k]: (newFluency[k] ?? 0) + e.amount };
+                    } else if (e.type === 'modify_failure_chance') {
+                        newModifiers.push({ sourceId: config.name, type: 'percent', value: e.amount, property: 'failure_chance' });
+                    } else if (e.type === 'modify_cooldown_flat') {
+                        newModifiers.push({ sourceId: config.name, actionId: e.actionId, type: 'flat', value: e.amount, property: 'cooldown' });
                     }
                 }
             };
@@ -740,6 +762,9 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 actions: newActions,
                 modifiers: newModifiers,
                 inventory: newInventory,
+                flags: newFlags,
+                castingFormsUnlocked: newFormsUnlocked,
+                aspectFluency: newFluency,
                 log: [makeLog(logMsg, logCat), ...state.log].slice(0, 20),
                 maxConcurrentTasks: newMaxTasks
             };
@@ -754,8 +779,9 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             const aState = state.actions[action.actionId];
             if (!aState?.unlocked) return state;
 
-            // Cooldown gate uses the spell's own cooldown; silently ignore while on cooldown
-            const effectiveCooldown = spell.baseCooldownMs;
+            // Cooldown gate uses the spell's own cooldown plus flat cooldown modifiers; silently ignore while on cooldown
+            const cooldownMods = allModifiers.filter(m => m.property === 'cooldown' && m.type === 'flat' && (!m.actionId || m.actionId === config.id));
+            const effectiveCooldown = Math.max(200, spell.baseCooldownMs + cooldownMods.reduce((s, m) => s + m.value, 0));
             if (aState.lastUsed) {
                 const elapsed = Date.now() - aState.lastUsed;
                 if (elapsed < effectiveCooldown) return state;
@@ -789,7 +815,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             // Failure roll: Focus sufficiency vs spell complexity + form reliability bonuses
             const focusMods = getActiveModifiers(state);
             const focusMax = calculateMax("focus", focusMods, RESOURCES.find(r => r.id === "focus")?.baseMax ?? 0);
-            const failChance = computeFailureChance(spell, state.resources["focus"]?.current ?? 0, focusMax, forms);
+            const failChance = computeFailureChance(spell, state.resources["focus"]?.current ?? 0, focusMax, forms, focusMods);
 
             const aspectKey: AspectID = (spell.aspectId ?? "ash") as AspectID;
             const aspect = ASPECTS.find(a => a.id === aspectKey);
@@ -1629,7 +1655,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (!spell) return 0;
         const forms = getActiveForms(state.activeFormSelection);
         const focusMax = getMaxResource("focus");
-        return computeFailureChance(spell, state.resources["focus"]?.current ?? 0, focusMax, forms);
+        return computeFailureChance(spell, state.resources["focus"]?.current ?? 0, focusMax, forms, activeModifiers);
     };
 
     const getResourceBreakdown = (resourceId: string): ResourceBreakdown => {

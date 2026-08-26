@@ -261,7 +261,7 @@ export interface Modifier {
   resourceId?: ResourceID;
   taskId?: TaskID;
   actionId?: ActionID;
-  property?: 'max' | 'gen' | 'max_exec' | 'yield' | 'gen_per_unit'; // 'max' (default) affects capacity, 'gen' affects passive generation, 'gen_per_unit' generates target per unit of source
+  property?: 'max' | 'gen' | 'max_exec' | 'yield' | 'gen_per_unit' | 'failure_chance' | 'cooldown'; // 'max' (default) affects capacity, 'gen' affects passive generation, 'gen_per_unit' generates target per unit of source
   // For gen_per_unit:
   sourceResourceId?: ResourceID; // Resource to count units of
   targetResourceId?: ResourceID; // Resource to generate
