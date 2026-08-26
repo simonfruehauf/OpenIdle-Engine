@@ -332,6 +332,11 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
                                 const act = state.actions[req.actionId];
                                 if (!act || act.executions < 1) met = false;
                                 text = `Upgrade: ${getName(req.actionId)}`;
+                            } else if (req.taskId) {
+                                const t = state.tasks[req.taskId];
+                                const needed = req.minExecutions ?? 1;
+                                if (!t || (t.completions || 0) < needed) met = false;
+                                text = `Complete: ${getName(req.taskId)}`;
                             }
 
                             return (
