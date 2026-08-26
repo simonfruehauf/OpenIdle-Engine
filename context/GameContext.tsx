@@ -264,8 +264,8 @@ const createInitialState = (): GameState => {
         flags: {},
         aspectFluency: { ash: 0, root: 0, hush: 0, iron: 0 },
         failedCastings: { ash: 0, root: 0, hush: 0, iron: 0 },
-        castingFormsUnlocked: {},
-        activeFormSelection: { method: undefined, duration: undefined, target: undefined },
+        castingFormsUnlocked: Object.fromEntries(CASTING_FORMS.map(f => [f.id, f.minTier === 0])),
+        activeFormSelection: { method: "method_instant", duration: "duration_instant", target: "target_outward" },
         chapter: 1,
         sustainedSpells: [],
         footprintCounter: 0
@@ -818,7 +818,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 const moteMax = calculateMax("motes", focusMods, RESOURCES.find(r => r.id === "motes")?.baseMax ?? 0);
                 const moteState = newResources["motes"];
                 if (moteState) moteState.current = Math.min(moteState.current + residue, moteMax);
-                newFailed = { ...newFailed, [aspectKey]: newFailed[aspectKey] + 1 };
+                newFailed = { ...newFailed, [aspectKey]: (newFailed[aspectKey] ?? 0) + 1 };
                 logUpdates.unshift(makeLog(`${spell.name} fails — ${spell.failureFlavor || aspect?.failureFlavor || ""}`, 'flavour'));
             } else {
                 let yieldAmount = spell.baseMotesYield * effMult;
@@ -830,7 +830,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 const moteMax = calculateMax("motes", focusMods, RESOURCES.find(r => r.id === "motes")?.baseMax ?? 0);
                 const moteState = newResources["motes"];
                 if (moteState) moteState.current = Math.min(moteState.current + Math.round(yieldAmount), moteMax);
-                newFluency = { ...newFluency, [aspectKey]: newFluency[aspectKey] + 1 };
+                newFluency = { ...newFluency, [aspectKey]: (newFluency[aspectKey] ?? 0) + 1 };
                 logUpdates.unshift(makeLog(config.logMessage || `${spell.name} cast cleanly.`, 'flavour'));
             }
 
