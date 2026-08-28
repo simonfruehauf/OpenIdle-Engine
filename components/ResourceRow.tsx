@@ -16,6 +16,7 @@ export const ResourceRow: React.FC<ResourceRowProps> = ({ resource }) => {
     const current = state.resources[resource.id]?.current || 0;
     const max = getMaxResource(resource.id);
     const { maxModifiers, rates, totalRate } = getResourceBreakdown(resource.id);
+    const isUncapped = max >= 999999999 || resource.id === "motes";
 
     // Don't render if locked (0 max)
     if (max <= 0) return null;
@@ -66,7 +67,7 @@ export const ResourceRow: React.FC<ResourceRowProps> = ({ resource }) => {
                     <div className="font-bold text-sm text-black mr-2">{resource.name}</div>
                     <div className="text-right">
                         <div className="font-mono font-bold leading-none text-gray-900">
-                            {Math.floor(current)} <span className="text-gray-600 font-normal">/ {max}</span>
+                            {Math.floor(current)} <span className="text-gray-600 font-normal">{isUncapped ? "/ ∞" : `/ ${max}`}</span>
                         </div>
                         {totalRate !== 0 && (
                             <div className={`font-mono text-[10px] mt-0.5 ${totalRate > 0 ? 'text-green-700' : 'text-red-700'}`}>
@@ -145,7 +146,7 @@ export const ResourceRow: React.FC<ResourceRowProps> = ({ resource }) => {
                     <span className="font-semibold text-gray-700">{resource.name}</span>
                     <div className="flex h-full flex-col items-end justify-center">
                         <span className="font-mono text-gray-600">
-                            {current.toFixed(1)}<span className="text-gray-400">/{max}</span>
+                            {current.toFixed(1)}<span className="text-gray-400">{isUncapped ? "/∞" : `/${max}`}</span>
                         </span>
                         <span className={`h-3 text-[10px] font-mono leading-none ${totalRate !== 0 ? (totalRate > 0 ? 'text-green-600' : 'text-red-600') : 'invisible'}`}>
                             {totalRate > 0 ? '+' : ''}{totalRate.toFixed(2)}/s
@@ -161,7 +162,7 @@ export const ResourceRow: React.FC<ResourceRowProps> = ({ resource }) => {
                             style={{ width: `${Math.min(100, Math.max(0, (current / max) * 100))}%` }}
                         />
                         <span className="absolute right-1 top-1/2 flex -translate-y-1/2 items-center whitespace-nowrap rounded bg-white/60 px-1.5 text-[10px] font-semibold text-gray-800 drop-shadow-sm">
-                            {current.toFixed(2)} / {max.toFixed(2)}
+                            {isUncapped ? `${current.toFixed(2)} / ∞` : `${current.toFixed(2)} / ${max.toFixed(2)}`}
                         </span>
                     </div>
                     <div className={`col-start-2 h-3 text-right font-mono text-[10px] leading-none ${totalRate !== 0 ? (totalRate > 0 ? 'text-green-600' : 'text-red-600') : 'invisible'}`}>
