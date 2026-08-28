@@ -11,7 +11,6 @@ export const SLOTS: SlotConfig[] = [
   {
     id: "current_tuner",
     name: "Current-Tuner",
-    // TODO(ch4): uncomment once sustain_training task exists
-    // prerequisitesAny: [{ taskId: "sustain_training", minExecutions: 1 }],
+    prerequisitesAny: [{ taskId: "sustain_training", minExecutions: 1 }],
   },
 ];

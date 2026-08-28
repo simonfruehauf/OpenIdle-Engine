@@ -5,6 +5,7 @@ import { TaskCard } from './components/TaskCard';
 import { ResourceRow } from './components/ResourceRow';
 import { EquipmentView } from './components/EquipmentView';
 import { ConverterCard } from './components/ConverterCard';
+import { FormSelector } from './components/FormSelector';
 import { CategoryConfig, ResourceConfig, LogCategory, LogEntry } from './types';
 
 // --- Components ---
@@ -427,6 +428,7 @@ const GameLayout: React.FC = () => {
                             </div>
 
                             <div className="flex-grow overflow-y-auto p-4 max-w-4xl mx-auto w-full">
+                                <FormSelector />
                                 {config.categories
                                     .filter(cat => !cat.parentCategoryId)
                                     .map(cat => renderActivityCategory(cat))}
