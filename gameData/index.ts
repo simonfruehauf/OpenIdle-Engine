@@ -24,6 +24,8 @@ import * as Ch5Equipment from "./chapter5/equipment";
 import * as SideNotebook from "./side/notebook";
 import * as SideSequences from "./side/sequences";
 import * as SideBestiary from "./side/bestiary";
+import * as LiveSeasons from "./live/seasons";
+import * as LiveChallenges from "./live/challenges";
 
 export interface GameModule {
   CATEGORIES?: any[];
@@ -39,6 +41,13 @@ export interface GameModule {
   BRAID_SPELLS?: any[];
   CASTING_FORMS?: any[];
   BESTIARY?: any[];
+  // Live content (data-only, not collected via generic collect but keep type open)
+  SEASONS?: any[];
+  MONTHLY_EVENTS?: any[];
+  QUARTERLY_EVENTS?: any[];
+  SEASONAL_MODIFIERS?: any[];
+  CHALLENGE_MODES?: any[];
+  [key: string]: any;
 }
 
 const modules: GameModule[] = [
@@ -49,6 +58,7 @@ const modules: GameModule[] = [
   Ch4Tasks, Ch4Actions, Ch4Equipment,
   Ch5Tasks, Ch5Actions, Ch5Equipment,
   SideNotebook, SideSequences, SideBestiary,
+  LiveSeasons, LiveChallenges,
 ];
 
 function collect<T>(key: keyof GameModule): T[] {
