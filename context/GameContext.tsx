@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useReducer, useRef } from 
 const TICK_RATE_MS = 100;
 const TICK_RATE_SECONDS = TICK_RATE_MS / 1000;
 import { ACTIONS, CATEGORIES, RESOURCES, TASKS, SLOTS, ITEMS, CONVERTERS, SPEED_TIERS } from "../gameData/index";
+import * as CoreSpeed from "../gameData/core/speed";
 import { SPELLS, ASPECTS } from "../gameData/core/aspects";
 import { CASTING_FORMS } from "../gameData/core/castingForms";
 import { MONTHLY_EVENTS } from "../gameData/live/seasons";
@@ -321,7 +322,8 @@ type Action =
     | { type: "SET_REST_TASK"; taskId: string | null }
     | { type: "CAST_SPELL"; actionId: string }
     | { type: "SELECT_FORM"; axis: "method" | "duration" | "target"; formId: string }
-    | { type: "SECOND_KINDLING" };
+    | { type: "SECOND_KINDLING" }
+    | { type: "SET_GAME_SPEED"; multiplier: 1 | 2 | 4 | 8 };
 
 // --- Helper: Clone Resources to prevent mutation ---
 const cloneResources = (resources: GameState["resources"]) => {
@@ -401,6 +403,53 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 footprintCounter: merged.footprintCounter || 0
             });
 
+            // Offline accumulation helper (Task 2)
+            const DEFAULT_OFFLINE_RATE = { resourceId: "time_essence", ratePerSecond: 0.08 };
+            const rawOffline = (CoreSpeed as any).OFFLINE_RATE as { resourceId?: string; ratePerSecond?: number; ratePerOfflineSecond?: number } | undefined;
+            const offlineRate = rawOffline
+                ? { resourceId: rawOffline.resourceId ?? "time_essence", ratePerSecond: rawOffline.ratePerSecond ?? (rawOffline as any).ratePerOfflineSecond ?? 0.08 }
+                : DEFAULT_OFFLINE_RATE;
+            const finalizeWithOffline = (base: GameState): GameState => {
+                let result: GameState = {
+                    ...base,
+                    gameSpeed: (base as any).gameSpeed ?? 1,
+                    lastSeen: (base as any).lastSeen ?? Date.now()
+                } as GameState;
+                if (![1, 2, 4, 8].includes(result.gameSpeed as any)) result.gameSpeed = 1;
+                const incomingLastSeen = (incoming as any).lastSeen;
+                const now = Date.now();
+                if (typeof incomingLastSeen === 'number' && !isNaN(incomingLastSeen) && incomingLastSeen > 0) {
+                    const elapsedSec = Math.min((now - incomingLastSeen) / 1000, 604800);
+                    if (elapsedSec > 5) {
+                        const targetId = offlineRate.resourceId;
+                        const resConfig = RESOURCES.find(r => r.id === targetId);
+                        if (resConfig && result.resources[targetId]) {
+                            const gained = Math.floor(offlineRate.ratePerSecond * elapsedSec);
+                            if (gained > 0) {
+                                const liveMods = getActiveModifiers({ ...result, modifiers: result.modifiers } as GameState);
+                                const max = calculateMax(targetId, liveMods, resConfig.baseMax);
+                                const cur = result.resources[targetId].current;
+                                const newVal = Math.min(cur + gained, max);
+                                const actualGained = newVal - cur;
+                                if (actualGained > 0) {
+                                    result = {
+                                        ...result,
+                                        resources: { ...result.resources, [targetId]: { ...result.resources[targetId], current: newVal } }
+                                    };
+                                    const hours = (elapsedSec / 3600).toFixed(1);
+                                    const msg = `Welcome back! Gained ${actualGained} ${targetId} while away (${hours} hours).`;
+                                    result = { ...result, log: [makeLog(msg, 'other'), ...result.log].slice(0, 50) };
+                                }
+                            }
+                        }
+                    }
+                    result = { ...result, lastSeen: now };
+                } else {
+                    result = { ...result, lastSeen: now };
+                }
+                return result;
+            };
+
             if (incomingVersion < 5) {
                 const sideBranchResources = ["petals", "ribbons", "may_wine", "quiet", "marginalia", "tokens", "favor", "echo", "resonance"];
                 const unlockActions: Record<string, string> = {
@@ -476,7 +525,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 }
                 // v6 fix: cat 0/1 bug - find_cat gave max but current stayed 0 due to stale max clamp
                 if (incomingVersion < 6) applyV6CatInsightFix(migratedResources, incoming as any, migratedModifiers);
-                return normalizeCastingFields({
+                return finalizeWithOffline(normalizeCastingFields({
                     ...defaults,
                     ...incoming,
                     version: migratedVersion,
@@ -492,13 +541,13 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                     activeTaskIds: [],
                     restTaskId: (incoming as any).restTaskId ?? defaults.restTaskId,
                     previousTaskId: (incoming as any).previousTaskId ?? defaults.previousTaskId
-                });
+                }));
             }
 
             // v6 migration: fix 0/1 cat (and related) for saves at version 5
             if (incomingVersion < 6) {
                 applyV6CatInsightFix(migratedResources, incoming as any, migratedModifiers);
-                return normalizeCastingFields({
+                return finalizeWithOffline(normalizeCastingFields({
                     ...defaults,
                     ...incoming,
                     version: migratedVersion,
@@ -514,10 +563,10 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                     activeTaskIds: incoming.activeTaskIds || defaults.activeTaskIds,
                     restTaskId: (incoming as any).restTaskId ?? defaults.restTaskId,
                     previousTaskId: (incoming as any).previousTaskId ?? defaults.previousTaskId
-                });
+                }));
             }
 
-            return normalizeCastingFields({
+            return finalizeWithOffline(normalizeCastingFields({
                 ...defaults,
                 ...incoming,
                 version: migratedVersion,
@@ -533,7 +582,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 activeTaskIds: incoming.activeTaskIds || defaults.activeTaskIds,
                 restTaskId: (incoming as any).restTaskId ?? defaults.restTaskId,
                 previousTaskId: (incoming as any).previousTaskId ?? defaults.previousTaskId
-            });
+            }));
         }
 
         case "RESET_GAME":
@@ -1058,6 +1107,54 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 return r ? calculateMax(rid, live, r.baseMax) : 0;
             };
 
+            // --- Speed tier per-tick cost handling (flat per tick, NOT scaled by dt) ---
+            let newGameSpeed: GameState["gameSpeed"] = (state.gameSpeed ?? 1) as GameState["gameSpeed"];
+            {
+                const checkTierPrereqs = (tier: any): boolean => {
+                    if (!tier.prerequisites || tier.prerequisites.length === 0) return true;
+                    return tier.prerequisites.every((p: Prerequisite) => evaluatePrereq(p, { resources: newResources, actions: newActions, tasks: newTasks, getMax: getTickMax }));
+                };
+                const isTierAffordable = (tier: any): boolean => {
+                    if (!tier.costs || tier.costs.length === 0) return true;
+                    return tier.costs.every((c: Cost) => (newResources[c.resourceId]?.current ?? 0) >= c.amount);
+                };
+                const currentTier = (SPEED_TIERS as any[]).find((t: any) => t.multiplier === state.gameSpeed);
+                let effectiveTier: any = currentTier ?? (SPEED_TIERS as any[]).find((t: any) => t.multiplier === 1) ?? { multiplier: 1, costs: [] };
+                // If no tier found or 1x, treat as always affordable
+                const currentAffordable = currentTier ? isTierAffordable(currentTier) : true;
+                if (currentTier && !currentAffordable) {
+                    const sorted = [...(SPEED_TIERS as any[])].sort((a: any, b: any) => a.multiplier - b.multiplier);
+                    let best: any = sorted.find((t: any) => t.multiplier === 1) ?? { multiplier: 1, costs: [] };
+                    // Find highest affordable tier (including 1x) that satisfies prereqs
+                    for (const t of sorted) {
+                        if (!checkTierPrereqs(t)) continue;
+                        if (!isTierAffordable(t)) continue;
+                        if (t.multiplier > best.multiplier) best = t;
+                    }
+                    // Only downgrade, don't auto-upgrade beyond current if best higher somehow (costs increase, so not possible)
+                    // But if best multiplier > currentTier.multiplier, keep current downgrade logic; else use best
+                    if (best.multiplier < effectiveTier.multiplier) {
+                        effectiveTier = best;
+                    } else if (best.multiplier !== effectiveTier.multiplier) {
+                        // If best is lower than current, use it; if best higher but current unaffordable, still use best (downgrade to affordable)
+                        effectiveTier = best;
+                    }
+                    if (effectiveTier.multiplier !== state.gameSpeed) {
+                        newGameSpeed = effectiveTier.multiplier as GameState["gameSpeed"];
+                        logUpdates.unshift(makeLog(`Insufficient time_essence - speed reduced to ${effectiveTier.multiplier}×.`, 'other'));
+                    }
+                }
+                // Deduct costs of effective tier (flat per tick)
+                if (effectiveTier && effectiveTier.costs) {
+                    for (const c of effectiveTier.costs as Cost[]) {
+                        if (newResources[c.resourceId]) {
+                            newResources[c.resourceId].current -= c.amount;
+                            if (newResources[c.resourceId].current < 0) newResources[c.resourceId].current = 0;
+                        }
+                    }
+                }
+            }
+
             // Helper to apply effects (Shared logic for completion/first-completion)
             const applyTaskEffect = (e: Effect, level: number, taskId: string) => {
                 if (e.chance !== undefined && Math.random() > e.chance) return;
@@ -1545,8 +1642,32 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 maxConcurrentTasks: newMaxTasks,
                 restTaskId: newRestTaskId,
                 previousTaskId: newPreviousTaskId,
-                sustainedSpells: newSustained
+                sustainedSpells: newSustained,
+                gameSpeed: newGameSpeed,
+                lastSeen: Date.now()
             };
+        }
+
+        case "SET_GAME_SPEED": {
+            const tier = (SPEED_TIERS as any[]).find((t: any) => t.multiplier === action.multiplier);
+            if (!tier) return state;
+            // Validate prerequisites
+            const getMaxForPrereq = (rid: string) => {
+                const r = RESOURCES.find(x => x.id === rid);
+                const live = getActiveModifiers(state);
+                return r ? calculateMax(rid, live, r.baseMax) : 0;
+            };
+            const checkPrereqs = (list?: Prerequisite[]) => checkPrereqsList(list, { resources: state.resources, actions: state.actions, tasks: state.tasks, getMax: getMaxForPrereq });
+            if (!checkPrereqs(tier.prerequisites)) {
+                return { ...state, log: [makeLog(`Cannot set speed to ${action.multiplier}×: prerequisites not met.`, 'other'), ...state.log].slice(0, 50) };
+            }
+            // Check affordability for one tick (flat per tick)
+            const canAfford = !tier.costs || tier.costs.length === 0 || tier.costs.every((c: Cost) => (state.resources[c.resourceId]?.current ?? 0) >= c.amount);
+            if (!canAfford) {
+                const costStr = tier.costs?.map((c: Cost) => `${c.amount} ${c.resourceId}`).join(", ") ?? "";
+                return { ...state, log: [makeLog(`Cannot set speed to ${action.multiplier}×: insufficient ${costStr}.`, 'other'), ...state.log].slice(0, 50) };
+            }
+            return { ...state, gameSpeed: action.multiplier, log: [makeLog(`Game speed set to ${action.multiplier}×.`, 'other'), ...state.log].slice(0, 50) };
         }
 
         default:
@@ -1582,11 +1703,12 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         stateRef.current = state;
     }, [state]);
 
-    // Game Loop
+    // Game Loop — scaled by gameSpeed
     useEffect(() => {
         const TICK_RATE = 100; // ms
         const loop = () => {
-            dispatch({ type: "TICK", dt: TICK_RATE });
+            const speed = (stateRef.current.gameSpeed as number) || 1;
+            dispatch({ type: "TICK", dt: TICK_RATE * speed });
         };
         const id = setInterval(loop, TICK_RATE);
         tickRef.current = id as unknown as number;
@@ -1689,13 +1811,12 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     const secondKindling = () => dispatch({ type: "SECOND_KINDLING" });
 
-    // Speed system stubs — Task 1 scaffold (real logic in Task 2)
     const getSpeedCost = (multiplier: 1 | 2 | 4 | 8): Cost[] => {
         const tier = (SPEED_TIERS as any[]).find((t: any) => t.multiplier === multiplier);
         return tier?.costs ?? [];
     };
-    const setGameSpeed = (_multiplier: 1 | 2 | 4 | 8) => {
-        // placeholder — Task 2 will wire dispatch SET_GAME_SPEED with validation
+    const setGameSpeed = (multiplier: 1 | 2 | 4 | 8) => {
+        dispatch({ type: "SET_GAME_SPEED", multiplier });
     };
 
     const activeModifiers = getActiveModifiers(state);
