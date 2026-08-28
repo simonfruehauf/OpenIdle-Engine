@@ -7,7 +7,6 @@ export const RESOURCES: ResourceConfig[] = [
     type: "stat",
     baseMax: 0,
     initialAmount: 0,
-    category: "first_spark",
     color: "bg-blue-500",
     description: "Raw magical reserve. Spent per casting; regenerates slowly. Starts low - earn your capacity.",
   },
@@ -17,7 +16,6 @@ export const RESOURCES: ResourceConfig[] = [
     type: "stat",
     baseMax: 20,
     initialAmount: 8,
-    category: "first_spark",
     color: "bg-purple-500",
     description: "Concentration and control. Raises reliability, shortens cooldowns. The first task teaches you to steady it.",
   },
@@ -27,7 +25,6 @@ export const RESOURCES: ResourceConfig[] = [
     type: "basic",
     baseMax: 999999999,
     initialAmount: 0,
-    category: "four_aspects",
     description: "Residue shaken loose by casting. Core crafting currency; converts to Mana.",
   },
   {
@@ -36,7 +33,6 @@ export const RESOURCES: ResourceConfig[] = [
     type: "basic",
     baseMax: 0,
     initialAmount: 0,
-    category: "wound_answers",
     description: "Physical shards of the Sundering itself. Found, not farmed.",
   },
   {
@@ -45,7 +41,14 @@ export const RESOURCES: ResourceConfig[] = [
     type: "basic",
     baseMax: 0,
     initialAmount: 0,
-    category: "wound_answers",
     description: "The world's own slow undertow of raw magic.",
+  },
+  {
+    id: "time_essence",
+    name: "Time Essence",
+    type: "basic",
+    baseMax: 1000,
+    initialAmount: 0,
+    description: "Crystallized time itself. Accumulates only while you are away. Spend to accelerate the world.",
   },
 ];
