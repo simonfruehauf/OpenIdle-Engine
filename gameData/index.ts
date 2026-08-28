@@ -18,6 +18,9 @@ import * as Ch3Equipment from "./chapter3/equipment";
 import * as Ch4Tasks from "./chapter4/tasks";
 import * as Ch4Actions from "./chapter4/actions";
 import * as Ch4Equipment from "./chapter4/equipment";
+import * as Ch5Tasks from "./chapter5/tasks";
+import * as Ch5Actions from "./chapter5/actions";
+import * as Ch5Equipment from "./chapter5/equipment";
 
 export interface GameModule {
   CATEGORIES?: any[];
@@ -40,6 +43,7 @@ const modules: GameModule[] = [
   Ch2Tasks, Ch2Actions, Ch2Equipment,
   Ch3Tasks, Ch3Actions, Ch3Equipment,
   Ch4Tasks, Ch4Actions, Ch4Equipment,
+  Ch5Tasks, Ch5Actions, Ch5Equipment,
 ];
 
 function collect<T>(key: keyof GameModule): T[] {
