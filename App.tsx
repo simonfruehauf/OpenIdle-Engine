@@ -7,6 +7,7 @@ import { ResourceRow } from './components/ResourceRow';
 import { EquipmentView } from './components/EquipmentView';
 import { ConverterCard } from './components/ConverterCard';
 import { FormSelector } from './components/FormSelector';
+import { SpeedControl } from './components/SpeedControl';
 import { CategoryConfig, ResourceConfig, LogCategory, LogEntry, Cost } from './types';
 import { BESTIARY } from './gameData/side/bestiary';
 import { getSeasonForDate } from './gameData/live/seasons';
@@ -305,7 +306,10 @@ const GameLayout: React.FC = () => {
 
             {/* --- HEADER --- */}
             <header className="bg-white border-b border-gray-300 px-4 py-2 flex items-center justify-between shadow-sm shrink-0 z-10 h-12">
-                <h1 className="font-bold text-lg text-gray-700 tracking-tight">OpenIdle</h1>
+                <div className="flex items-center gap-4">
+                    <h1 className="font-bold text-lg text-gray-700 tracking-tight">OpenIdle</h1>
+                    <SpeedControl />
+                </div>
 
                 {/* Toolbar */}
                 <div className="flex items-center gap-3">
