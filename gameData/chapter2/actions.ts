@@ -11,6 +11,7 @@ export const ACTIONS: ActionConfig[] = [
     effects: [],
     maxExecutions: 999999,
     cooldownMs: 3000,
+    prerequisites: [{ actionId: "widow_cathal_visit", minExecutions: 1 }],
     logMessage: "The stone's skin hardens like winter arriving.",
   },
   {
@@ -74,6 +75,7 @@ export const ACTIONS: ActionConfig[] = [
     effects: [{ type: "modify_yield_pct", resourceId: "focus", amount: 0.25 }],
     firstCompletionEffects: [{ type: "set_flag", flagId: "osrun_choice_made", amount: 1 }],
     maxExecutions: 1,
+    prerequisites: [{ actionId: "widow_cathal_visit", minExecutions: 1 }],
     exclusiveWith: ["keep_your_lead"],
     logMessage: "\"Then we begin tomorrow,\" Osrun says, and something in the room settles.",
   },
@@ -86,6 +88,7 @@ export const ACTIONS: ActionConfig[] = [
     effects: [{ type: "modify_max_resource_pct", resourceId: "mana", amount: 0.10 }],
     firstCompletionEffects: [{ type: "set_flag", flagId: "osrun_choice_made", amount: 1 }],
     maxExecutions: 1,
+    prerequisites: [{ actionId: "widow_cathal_visit", minExecutions: 1 }],
     exclusiveWith: ["teach_hollow_reach_children"],
     logMessage: "You nod once and keep walking. The children will learn from someone.",
   },

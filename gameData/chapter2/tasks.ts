@@ -9,6 +9,7 @@ export const TASKS: TaskConfig[] = [
     costPerSecond: [{ resourceId: "focus", amount: 0.3 }],
     effectsPerSecond: [{ type: "add_resource", resourceId: "motes", amount: 0.35 }],
     xpPerSecond: 5,
+    prerequisites: [{ actionId: "widow_cathal_visit", minExecutions: 1 }],
   },
   {
     id: "focus_meditation",

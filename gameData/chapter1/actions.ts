@@ -11,6 +11,7 @@ export const ACTIONS: ActionConfig[] = [
     effects: [],
     maxExecutions: 999999,
     cooldownMs: 2000,
+    prerequisites: [{ taskId: "catch_your_breath", minExecutions: 1 }],
     logMessage: "The ember leans toward your intent, obedient for once.",
   },
   {
@@ -23,6 +24,7 @@ export const ACTIONS: ActionConfig[] = [
     effects: [],
     maxExecutions: 999999,
     cooldownMs: 3000,
+    prerequisites: [{ taskId: "catch_your_breath", minExecutions: 1 }],
     logMessage: "A seed splits. Something green considers the light.",
   },
   {
@@ -35,6 +37,7 @@ export const ACTIONS: ActionConfig[] = [
     effects: [],
     maxExecutions: 999999,
     cooldownMs: 1500,
+    prerequisites: [{ taskId: "catch_your_breath", minExecutions: 1 }],
     logMessage: "The bell swings — silently. It looks almost offended.",
   },
   {
@@ -46,6 +49,7 @@ export const ACTIONS: ActionConfig[] = [
     effects: [{ type: "add_resource", resourceId: "mana", amount: 5 }],
     maxExecutions: 999999,
     cooldownMs: 1000,
+    prerequisites: [{ taskId: "catch_your_breath", minExecutions: 1 }],
     logMessage: "The motes fold into blue light.",
   },
   {
