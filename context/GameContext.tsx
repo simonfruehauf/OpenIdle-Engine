@@ -403,7 +403,10 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 footprintCounter: merged.footprintCounter || 0
             });
 
-            // Offline accumulation helper (Task 2)
+            // Offline accumulation helper (Task 2) + Task 5 persistence note:
+            // gameSpeed/lastSeen are already serialized via stateRef.current (JSON.stringify).
+            // Migration is additive with defaults (version stays 7) — missing fields default to 1/now,
+            // capped at 7 days offline. No version bump needed.
             const DEFAULT_OFFLINE_RATE = { resourceId: "time_essence", ratePerSecond: 0.08 };
             const rawOffline = (CoreSpeed as any).OFFLINE_RATE as { resourceId?: string; ratePerSecond?: number; ratePerOfflineSecond?: number } | undefined;
             const offlineRate = rawOffline
@@ -1781,6 +1784,16 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
             saveGame();
         }, 30000); // 30 seconds
         return () => clearInterval(id);
+    }, []);
+
+    // Task 5: persist lastSeen on visibilitychange / beforeunload; gameSpeed+lastSeen already serialized via stateRef.
+    // Version stays at 7 — LOAD_GAME finalizeWithOffline defaults missing fields additively, no bump needed.
+    useEffect(() => {
+        const onVis = () => { if (document.hidden) saveGame(); else { stateRef.current.lastSeen = Date.now(); } };
+        const onBefore = () => saveGame();
+        document.addEventListener("visibilitychange", onVis);
+        window.addEventListener("beforeunload", onBefore);
+        return () => { document.removeEventListener("visibilitychange", onVis); window.removeEventListener("beforeunload", onBefore); };
     }, []);
 
     const toggleTask = (taskId: TaskID) => {

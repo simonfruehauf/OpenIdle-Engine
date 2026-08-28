@@ -273,6 +273,78 @@ function run(): CheckResult {
     }
   }
 
+  // 5. Speed tier validation (Task 5 polishing)
+  // If SPEED_TIERS defined (non-empty), validate multipliers, costs, OFFLINE_RATE, duplicates, and prereqs.
+  {
+    const speedTierFiles = files.filter(f => stripComments(fs.readFileSync(f, "utf-8")).includes("SPEED_TIERS"));
+    const allMultipliers: number[] = [];
+    let hasSpeedTiers = false;
+    for (const f of speedTierFiles) {
+      const content = stripComments(fs.readFileSync(f, "utf-8"));
+      // Robust tier parsing: slice by multiplier occurrences to avoid nested-brace regex pitfalls
+      const tierStartRe = /\{\s*multiplier\s*:\s*(\d+)/g;
+      const starts: { index: number; mult: number }[] = [];
+      let sm: RegExpExecArray | null;
+      while ((sm = tierStartRe.exec(content))) {
+        starts.push({ index: sm.index, mult: parseInt(sm[1], 10) });
+      }
+      for (let i = 0; i < starts.length; i++) {
+        const start = starts[i].index;
+        const end = i + 1 < starts.length ? starts[i + 1].index : content.length;
+        const tierSlice = content.slice(start, end);
+        // Only consider slices that are inside SPEED_TIERS array (heuristic: they follow SPEED_TIERS)
+        // If file has other multiplier fields outside SPEED_TIERS, they'd be false positives — but spec says only speed tiers use multiplier
+        const costsMatch = tierSlice.match(/costs\s*:\s*\[([^\]]*)\]/);
+        if (!costsMatch) continue;
+        hasSpeedTiers = true;
+        const mult = starts[i].mult;
+        allMultipliers.push(mult);
+        const costsInner = costsMatch[1];
+        const costResIds = [...costsInner.matchAll(/resourceId:\s*["']([^"']+)["']/g)].map(x => x[1]);
+        if (![1, 2, 4, 8].includes(mult)) {
+          errors.push(`SPEED_TIERS multiplier "${mult}" in ${path.relative(".", f)} is invalid — must be one of 1,2,4,8`);
+        }
+        for (const rid of costResIds) {
+          if (!definedResources.has(rid)) {
+            errors.push(`SPEED_TIERS costs resourceId "${rid}" in ${path.relative(".", f)} has no defined Resource`);
+          }
+        }
+        if (mult === 1 && costResIds.length > 0) {
+          warnings.push(`SPEED_TIERS 1× has costs [${costResIds.join(", ")}] in ${path.relative(".", f)} — 1× should be free`);
+        }
+        const prereqMatch = tierSlice.match(/prerequisites\s*:\s*\[([^\]]*)\]/);
+        if (prereqMatch) {
+          const prereqInner = prereqMatch[1];
+          const prereqResIds = [...prereqInner.matchAll(/resourceId:\s*["']([^"']+)["']/g)].map(x => x[1]);
+          const prereqActionIds = [...prereqInner.matchAll(/actionId:\s*["']([^"']+)["']/g)].map(x => x[1]);
+          const prereqTaskIds = [...prereqInner.matchAll(/taskId:\s*["']([^"']+)["']/g)].map(x => x[1]);
+          for (const rid of prereqResIds) if (!definedResources.has(rid)) errors.push(`SPEED_TIERS prerequisites resourceId "${rid}" in ${path.relative(".", f)} has no defined Resource`);
+          for (const aid of prereqActionIds) if (!definedActions.has(aid)) errors.push(`SPEED_TIERS prerequisites actionId "${aid}" in ${path.relative(".", f)} has no defined Action`);
+          for (const tid of prereqTaskIds) if (!definedTasks.has(tid)) errors.push(`SPEED_TIERS prerequisites taskId "${tid}" in ${path.relative(".", f)} has no defined Task`);
+        }
+      }
+    }
+    if (hasSpeedTiers) {
+      const seenMult = new Map<number, number>();
+      for (const mm of allMultipliers) seenMult.set(mm, (seenMult.get(mm) || 0) + 1);
+      for (const [mult, count] of seenMult) if (count > 1) warnings.push(`SPEED_TIERS duplicate multiplier ${mult}× (${count} tiers)`);
+      // OFFLINE_RATE validation: if defined, check its resourceId exists
+      for (const f of files) {
+        const c = stripComments(fs.readFileSync(f, "utf-8"));
+        if (c.includes("OFFLINE_RATE")) {
+          const offIdx = c.indexOf("OFFLINE_RATE");
+          const slice = c.slice(offIdx, offIdx + 600);
+          const ridMatch = slice.match(/resourceId:\s*["']([^"']+)["']/);
+          if (ridMatch) {
+            const rid = ridMatch[1];
+            if (!definedResources.has(rid)) errors.push(`OFFLINE_RATE resourceId "${rid}" in ${path.relative(".", f)} has no defined Resource`);
+          }
+          break;
+        }
+      }
+    }
+  }
+
   return { ok: errors.length === 0, errors, warnings };
 }
 
