@@ -21,6 +21,9 @@ import * as Ch4Equipment from "./chapter4/equipment";
 import * as Ch5Tasks from "./chapter5/tasks";
 import * as Ch5Actions from "./chapter5/actions";
 import * as Ch5Equipment from "./chapter5/equipment";
+import * as SideNotebook from "./side/notebook";
+import * as SideSequences from "./side/sequences";
+import * as SideBestiary from "./side/bestiary";
 
 export interface GameModule {
   CATEGORIES?: any[];
@@ -35,6 +38,7 @@ export interface GameModule {
   BRAIDS?: any[];
   BRAID_SPELLS?: any[];
   CASTING_FORMS?: any[];
+  BESTIARY?: any[];
 }
 
 const modules: GameModule[] = [
@@ -44,6 +48,7 @@ const modules: GameModule[] = [
   Ch3Tasks, Ch3Actions, Ch3Equipment,
   Ch4Tasks, Ch4Actions, Ch4Equipment,
   Ch5Tasks, Ch5Actions, Ch5Equipment,
+  SideNotebook, SideSequences, SideBestiary,
 ];
 
 function collect<T>(key: keyof GameModule): T[] {
