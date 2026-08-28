@@ -393,23 +393,20 @@ const GameLayout: React.FC = () => {
                 </aside>
 
                 {/* MIDDLE COLUMN: TABS + CONTENT */}
-                <main className="flex flex-col flex-1 bg-white overflow-hidden relative min-h-0">
-                    {state.flags["met_cathal"] && (
-                        <div className="bg-gray-100 border-b border-gray-300 p-2 text-xs flex items-center justify-between shrink-0">
-                            <div className="flex items-center gap-2">
-                                Auto-Rest:
-                                <select value={state.restTaskId || ""} onChange={(e) => setRestTask(e.target.value || null)} className="bg-white border border-gray-300 rounded px-2 py-1 outline-none focus:border-blue-500">
-                                    <option value="">(None)</option>
-                                    {config.tasks.filter(t => t.type === 'rest' && state.tasks[t.id]?.unlocked).map(t => (
-                                        <option key={t.id} value={t.id}>{t.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <span className="text-[10px] text-gray-400 italic">Unlocked at Hollow Reach</span>
+                <main className="flex-grow bg-white flex-1 relative">
+                    <div className="bg-gray-100 border-b border-gray-300 p-2 text-xs flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            Auto-Rest:
+                            <select value={state.restTaskId || ""} onChange={(e) => setRestTask(e.target.value || null)} className="bg-white border border-gray-300 rounded px-2 py-1 outline-none focus:border-blue-500">
+                                <option value="">(None)</option>
+                                {config.tasks.filter(t => t.type === 'rest' && state.tasks[t.id]?.unlocked).map(t => (
+                                    <option key={t.id} value={t.id}>{t.name}</option>
+                                ))}
+                            </select>
                         </div>
-                    )}
+                    </div>
 
-                    <div className="flex border-b border-gray-300 bg-gray-50 shrink-0">
+                    <div className="flex border-b border-gray-300 bg-gray-50">
                         <button onClick={() => setActiveTab('activity')} className={`flex-1 py-2 text-xs font-bold uppercase tracking-wide border-r border-gray-200 hover:bg-gray-100 ${activeTab === 'activity' ? 'bg-white text-blue-600 border-b-2 border-b-blue-500' : 'text-gray-500'}`}>Activity</button>
                         {hasItems && (
                             <button onClick={() => setActiveTab('equipment')} className={`flex-1 py-2 text-xs font-bold uppercase tracking-wide border-r border-gray-200 hover:bg-gray-100 ${activeTab === 'equipment' ? 'bg-white text-blue-600 border-b-2 border-b-blue-500' : 'text-gray-500'}`}>Equipment</button>
@@ -423,30 +420,26 @@ const GameLayout: React.FC = () => {
                     </div>
 
                     {activeTab === 'activity' && (
-                        <div className="flex flex-col flex-1 overflow-hidden min-h-0">
+                        <>
                             <div className="bg-orange-50 border-b border-orange-200 p-2 text-center shadow-sm shrink-0 flex items-center justify-center gap-4">
                                 <span className="text-xs text-orange-600 uppercase font-bold tracking-wide mr-2">Current Activity:</span>
                                 <span className={`font-bold ${activeTaskId ? 'text-orange-800' : 'text-gray-400 italic'}`}>{activeTaskName}</span>
                                 {autoRestLabel && <span className="text-[10px] text-orange-600 ml-2 italic font-normal">({autoRestLabel})</span>}
                             </div>
 
-                            <div className="flex-1 overflow-y-auto p-4 max-w-4xl mx-auto w-full min-h-0">
+                            <div className="flex-grow overflow-y-auto p-4 max-w-4xl mx-auto w-full">
                                 <FormSelector />
                                 {config.categories
                                     .filter(cat => !cat.parentCategoryId)
                                     .map(cat => renderActivityCategory(cat))}
                             </div>
-                        </div>
+                        </>
                     )}
 
-                    {activeTab === 'equipment' && (
-                        <div className="flex-1 overflow-y-auto p-4 max-w-4xl mx-auto w-full min-h-0">
-                            <EquipmentView />
-                        </div>
-                    )}
+                    {activeTab === 'equipment' && <EquipmentView />}
 
                     {activeTab === 'converters' && (
-                        <div className="flex-1 overflow-y-auto p-4 max-w-4xl mx-auto w-full min-h-0">
+                        <div className="flex-grow overflow-y-auto p-4 max-w-4xl mx-auto w-full">
                             {config.converters.some(c => state.converters[c.id]?.owned) && (
                                 <div className="mb-4 border border-gray-200 rounded-sm overflow-hidden shadow-sm">
                                     <SectionHeader title="Owned Converters" isOpen={!collapsedSections['conv-owned']} onToggle={() => toggleSection('conv-owned')} count={config.converters.filter(c => state.converters[c.id]?.owned).length} colorClass="bg-gray-100" />
@@ -480,7 +473,7 @@ const GameLayout: React.FC = () => {
                     )}
 
                     {activeTab === 'completed' && (
-                        <div className="flex-1 overflow-y-auto p-4 max-w-2xl mx-auto w-full min-h-0">
+                        <div className="flex-grow overflow-y-auto p-4 max-w-2xl mx-auto w-full">
                             <h3 className="text-xs font-bold text-gray-400 uppercase border-b border-gray-200 mb-4 pb-1">Completed</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 opacity-75 grayscale hover:grayscale-0 transition-all">
                                 {config.actions.filter(a => isActionCompleted(a.id)).map(a => <ActionCard key={a.id} action={a} />)}
