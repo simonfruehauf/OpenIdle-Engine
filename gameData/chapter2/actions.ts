@@ -107,17 +107,18 @@ export const ACTIONS: ActionConfig[] = [
   {
     id: "settle_into_reach",
     name: "Settle into Reach",
-    description: "Take up residence at the Conclave; requisition standard practice gear.",
+    description: "Take up residence at the Conclave; requisition standard practice gear. Settling lets you hold two practices at once.",
     category: "chapter2",
     costs: [],
     effects: [],
     firstCompletionEffects: [
       { type: "add_item", itemId: "practice_wand", amount: 1 },
       { type: "add_item", itemId: "wardstone_amulet", amount: 1 },
+      { type: "increase_max_tasks", amount: 1 },
     ],
     maxExecutions: 1,
     prerequisites: [{ actionId: "widow_cathal_visit", minExecutions: 1 }],
-    logMessage: "A borrowed room. A peg for your coat. Yours now.",
+    logMessage: "A borrowed room. A peg for your coat. Yours now - and room to keep two workings in mind.",
   },
   {
     id: "skyglass_unlock",
@@ -128,7 +129,7 @@ export const ACTIONS: ActionConfig[] = [
     // Engine applies firstCompletionEffects BEFORE effects; capacity must exist
     // before the grant lands or the +20 clamps against baseMax 0 and is lost.
     firstCompletionEffects: [
-      { type: "set_max_resource", resourceId: "skyglass", amount: 30 },
+      { type: "set_max_resource", resourceId: "skyglass", amount: 40 },
       { type: "set_flag", flagId: "skyglass_unlocked", amount: 1 },
     ],
     effects: [{ type: "add_resource", resourceId: "skyglass", amount: 20 }],

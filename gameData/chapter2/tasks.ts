@@ -46,6 +46,8 @@ export const TASKS: TaskConfig[] = [
     name: "Library Duty",
     description: "Assist Osrun Fell among the stacks. Small Focus gain; history waits here.",
     category: "chapter2",
+    progressRequired: 25,
+    autoRestart: true,
     costPerSecond: [],
     effectsPerSecond: [
       { type: "add_resource", resourceId: "focus", amount: 0.15 },

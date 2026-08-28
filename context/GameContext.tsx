@@ -929,6 +929,17 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 [action.actionId]: { ...aState, executions: aState.executions + 1, lastUsed: Date.now() }
             };
 
+            // Sustained form: hold working past instant (Chapter IV)
+            let newSustained = [...state.sustainedSpells];
+            const isSustained = forms.some(f => f.id === "duration_sustained");
+            if (isSustained) {
+                if (newSustained.length < 3) {
+                    newSustained.push({ spellId: spell.id, aspectId: aspectKey, remainingSeconds: 30 });
+                } else {
+                    logUpdates.unshift(makeLog("Sustained limit reached (3) - release one before channeling more.", 'other'));
+                }
+            }
+
             return {
                 ...state,
                 resources: newResources,
@@ -936,6 +947,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 aspectFluency: newFluency,
                 failedCastings: newFailed,
                 footprintCounter,
+                sustainedSpells: newSustained,
                 log: logUpdates.slice(0, 50)
             };
         }
@@ -1328,8 +1340,8 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 }
             });
 
-            // 2. Process Sustained Spell Drain (inert until sustained spells exist - Chapter IV)
-            let newSustained = state.sustainedSpells;
+            // 2. Process Sustained Spell Drain + expiry (Chapter IV)
+            let newSustained = [...state.sustainedSpells];
             if (newSustained.length > 0) {
                 const sustainedForms = CASTING_FORMS.filter(f => f.value === "sustained");
                 const drainPerSec = sustainedForms.reduce((m, f) => m + (f.continuousDrainPerSecond ?? 0), 0);
@@ -1337,11 +1349,21 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                     const totalDrain = drainPerSec * newSustained.length * dtSeconds;
                     if ((newResources["mana"]?.current ?? 0) >= totalDrain) {
                         newResources["mana"].current -= totalDrain;
-                        newSustained = newSustained.map(s => ({ ...s }));
+                        // Tick down remaining and expire
+                        let expired = 0;
+                        newSustained = newSustained.map(s => ({ ...s, remainingSeconds: s.remainingSeconds - dtSeconds }))
+                            .filter(s => {
+                                if (s.remainingSeconds <= 0) { expired++; return false; }
+                                return true;
+                            });
+                        if (expired > 0) logUpdates.unshift(makeLog(`${expired} sustained working${expired > 1 ? 's' : ''} released.`, 'other'));
                     } else {
                         newSustained = [];
                         logUpdates.unshift(makeLog("Sustained workings gutter out - Mana exhausted.", 'other'));
                     }
+                } else {
+                    // No drain config but still expiry
+                    newSustained = newSustained.map(s => ({ ...s, remainingSeconds: s.remainingSeconds - dtSeconds })).filter(s => s.remainingSeconds > 0);
                 }
             }
 

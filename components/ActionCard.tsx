@@ -78,6 +78,13 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
 
     const isUpgrade = isLimited && (action.maxExecutions || 0) < 100; // Heuristic for "Upgrade" vs "Repeatable Action"
 
+    // Focus failure telegraph (low-risk UX)
+    const focusCurrent = state.resources["focus"]?.current ?? 0;
+    const focusMax = getMaxResource("focus");
+    const focusRatio = focusMax > 0 ? focusCurrent / focusMax : 0;
+    const failureChance = spell ? getFailureChance(spell.id) : 0;
+    const isFocusStrained = !!spell && (failureChance > 0.10 || focusRatio < 0.35);
+
     const handleMouseEnter = (e: React.MouseEvent) => {
         setHoverRect(e.currentTarget.getBoundingClientRect());
         setIsHovered(true);
@@ -287,8 +294,11 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
                                 {Number.isInteger(spell.baseManaCost) ? spell.baseManaCost : spell.baseManaCost.toFixed(1)}
                             </span>
                         </div>
-                        <div className="text-amber-700">
-                            {Math.round(getFailureChance(spell.id) * 100)}% failure risk
+                        <div className={`${failureChance > 0.10 ? 'text-amber-600 font-bold' : 'text-amber-700'}`}>
+                            {Math.round(failureChance * 100)}% failure risk{isFocusStrained ? ' • Focus strained' : ''}
+                        </div>
+                        <div className="text-[10px] text-gray-500">
+                            Focus {focusCurrent.toFixed(0)}/{focusMax} ({Math.round(focusRatio * 100)}%)
                         </div>
                         <div className="text-green-700">
                             +{spell.baseMotesYield} Motes on success
@@ -407,7 +417,9 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
         styleClass += "bg-slate-50 border-gray-200 text-gray-500 opacity-70 cursor-not-allowed";
     } else {
         // Affordable & Available
-        if (isUpgrade) {
+        if (isFocusStrained) {
+            styleClass += "bg-amber-50 border-amber-300 hover:border-amber-400 hover:shadow-sm cursor-pointer hover:bg-amber-100 ring-1 ring-amber-200";
+        } else if (isUpgrade) {
             styleClass += "bg-yellow-50/20 border-yellow-200 hover:border-yellow-400 hover:shadow-sm cursor-pointer hover:bg-yellow-50/50 border-b-2";
         } else {
             // Brighter background for unlocked actions

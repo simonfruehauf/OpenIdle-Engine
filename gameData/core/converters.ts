@@ -24,8 +24,8 @@ export const CONVERTERS: ConverterConfig[] = [
   {
     id: "deep_current_tap",
     name: "Undertow Tap",
-    description: "Draws on the world's own undertow while you work.",
-    cost: [{ resourceId: "skyglass", amount: 40 }],
+    description: "Draws on the world's own undertow while you work. (Capacity-sized to fit skyglass 30 vault)",
+    cost: [{ resourceId: "skyglass", amount: 25 }],
     canBeToggled: false,
     costPerSecond: [],
     effectsPerSecond: [{ type: "add_resource", resourceId: "deep_current", amount: 0.05 }],

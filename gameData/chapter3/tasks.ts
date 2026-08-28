@@ -59,7 +59,7 @@ export const TASKS: TaskConfig[] = [
   {
     id: "braid_practice",
     name: "Braid Practice",
-    description: "Weave two Aspects at once. Flooded Undercroft work - the prerequisite for braided casting and Farseer's lenses.",
+    description: "Weave two Aspects at once. Flooded Undercroft work - the prerequisite for braided casting and Farseer's lenses. Rare skyglass glints in the flooded seams.",
     category: "chapter3",
     progressRequired: 30,
     autoRestart: true,
@@ -67,5 +67,6 @@ export const TASKS: TaskConfig[] = [
     effectsPerSecond: [{ type: "add_resource", resourceId: "motes", amount: 1.0 }],
     xpPerSecond: 10,
     prerequisites: [{ actionId: "skyglass_unlock", minExecutions: 1 }],
+    completionEffects: [{ type: "add_resource", resourceId: "skyglass", amount: 1, chance: 0.6 }],
   },
 ];
