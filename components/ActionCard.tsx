@@ -71,10 +71,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
 
     const isLimited = action.maxExecutions !== undefined;
     const isCompleted = isLimited && actionState.executions >= (action.maxExecutions || 0);
-    const effectiveCooldown = spell ? spell.baseCooldownMs : (action.cooldownMs ?? 200);
-    const isOnCooldown = actionState.lastUsed ? (Date.now() - actionState.lastUsed < effectiveCooldown) : false;
     const canPayMana = !spell || (state.resources["mana"]?.current ?? 0) >= spell.baseManaCost; // form cost multipliers arrive with Ch IV UI; instants are 1.0x
-    const isDisabled = !canAfford || !canPayMana || isCompleted || !!exclusiveBlocked || isLocked || isOnCooldown;
 
     const isUpgrade = isLimited && (action.maxExecutions || 0) < 100; // Heuristic for "Upgrade" vs "Repeatable Action"
 
@@ -84,6 +81,19 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
     const focusRatio = focusMax > 0 ? focusCurrent / focusMax : 0;
     const failureChance = spell ? getFailureChance(spell.id) : 0;
     const isFocusStrained = !!spell && (failureChance > 0.10 || focusRatio < 0.35);
+
+    const baseEffective = spell ? spell.baseCooldownMs : (action.cooldownMs ?? 200);
+    const cooldownMods = spell || action.id
+        ? getActiveModifiers().filter(m => m.property === 'cooldown' && m.type === 'flat' && (!m.actionId || m.actionId === action.id))
+        : [];
+    const effectiveCooldown = spell
+        ? Math.max(200, baseEffective + cooldownMods.reduce((s, m) => s + m.value, 0))
+        : baseEffective;
+    const remainingMs = actionState.lastUsed ? Math.max(0, effectiveCooldown - (Date.now() - actionState.lastUsed)) : 0;
+    const cooldownPct = effectiveCooldown > 0 ? remainingMs / effectiveCooldown : 0;
+    const isOnCooldown = actionState.lastUsed ? (Date.now() - actionState.lastUsed < effectiveCooldown) : false;
+    const showCooldown = effectiveCooldown > 200 && remainingMs > 0 && isOnCooldown;
+    const isDisabled = !canAfford || !canPayMana || isCompleted || !!exclusiveBlocked || isLocked || isOnCooldown;
 
     const handleMouseEnter = (e: React.MouseEvent) => {
         setHoverRect(e.currentTarget.getBoundingClientRect());
@@ -297,6 +307,11 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
                         <div className={`${failureChance > 0.10 ? 'text-amber-600 font-bold' : 'text-amber-700'}`}>
                             {Math.round(failureChance * 100)}% failure risk{isFocusStrained ? ' • Focus strained' : ''}
                         </div>
+                        {showCooldown && (
+                            <div className="text-slate-600 font-mono">
+                                {(remainingMs/1000).toFixed(1)}s remaining
+                            </div>
+                        )}
                         <div className="text-[10px] text-gray-500">
                             Focus {focusCurrent.toFixed(0)}/{focusMax} ({Math.round(focusRatio * 100)}%)
                         </div>
@@ -404,7 +419,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
     };
 
     // --- Dynamic Styling ---
-    let styleClass = "relative flex flex-col items-start p-2 border rounded-sm w-full text-left transition-all mb-0 overflow-visible h-full min-h-[60px] ";
+    let styleClass = "relative flex flex-col items-start p-2 border rounded-sm w-full text-left transition-all mb-0 overflow-hidden h-full min-h-[60px] ";
 
     if (exclusiveBlocked) {
         styleClass += "bg-gray-200 border-gray-300 opacity-50 cursor-not-allowed";
@@ -475,6 +490,14 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
                         )}
                     </div>
                 </div>
+                {showCooldown && (
+                    <>
+                        <div className="absolute bottom-0 left-0 h-1 bg-slate-400" style={{ width: `${cooldownPct * 100}%` }} />
+                        <div className="absolute inset-0 flex items-center justify-center text-[10px] font-mono bg-white/40 pointer-events-none">
+                            {(remainingMs/1000).toFixed(1)}s
+                        </div>
+                    </>
+                )}
             </button>
         </>
     );
