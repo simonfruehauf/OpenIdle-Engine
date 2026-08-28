@@ -4,8 +4,10 @@ export const TASKS: TaskConfig[] = [
   {
     id: "stonewatch_practice",
     name: "Stonewatch Practice",
-    description: "Harden a stone's surface under Conclave instruction. Introductory Iron.",
+    description: "Harden a stone's surface under Conclave instruction. Introductory Iron. Short sessions, steady residue.",
     category: "iron",
+    progressRequired: 5,
+    autoRestart: true,
     costPerSecond: [{ resourceId: "focus", amount: 0.3 }],
     effectsPerSecond: [{ type: "add_resource", resourceId: "motes", amount: 0.35 }],
     xpPerSecond: 5,
