@@ -14,13 +14,13 @@ export const TASKS: TaskConfig[] = [
   {
     id: "focus_meditation",
     name: "Focus Meditation",
-    description: "Sit with the scar's light and steady your mind.",
+    description: "Sit with the scar's light and steady your mind. Conclave discipline — taught only after Cathal sends you on.",
     category: "chapter2",
     type: "rest",
     costPerSecond: [],
     effectsPerSecond: [{ type: "add_resource", resourceId: "focus", amount: 0.3 }],
     xpPerSecond: 2,
-    prerequisites: [{ taskId: "catch_your_breath", minExecutions: 1 }],
+    prerequisites: [{ actionId: "widow_cathal_visit", minExecutions: 1 }],
   },
   {
     id: "mote_study",

@@ -9,7 +9,6 @@ export const ACTIONS: ActionConfig[] = [
     spellId: "stonewatch",
     costs: [],
     effects: [],
-    maxExecutions: 999999,
     cooldownMs: 3000,
     prerequisites: [{ actionId: "widow_cathal_visit", minExecutions: 1 }],
     logMessage: "The stone's skin hardens like winter arriving.",

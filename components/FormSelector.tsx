@@ -11,8 +11,10 @@ export const FormSelector: React.FC = () => {
     ([id, unlocked]) => unlocked && !id.endsWith("_instant") && !id.endsWith("outward")
   );
 
-  // Always render after forms_awakened, but keep visible hint earlier
   const formsAwakened = state.flags["forms_awakened"] || hasAnyUnlockedBeyondInstant;
+
+  // Hide entirely until Chapter IV (Awaken Casting Forms). Prevents "unlock in chapter IV" hint spam at top.
+  if (!formsAwakened) return null;
 
   return (
     <div className="bg-white border border-gray-200 rounded-sm p-2 mb-3 flex flex-wrap gap-3 items-center text-xs">
@@ -27,7 +29,6 @@ export const FormSelector: React.FC = () => {
               value={current ?? ""}
               onChange={(e) => selectForm(axis, e.target.value || null)}
               className="bg-white border border-gray-300 rounded px-1 py-0.5 text-xs min-w-[110px] disabled:bg-gray-100 disabled:text-gray-400"
-              disabled={!formsAwakened && axis !== "method"}
             >
               {options.map((f) => {
                 const unlocked = state.castingFormsUnlocked[f.id];
@@ -41,9 +42,6 @@ export const FormSelector: React.FC = () => {
           </label>
         );
       })}
-      {!formsAwakened && (
-        <span className="text-[10px] text-gray-400 italic ml-2">Unlock via Awaken Casting Forms (Chapter IV)</span>
-      )}
     </div>
   );
 };
