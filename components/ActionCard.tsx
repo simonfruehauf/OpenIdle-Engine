@@ -312,6 +312,11 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
                                 {(remainingMs/1000).toFixed(1)}s remaining
                             </div>
                         )}
+                        {spell && actionState.executions > 0 && (
+                            <div className="text-[10px] text-gray-500 font-mono">
+                                Cast {actionState.executions}×
+                            </div>
+                        )}
                         <div className="text-[10px] text-gray-500">
                             Focus {focusCurrent.toFixed(0)}/{focusMax} ({Math.round(focusRatio * 100)}%)
                         </div>
@@ -486,6 +491,11 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
                         {isLimited && !exclusiveBlocked && !isLocked && (
                             <div className={`text-[9px] font-mono mt-auto pt-1 self-start ${isCompleted ? 'text-gray-400' : 'text-gray-500'}`}>
                                 {isCompleted ? 'Maxed' : `${actionState.executions}/${action.maxExecutions}`}
+                            </div>
+                        )}
+                        {!isLimited && spell && !exclusiveBlocked && !isLocked && actionState.executions > 0 && (
+                            <div className="text-[9px] font-mono mt-auto pt-1 self-start text-gray-400">
+                                {actionState.executions} casts
                             </div>
                         )}
                     </div>

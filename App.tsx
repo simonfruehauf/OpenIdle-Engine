@@ -550,18 +550,31 @@ const GameLayout: React.FC = () => {
                                     const task = config.tasks.find(t => t.id === tid);
                                     if (!task) return null;
                                     const tState = state.tasks[tid];
+                                    const hasProgress = task.progressRequired !== undefined;
                                     const progress = tState.progress || 0;
                                     const req = task.progressRequired || 1;
-                                    const pct = Math.min(100, (progress / req) * 100);
+                                    const pct = hasProgress ? Math.min(100, (progress / req) * 100) : 0;
                                     const isLoop = task.autoRestart;
+                                    const completions = tState.completions || 0;
                                     return (
-                                        <div onClick={() => toggleTask(tid)} className="group flex items-center gap-2 bg-white border border-orange-200 rounded-sm p-1.5 cursor-pointer hover:bg-red-50 transition-colors select-none">
-                                            {isLoop && <svg className="w-3 h-3 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>}
-                                            <span className="text-xs font-semibold text-gray-700 group-hover:text-red-700 truncate flex-grow">{task.name}</span>
-                                            {pct > 0 && (
-                                                <div className={`w-3/4 h-0.5 bg-gray-200 rounded-full overflow-hidden`}>
-                                                    <div style={{ width: `${pct}%`, backgroundColor: isLoop ? '#c7e2e6' : '#fca5a5' }} /></div>
+                                        <div onClick={() => toggleTask(tid)} className="group flex flex-col gap-1 bg-white border border-orange-200 rounded-sm p-1.5 cursor-pointer hover:bg-red-50 transition-colors select-none">
+                                            <div className="flex items-center gap-2 w-full">
+                                                {isLoop && <svg className="w-3 h-3 text-orange-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>}
+                                                <span className="text-xs font-semibold text-gray-700 group-hover:text-red-700 truncate flex-grow">{task.name}</span>
+                                                <span className="text-[9px] font-mono text-gray-400 shrink-0">
+                                                    {hasProgress ? `${progress.toFixed(1)}/${req}s` : `Lv ${tState.level}`}
+                                                </span>
+                                            </div>
+                                            {hasProgress ? (
+                                                <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden flex">
+                                                    <div className="h-full transition-none" style={{ width: `${pct}%`, backgroundColor: isLoop ? '#f97316' : '#ef4444' }} />
+                                                </div>
+                                            ) : (
+                                                <div className="w-full h-1 bg-orange-100 rounded-full overflow-hidden flex">
+                                                    <div className="h-full bg-orange-300 animate-pulse" style={{ width: '100%' }} />
+                                                </div>
                                             )}
+                                            {hasProgress && completions > 0 && <span className="text-[9px] font-mono text-gray-400 self-end -mt-0.5">{completions} done</span>}
                                         </div>
                                     );
                                 })}
