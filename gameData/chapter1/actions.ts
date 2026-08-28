@@ -2,6 +2,18 @@ import { ActionConfig } from "../../types";
 
 export const ACTIONS: ActionConfig[] = [
   {
+    id: "first_spark",
+    name: "The First Spark",
+    description: "Millhollow dusk — the Sundering's light gathers without asking. A brief, bright, uncontrolled spark. Prologue: it leaves ash on your hands and emptiness in your reserve. Click to let it happen.",
+    category: "chapter1",
+    costs: [],
+    effects: [],
+    firstCompletionEffects: [{ type: "set_flag", flagId: "first_spark", amount: 1 }],
+    maxExecutions: 1,
+    hideWhenComplete: true,
+    logMessage: "Heat. Light. Then ash on your hands. The air still smells of ozone.",
+  },
+  {
     id: "cast_ash",
     name: "Cast: Coax the Ember",
     description: "Grow or shrink an existing flame. Introductory Ash casting. The first Aspect Widow Cathal told you to try.",

@@ -4,7 +4,7 @@ export const TASKS: TaskConfig[] = [
   {
     id: "catch_your_breath",
     name: "Catch Your Breath",
-    description: "The first uncontrolled casting still crackles under your skin. Calming down — not casting harder — is the way through.",
+    description: "The spark still crackles under your skin. Calming down — not casting harder — is the way through. You did not mean to cast; now you must learn to steady.",
     category: "chapter1",
     progressRequired: 10,
     maxExecutions: 1,
@@ -18,6 +18,7 @@ export const TASKS: TaskConfig[] = [
     firstCompletionEffects: [
       { type: "add_item", itemId: "millers_charm", amount: 1 },
     ],
+    prerequisites: [{ actionId: "first_spark", minExecutions: 1 }],
   },
   {
     id: "ember_practice",
