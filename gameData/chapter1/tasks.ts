@@ -58,11 +58,12 @@ export const TASKS: TaskConfig[] = [
   {
     id: "errand_running",
     name: "Errand Running",
-    description: "Non-magical village chores that quietly build Focus through routine.",
+    description: "Non-magical village chores that quietly build Focus through routine. After you’ve steadied from the first spark, routine steadies what practice cannot.",
     category: "chapter1",
     type: "rest",
     costPerSecond: [],
     effectsPerSecond: [{ type: "add_resource", resourceId: "focus", amount: 0.25 }],
     xpPerSecond: 1,
+    prerequisites: [{ taskId: "catch_your_breath", minExecutions: 1 }],
   },
 ];

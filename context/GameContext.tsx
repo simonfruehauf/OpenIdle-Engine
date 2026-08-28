@@ -263,7 +263,7 @@ const createInitialState = (): GameState => {
         inventory: [],
         equipment: {},
         modifiers: [],
-        log: [makeLog("Welcome. Manage your tasks and resources.", 'other')],
+        log: [makeLog("Millhollow, edge of the Sundering's light. Your first spark leapt before you meant it — heat, then ash on your hands. Mana low, Focus thin. Catch your breath before you try again.", 'flavour')],
         totalTimePlayed: 0,
         activeTaskIds: [],
         maxConcurrentTasks: 1,
