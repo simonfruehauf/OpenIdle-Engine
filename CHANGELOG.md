@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## v0.0.0 — Initial Release
+## v0.0.0 - Initial Release
 
 - Engine core: React 19 + TypeScript + Vite + Tailwind CSS 4
 - GameState with versioned persistence (version 6)

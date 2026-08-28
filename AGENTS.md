@@ -68,12 +68,12 @@ npm run validate # duplicate-ID & reference checks (useful before PRs)
 | 8 | getScaledCost level>0 heuristic vs card mirrors | ✅ DONE | Cards use executions/level correctly |
 | 9 | prerequisitesAny only used for accessory_2 | ✅ Done | types.ts:74 + EquipmentView.tsx:118 |
 | 10 | Start pacing 50/100 mana half-full + unlock spam after Catch | ✅ FIXED | `core/resources.ts:6` 18/100 mana 10/30 focus + staggered prereqs (`chapter1/tasks.ts:32` hedge behind 3 ash, `actions.ts:31` hush behind 3 root, `actions.ts:62` widow behind 4 ash, `chapter2/tasks.ts:23` focus_meditation behind widow) |
-| 11 | 0/999999 badge on repeatables | ✅ FIXED | Removed `maxExecutions:999999` from 7 repeatables (`chapter2/actions.ts:12` etc.) — `ActionCard.tsx:72` isLimited false → no badge |
+| 11 | 0/999999 badge on repeatables | ✅ FIXED | Removed `maxExecutions:999999` from 7 repeatables (`chapter2/actions.ts:12` etc.) - `ActionCard.tsx:72` isLimited false → no badge |
 | 12 | Activity tab not scrollable with many cards | ✅ FIXED | `App.tsx:396` main `flex-col overflow-hidden` + activity `flex-1 overflow-y-auto` |
 | 13 | Casting Forms visible at 0s with “unlock in Ch IV” hint | ✅ FIXED | `FormSelector.tsx:14` `return null` until `forms_awakened` |
 | 14 | Auto-Rest dropdown visible from start | ✅ FIXED | `App.tsx:396` gated behind `state.flags["met_cathal"]` (Widow visit) |
 | 15 | Pure loops show Completed:0 with no completion path | ✅ FIXED | `TaskCard.tsx:157,450` hide when no `maxExecutions`/`progressRequired`; loops `ember/hedge/stillness/stonewatch` now `progressRequired:5 autoRestart:true` so counter ticks (or hidden if pure) |
-| 16 | Loop tasks used minExecutions (deadlock) — ritual/wild/sustain/braid/deep_listening | ✅ FIXED | `2701670` added `progressRequired 25-35 autoRestart` to `chapter3/tasks.ts:60` `chapter4/tasks.ts:6` `chapter5/tasks.ts:6` |
+| 16 | Loop tasks used minExecutions (deadlock) - ritual/wild/sustain/braid/deep_listening | ✅ FIXED | `2701670` added `progressRequired 25-35 autoRestart` to `chapter3/tasks.ts:60` `chapter4/tasks.ts:6` `chapter5/tasks.ts:6` |
 
 ## 5. Agent Workflow
 

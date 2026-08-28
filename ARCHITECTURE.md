@@ -147,7 +147,7 @@ Header (Title + Save/Export/Import/Reset)
 ## 9. Known Gotchas for Contributors
 
 1. **`getScaledCost` branching** (`GameContext.tsx:195`) now uses `level>0` heuristic to distinguish task vs action; card mirrors (`ActionCard.tsx:33`, `TaskCard.tsx:34`) must stay in sync. Old `resourceId` heuristic caused action costs to decay.
-2. **`getActiveModifiers` partial coverage** (`GameContext.tsx:15`) — now includes `set_max_resource` and `add_passive_gen_per_unit`; `increase_max_*` still handled via direct state, not modifiers. Keep in sync when adding new `Effect.type`.
+2. **`getActiveModifiers` partial coverage** (`GameContext.tsx:15`) - now includes `set_max_resource` and `add_passive_gen_per_unit`; `increase_max_*` still handled via direct state, not modifiers. Keep in sync when adding new `Effect.type`.
 3. **`cooldownMs` is enforced** (`GameContext.tsx:561`, `types.ts:106`, `ActionCard.tsx:72`): default `200ms`, blocks spam with `lastUsed` check; long cooldowns (≥1s) log remaining time. Short cooldowns silently drop.
 4. **Converter costs are unscaled** - unlike tasks/actions, purchase cost is flat. `getResourceBreakdown` now correctly scales active task drains (`:1469`), but converter toggle afford check uses `*0.1` probe vs `dtSeconds`.
 5. **Action tier heuristic** (`ActionCard.tsx:76`): `maxExecutions < 100` → styled as Upgrade (yellow). Keep limits under 100 for yellow styling or change the heuristic.

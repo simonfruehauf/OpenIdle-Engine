@@ -55,13 +55,13 @@ Groups cards in middle column (`App.tsx:368`) and resource groups in left column
 | `modify_yield_flat` | `taskId\|actionId\|resourceId` | `+amount` flat yield | Same targeting as above |
 | `modify_passive_gen` | `resourceId` | `+amount` passive `/s` (`property:'gen'`) | Floored source units * rate; shown in breakdown |
 | `add_passive_gen_per_unit` | `sourceResourceId` + `targetResourceId` | `+amount` per full unit of source/sec | `property:'gen_per_unit'`; stackable via modifiers |
-| `increase_max_tasks` | — | `maxConcurrentTasks += amount` | No target; direct state |
+| `increase_max_tasks` | - | `maxConcurrentTasks += amount` | No target; direct state |
 | `increase_max_executions` | `taskId\|actionId` | `+amount` to cap (`property:'max_exec'`) | Stored as modifier but not yet surfaced as separate UI |
 
 **Notes:**
 - `chance:0-1` per-trigger probability (e.g. drops). `hidden:true` effects are applied to state but **filtered from tooltips**. Four renderers duplicate this filter: `TaskCard.tsx:282`, `ActionCard.tsx:105`, `ConverterCard.tsx:53`, `EquipmentView.tsx:41`.
 - `firstCompletionEffects` fire **once** on completion; `effectsPerSecond` stream continuously. Don't mix them for recurring boosts.
-- Modifiers stack via `getActiveModifiers()` (`GameContext.tsx:15`) — they clone the current state, apply modifiers, and return a flat list. No priority system yet (last one wins for same property).
+- Modifiers stack via `getActiveModifiers()` (`GameContext.tsx:15`) - they clone the current state, apply modifiers, and return a flat list. No priority system yet (last one wins for same property).
 
 ### 1.5 TaskConfig (`types.ts:111`)
 
@@ -184,7 +184,7 @@ If `resource.baseMax === 0`, there must be at least one `modify_max_resource_fla
 * **Adding `exclusiveWith` to tasks** - no reducer handling; only actions (locks handle task branching).
 * **Relying on save compatibility after renames** - `LOAD_GAME` is versioned (current 6); removed fields orphan, renamed IDs duplicate unless migrated.
 * **Modifying state outside reducer** - will be overwritten next tick.
-* **Duplicate "Rest" names** (`rest_bench` vs `rest_bed` in `gameData/tasks.ts:5`) — both show "Rest"; rename for HUD clarity.
+* **Duplicate "Rest" names** (`rest_bench` vs `rest_bed` in `gameData/tasks.ts:5`) - both show "Rest"; rename for HUD clarity.
 
 ## 5. Agent Workflow (from AGENTS.md)
 
