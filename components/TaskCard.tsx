@@ -157,7 +157,9 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, isLocked = false }) =>
                 <div className="flex justify-between items-start mb-1">
                     <span className="font-bold text-sm text-black mr-2 leading-tight">{task.name}</span>
                     <div className="text-right text-gray-600 whitespace-nowrap">
-                        <span>Completed: {taskState.completions || 0}{task.maxExecutions ? `/${task.maxExecutions}` : ''}</span>
+                        {(task.maxExecutions !== undefined || (task.progressRequired !== undefined && task.progressRequired > 0)) && (
+                            <span>Completed: {taskState.completions || 0}{task.maxExecutions ? `/${task.maxExecutions}` : ''}</span>
+                        )}
                         {isLocked && <div className="text-red-600 font-bold text-[10px] uppercase">Locked</div>}
                     </div>
                 </div>
@@ -447,7 +449,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, isLocked = false }) =>
                                     )}
                                 </div>
 
-                                {!isLocked && (
+                                {!isLocked && (task.maxExecutions !== undefined || (task.progressRequired !== undefined && task.progressRequired > 0)) && (
                                     <span className="text-[9px] text-gray-500 mt-0.5">
                                         {task.maxExecutions ? `${taskState.completions || 0}/${task.maxExecutions}` : `Completed: ${taskState.completions || 0}`}
                                     </span>
