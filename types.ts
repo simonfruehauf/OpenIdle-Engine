@@ -240,6 +240,14 @@ export interface ConverterConfig {
   prerequisites?: Prerequisite[];
 }
 
+export interface SpeedTierConfig {
+  multiplier: 1 | 2 | 4 | 8;
+  costs: Cost[];
+  prerequisites?: Prerequisite[];
+  name?: string;
+  description?: string;
+}
+
 export interface ConverterState {
   owned: boolean;
   active: boolean;
@@ -316,6 +324,10 @@ export interface GameState {
   endgamePath?: EndgamePath;
   sustainedSpells: { spellId: string; aspectId?: AspectID; remainingSeconds: number }[];
   footprintCounter: number; // Unwitnessed challenge tracking
+
+  // Speed system (Task 1 scaffold — engine wired in Task 2)
+  gameSpeed: 1 | 2 | 4 | 8;
+  lastSeen: number; // unix ms for offline accumulation
 }
 
 export interface GameContextType {
@@ -328,6 +340,7 @@ export interface GameContextType {
     items: ItemConfig[];
     slots: SlotConfig[];
     converters: ConverterConfig[];
+    speedTiers: SpeedTierConfig[];
   };
   triggerAction: (actionId: ActionID) => void;
   toggleTask: (taskId: TaskID) => void;
@@ -354,4 +367,8 @@ export interface GameContextType {
   selectForm: (axis: 'method' | 'duration' | 'target', formId: string | null) => void;
   getFailureChance: (spellId: string) => number;
   secondKindling: () => void;
+
+  // Speed system (Task 1 scaffold — engine wired in Task 2)
+  setGameSpeed: (multiplier: 1 | 2 | 4 | 8) => void;
+  getSpeedCost: (multiplier: 1 | 2 | 4 | 8) => Cost[];
 }

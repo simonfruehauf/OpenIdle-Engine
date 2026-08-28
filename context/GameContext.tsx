@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useReducer, useRef } from 
 
 const TICK_RATE_MS = 100;
 const TICK_RATE_SECONDS = TICK_RATE_MS / 1000;
-import { ACTIONS, CATEGORIES, RESOURCES, TASKS, SLOTS, ITEMS, CONVERTERS } from "../gameData/index";
+import { ACTIONS, CATEGORIES, RESOURCES, TASKS, SLOTS, ITEMS, CONVERTERS, SPEED_TIERS } from "../gameData/index";
 import { SPELLS, ASPECTS } from "../gameData/core/aspects";
 import { CASTING_FORMS } from "../gameData/core/castingForms";
 import { MONTHLY_EVENTS } from "../gameData/live/seasons";
@@ -300,7 +300,9 @@ const createInitialState = (): GameState => {
         activeFormSelection: { method: "method_instant", duration: "duration_instant", target: "target_outward" },
         chapter: 1,
         sustainedSpells: [],
-        footprintCounter: 0
+        footprintCounter: 0,
+        gameSpeed: 1,
+        lastSeen: Date.now()
     };
 };
 
@@ -1687,6 +1689,15 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     const secondKindling = () => dispatch({ type: "SECOND_KINDLING" });
 
+    // Speed system stubs — Task 1 scaffold (real logic in Task 2)
+    const getSpeedCost = (multiplier: 1 | 2 | 4 | 8): Cost[] => {
+        const tier = (SPEED_TIERS as any[]).find((t: any) => t.multiplier === multiplier);
+        return tier?.costs ?? [];
+    };
+    const setGameSpeed = (_multiplier: 1 | 2 | 4 | 8) => {
+        // placeholder — Task 2 will wire dispatch SET_GAME_SPEED with validation
+    };
+
     const activeModifiers = getActiveModifiers(state);
 
     const checkPrerequisites = (prereqs?: Prerequisite[]) =>
@@ -1898,7 +1909,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         <GameContext.Provider
             value={{
                 state,
-                config: { resources: RESOURCES, actions: ACTIONS, tasks: TASKS, categories: CATEGORIES, items: ITEMS, slots: SLOTS, converters: CONVERTERS },
+                config: { resources: RESOURCES, actions: ACTIONS, tasks: TASKS, categories: CATEGORIES, items: ITEMS, slots: SLOTS, converters: CONVERTERS, speedTiers: SPEED_TIERS as any },
                 triggerAction,
                 toggleTask,
                 setRestTask,
@@ -1919,7 +1930,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 resetGame,
                 exportSave,
                 importSave,
-                secondKindling
+                secondKindling,
+                setGameSpeed,
+                getSpeedCost
             }}
         >
             {children}

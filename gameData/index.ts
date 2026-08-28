@@ -4,6 +4,7 @@ import * as CoreResources from "./core/resources";
 import * as CoreAspects from "./core/aspects";
 import * as CoreBraids from "./core/braids";
 import * as CoreCastingForms from "./core/castingForms";
+import * as CoreSpeed from "./core/speed";
 import * as CoreEquipment from "./core/equipment";
 import * as CoreConverters from "./core/converters";
 import * as Ch1Tasks from "./chapter1/tasks";
@@ -47,11 +48,12 @@ export interface GameModule {
   QUARTERLY_EVENTS?: any[];
   SEASONAL_MODIFIERS?: any[];
   CHALLENGE_MODES?: any[];
+  SPEED_TIERS?: any[];
   [key: string]: any;
 }
 
 const modules: GameModule[] = [
-  CoreCategories, CoreResources, CoreAspects, CoreBraids, CoreCastingForms,
+  CoreCategories, CoreResources, CoreAspects, CoreBraids, CoreCastingForms, CoreSpeed,
   CoreEquipment, CoreConverters, Ch1Tasks, Ch1Actions, Ch1Equipment,
   Ch2Tasks, Ch2Actions, Ch2Equipment,
   Ch3Tasks, Ch3Actions, Ch3Equipment,
@@ -75,3 +77,4 @@ export const CONVERTERS = collect<any>("CONVERTERS");
 // Braid spells live in their own module export (core/braids.ts: BRAID_SPELLS);
 // fold them into the unified SPELLS registry so they aren't silently dropped.
 export const SPELLS = [...collect<any>("SPELLS"), ...collect<any>("BRAID_SPELLS")];
+export const SPEED_TIERS = collect<any>("SPEED_TIERS");
