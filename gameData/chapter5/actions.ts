@@ -6,7 +6,7 @@ export const ACTIONS: ActionConfig[] = [
     id: "unlock_deep_current",
     name: "Tap the Deep Current",
     description: "The listening and sustain training align - the undertow answers. Opens Deep Current (base 100) and grants an initial 20 to work with.",
-    category: "chapter5",
+    category: "wound_answers",
     costs: [
       { resourceId: "motes", amount: 60 },
       { resourceId: "skyglass", amount: 8 },
@@ -147,7 +147,7 @@ export const ACTIONS: ActionConfig[] = [
     id: "acquire_long_sight",
     name: "Cut the Long Sight",
     description: "Grind skyglass for fracture-work. Reveals fracture locations (Mender prerequisite). Grants farseer_lens: The Long Sight.",
-    category: "chapter5",
+    category: "wound_answers",
     costs: [
       { resourceId: "skyglass", amount: 6 },
       { resourceId: "motes", amount: 40 },
@@ -165,7 +165,7 @@ export const ACTIONS: ActionConfig[] = [
     id: "acquire_undertow_fork",
     name: "Tune the Undertow Fork",
     description: "Tap Deep Current directly. Grants current_tuner: The Undertow Fork (Deep Current → Mana).",
-    category: "chapter5",
+    category: "wound_answers",
     costs: [
       { resourceId: "deep_current", amount: 8 },
       { resourceId: "skyglass", amount: 4 },
@@ -181,7 +181,7 @@ export const ACTIONS: ActionConfig[] = [
     id: "acquire_archivists_charm",
     name: "Recover the Archivist's Charm",
     description: "Fourfold Rite completion - +10 Focus, -500ms all cooldowns. Grants focus_gear: The Archivist's Charm.",
-    category: "chapter5",
+    category: "wound_answers",
     costs: [
       { resourceId: "motes", amount: 90 },
       { resourceId: "skyglass", amount: 8 },
@@ -196,7 +196,7 @@ export const ACTIONS: ActionConfig[] = [
     id: "acquire_secret_braidstone",
     name: "Claim the Secret Braidstone",
     description: "Mender's Working recognition - combine any two Aspects for bonus yield. Grants focus_gear: The Secret Braidstone.",
-    category: "chapter5",
+    category: "wound_answers",
     costs: [
       { resourceId: "skyglass", amount: 7 },
       { resourceId: "motes", amount: 70 },
@@ -211,7 +211,7 @@ export const ACTIONS: ActionConfig[] = [
     id: "acquire_cathals_ashwork",
     name: "Inherit Cathal's Ashwork",
     description: "Widow Cathal's final ashwork - unique. Ash answers faster and with less failure. Grants focus_gear: Cathal's Ashwork.",
-    category: "chapter5",
+    category: "wound_answers",
     costs: [
       { resourceId: "deep_current", amount: 12 },
       { resourceId: "motes", amount: 85 },

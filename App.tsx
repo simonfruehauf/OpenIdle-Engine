@@ -177,7 +177,7 @@ const GameLayout: React.FC = () => {
             <div key={cat.id} className="mb-4">
                 <SectionHeader title={cat.name} isOpen={isOpen} onToggle={() => toggleSection(`cat-${cat.id}`)} level={depth + 1} bordered={false} />
                 {isOpen && (
-                    <div className={`${depth === 0 ? 'p-2' : ''} bg-gray-50/50`}>
+                    <div className={`${depth === 0 ? 'p-2' : ''} bg-gray-50/50 mt-3`}>
                         {(tasks.length > 0 || actions.length > 0) && (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                                 {tasks.map(t => <TaskCard key={t.id} task={t} isLocked={false} />)}
@@ -205,7 +205,7 @@ const GameLayout: React.FC = () => {
             <div key={cat.id} className="mb-4">
                 <SectionHeader title={cat.name} isOpen={isOpen} onToggle={() => toggleSection(`stat-${cat.id}`)} colorClass="bg-gray-100" level={depth + 1} bordered={false} />
                 {isOpen && (
-                    <div className={`${depth === 0 ? 'p-2' : ''} bg-gray-50/50`}>
+                    <div className={`${depth === 0 ? 'p-2' : ''} bg-gray-50/50 mt-3`}>
                         {stats.length > 0 && (
                             <div className={`${depth === 0 ? 'p-2' : ''} space-y-4`}>
                                 {stats.map(resource => <ResourceRow key={resource.id} resource={resource} />)}
@@ -338,7 +338,7 @@ const GameLayout: React.FC = () => {
                                     colorClass="bg-gray-100"
                                 />
                                 {!collapsedSections[`res-${group.id}`] && (
-                                    <div className="p-2 space-y-1">
+                                    <div className="p-2 space-y-1 mt-3">
                                         {group.resources.map(res => <ResourceRow key={res.id} resource={res} />)}
                                     </div>
                                 )}
@@ -353,7 +353,7 @@ const GameLayout: React.FC = () => {
                                     colorClass="bg-gray-100"
                                 />
                                 {!collapsedSections['res-uncat'] && (
-                                    <div className="p-2 space-y-1">
+                                    <div className="p-2 space-y-1 mt-3">
                                         {uncategorizedResources.map(res => <ResourceRow key={res.id} resource={res} />)}
                                     </div>
                                 )}

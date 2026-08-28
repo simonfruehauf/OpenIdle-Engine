@@ -113,7 +113,7 @@ export const ACTIONS: ActionConfig[] = [
     id: "upgrade_ash_3",
     name: "Master Ash III",
     description: "Heat obeys before it arrives. Stronger mastery yields, faster recovery.",
-    category: "chapter4",
+    category: "casting_forms",
     costs: [{ resourceId: "motes", amount: 150, scaleFactor: 1.55 }],
     effects: [
       { type: "modify_yield_pct", actionId: "cast_ash_mastery", amount: 0.3 },
@@ -126,7 +126,7 @@ export const ACTIONS: ActionConfig[] = [
     id: "upgrade_root_3",
     name: "Master Root III",
     description: "Growth no longer asks - it is already there. Stronger yields, faster recovery.",
-    category: "chapter4",
+    category: "casting_forms",
     costs: [{ resourceId: "motes", amount: 150, scaleFactor: 1.55 }],
     effects: [
       { type: "modify_yield_pct", actionId: "cast_root_mastery", amount: 0.3 },
@@ -139,7 +139,7 @@ export const ACTIONS: ActionConfig[] = [
     id: "upgrade_hush_3",
     name: "Master Hush III",
     description: "Silence arrives at half the asking. Stronger yields, faster recovery.",
-    category: "chapter4",
+    category: "casting_forms",
     costs: [{ resourceId: "motes", amount: 150, scaleFactor: 1.55 }],
     effects: [
       { type: "modify_yield_pct", actionId: "cast_hush_mastery", amount: 0.3 },
@@ -152,7 +152,7 @@ export const ACTIONS: ActionConfig[] = [
     id: "upgrade_iron_3",
     name: "Master Iron III",
     description: "Stone listens the first time. Stronger yields, faster recovery.",
-    category: "chapter4",
+    category: "casting_forms",
     costs: [{ resourceId: "motes", amount: 150, scaleFactor: 1.55 }],
     effects: [
       { type: "modify_yield_pct", actionId: "cast_iron_mastery", amount: 0.3 },
@@ -165,7 +165,7 @@ export const ACTIONS: ActionConfig[] = [
     id: "upgrade_smolder_3",
     name: "Master Smolder III",
     description: "Smolder spreads without announcing itself. Stronger yields, faster recovery.",
-    category: "chapter4",
+    category: "casting_forms",
     costs: [{ resourceId: "motes", amount: 160, scaleFactor: 1.55 }],
     effects: [
       { type: "modify_yield_pct", actionId: "cast_smolder_mastery", amount: 0.3 },
@@ -178,7 +178,7 @@ export const ACTIONS: ActionConfig[] = [
     id: "upgrade_dormancy_3",
     name: "Master Dormancy III",
     description: "Time suspends more faithfully. Stronger yields, faster recovery.",
-    category: "chapter4",
+    category: "casting_forms",
     costs: [{ resourceId: "motes", amount: 160, scaleFactor: 1.55 }],
     effects: [
       { type: "modify_yield_pct", actionId: "cast_dormancy_mastery", amount: 0.3 },
@@ -191,7 +191,7 @@ export const ACTIONS: ActionConfig[] = [
     id: "upgrade_heartwood_3",
     name: "Master Heartwood III",
     description: "Bark sets truer, alive and unyielding. Stronger yields, faster recovery.",
-    category: "chapter4",
+    category: "casting_forms",
     costs: [{ resourceId: "motes", amount: 160, scaleFactor: 1.55 }],
     effects: [
       { type: "modify_yield_pct", actionId: "cast_heartwood_mastery", amount: 0.3 },
@@ -204,7 +204,7 @@ export const ACTIONS: ActionConfig[] = [
     id: "upgrade_temper_3",
     name: "Master Temper III",
     description: "Metal remembers its second firing forever. Stronger yields, faster recovery.",
-    category: "chapter4",
+    category: "casting_forms",
     costs: [{ resourceId: "motes", amount: 160, scaleFactor: 1.55 }],
     effects: [
       { type: "modify_yield_pct", actionId: "cast_temper_mastery", amount: 0.3 },
@@ -246,7 +246,7 @@ export const ACTIONS: ActionConfig[] = [
     id: "acquire_basic_current_tuner",
     name: "Assemble Basic Current-Tuner",
     description: "Better Motes→Mana conversion. Current-Tuner (basic).",
-    category: "chapter4",
+    category: "casting_forms",
     costs: [
       { resourceId: "skyglass", amount: 5 },
       { resourceId: "motes", amount: 40 },
@@ -261,7 +261,7 @@ export const ACTIONS: ActionConfig[] = [
     id: "acquire_fine_current_tuner",
     name: "Calibrate Fine Current-Tuner",
     description: "+3 Focus and still better conversion. Current-Tuner (fine).",
-    category: "chapter4",
+    category: "casting_forms",
     costs: [
       { resourceId: "skyglass", amount: 10 },
       { resourceId: "motes", amount: 80 },
@@ -276,7 +276,7 @@ export const ACTIONS: ActionConfig[] = [
     id: "acquire_steady_hand",
     name: "Claim the Steady Hand",
     description: "A focus-gear that steadies wild variance. Requires wild practice.",
-    category: "chapter4",
+    category: "casting_forms",
     costs: [{ resourceId: "motes", amount: 90 }],
     effects: [],
     firstCompletionEffects: [{ type: "add_item", itemId: "steady_hand", amount: 1 }],

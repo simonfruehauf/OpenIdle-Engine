@@ -17,7 +17,7 @@ export const TASKS: TaskConfig[] = [
     id: "focus_meditation",
     name: "Focus Meditation",
     description: "Sit with the scar's light and steady your mind. Conclave discipline - taught only after Cathal sends you on.",
-    category: "chapter2",
+    category: "four_aspects",
     type: "rest",
     costPerSecond: [],
     effectsPerSecond: [{ type: "add_resource", resourceId: "focus", amount: 0.3 }],
@@ -30,7 +30,7 @@ export const TASKS: TaskConfig[] = [
     // Loop economy plus timed sessions (progressRequired+autoRestart): completions gate
     // skyglass_unlock / converter prerequisites - DESIGN.md Section 7 "three dedicated study sessions".
     description: "Catalogue the residue castings leave behind.",
-    category: "chapter2",
+    category: "four_aspects",
     progressRequired: 30,
     autoRestart: true,
     costPerSecond: [{ resourceId: "focus", amount: 0.4 }],
@@ -45,7 +45,7 @@ export const TASKS: TaskConfig[] = [
     id: "library_duty",
     name: "Library Duty",
     description: "Assist Osrun Fell among the stacks. Small Focus gain; history waits here.",
-    category: "chapter2",
+    category: "four_aspects",
     progressRequired: 25,
     autoRestart: true,
     costPerSecond: [],
