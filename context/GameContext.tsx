@@ -2,6 +2,9 @@ import React, { createContext, useContext, useEffect, useReducer, useRef } from 
 
 const TICK_RATE_MS = 100;
 const TICK_RATE_SECONDS = TICK_RATE_MS / 1000;
+const TICKS_PER_SECOND = 1000 / TICK_RATE_MS; // 10 ticks/s at 100 ms
+const OFFLINE_CAP_SEC = 604800; // 7 days
+const OFFLINE_THRESHOLD_SEC = 5;
 import { ACTIONS, CATEGORIES, RESOURCES, TASKS, SLOTS, ITEMS, CONVERTERS, SPEED_TIERS } from "../gameData/index";
 import * as CoreSpeed from "../gameData/core/speed";
 import { SPELLS, ASPECTS } from "../gameData/core/aspects";
@@ -309,7 +312,7 @@ const createInitialState = (): GameState => {
 
 // --- Reducer ---
 type Action =
-    | { type: "TICK"; dt: number }
+    | { type: "TICK"; dt: number; now?: number }
     | { type: "TRIGGER_ACTION"; actionId: string }
     | { type: "TOGGLE_TASK"; taskId: string }
     | { type: "EQUIP_ITEM"; itemId: string }
@@ -317,7 +320,7 @@ type Action =
     | { type: "BUY_CONVERTER"; converterId: string }
     | { type: "TOGGLE_CONVERTER"; converterId: string }
     | { type: "ADD_LOG"; msg: string; category?: LogCategory }
-    | { type: "LOAD_GAME"; state: GameState }
+    | { type: "LOAD_GAME"; state: GameState; now?: number }
     | { type: "RESET_GAME" }
     | { type: "SET_REST_TASK"; taskId: string | null }
     | { type: "CAST_SPELL"; actionId: string }
@@ -413,17 +416,19 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 ? { resourceId: rawOffline.resourceId ?? "time_essence", ratePerSecond: rawOffline.ratePerSecond ?? (rawOffline as any).ratePerOfflineSecond ?? 0.08 }
                 : DEFAULT_OFFLINE_RATE;
             const finalizeWithOffline = (base: GameState): GameState => {
+                // Reducer impurity documented: Date.now() fallback preserves backward-compat for saves dispatched without `now`.
+                // Preferred path uses action.now passed from dispatch sites.
+                const now = action.now ?? Date.now();
                 let result: GameState = {
                     ...base,
                     gameSpeed: (base as any).gameSpeed ?? 1,
-                    lastSeen: (base as any).lastSeen ?? Date.now()
+                    lastSeen: (base as any).lastSeen ?? now
                 } as GameState;
                 if (![1, 2, 4, 8].includes(result.gameSpeed as any)) result.gameSpeed = 1;
                 const incomingLastSeen = (incoming as any).lastSeen;
-                const now = Date.now();
                 if (typeof incomingLastSeen === 'number' && !isNaN(incomingLastSeen) && incomingLastSeen > 0) {
-                    const elapsedSec = Math.min((now - incomingLastSeen) / 1000, 604800);
-                    if (elapsedSec > 5) {
+                    const elapsedSec = Math.min((now - incomingLastSeen) / 1000, OFFLINE_CAP_SEC);
+                    if (elapsedSec > OFFLINE_THRESHOLD_SEC) {
                         const targetId = offlineRate.resourceId;
                         const resConfig = RESOURCES.find(r => r.id === targetId);
                         if (resConfig && result.resources[targetId]) {
@@ -1134,14 +1139,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                         if (!isTierAffordable(t)) continue;
                         if (t.multiplier > best.multiplier) best = t;
                     }
-                    // Only downgrade, don't auto-upgrade beyond current if best higher somehow (costs increase, so not possible)
-                    // But if best multiplier > currentTier.multiplier, keep current downgrade logic; else use best
-                    if (best.multiplier < effectiveTier.multiplier) {
-                        effectiveTier = best;
-                    } else if (best.multiplier !== effectiveTier.multiplier) {
-                        // If best is lower than current, use it; if best higher but current unaffordable, still use best (downgrade to affordable)
-                        effectiveTier = best;
-                    }
+                    if (!currentAffordable) effectiveTier = best;
                     if (effectiveTier.multiplier !== state.gameSpeed) {
                         newGameSpeed = effectiveTier.multiplier as GameState["gameSpeed"];
                         logUpdates.unshift(makeLog(`Insufficient time_essence - speed reduced to ${effectiveTier.multiplier}×.`, 'other'));
@@ -1647,7 +1645,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 previousTaskId: newPreviousTaskId,
                 sustainedSpells: newSustained,
                 gameSpeed: newGameSpeed,
-                lastSeen: Date.now()
+                lastSeen: action.now ?? Date.now()
             };
         }
 
@@ -1708,10 +1706,10 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Game Loop — scaled by gameSpeed
     useEffect(() => {
-        const TICK_RATE = 100; // ms
+        const TICK_RATE = TICK_RATE_MS; // ms, matches reducer constants
         const loop = () => {
             const speed = (stateRef.current.gameSpeed as number) || 1;
-            dispatch({ type: "TICK", dt: TICK_RATE * speed });
+            dispatch({ type: "TICK", dt: TICK_RATE * speed, now: Date.now() });
         };
         const id = setInterval(loop, TICK_RATE);
         tickRef.current = id as unknown as number;
@@ -1735,7 +1733,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const saved = localStorage.getItem(SAVE_KEY);
             if (saved) {
                 const parsed = JSON.parse(saved);
-                dispatch({ type: "LOAD_GAME", state: parsed });
+                dispatch({ type: "LOAD_GAME", state: parsed, now: Date.now() });
                 dispatch({ type: "ADD_LOG", msg: "Game Loaded." });
             }
         } catch (e) {
@@ -1762,7 +1760,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
             const json = b64_to_utf8(saveData);
             const parsed = JSON.parse(json);
-            dispatch({ type: "LOAD_GAME", state: parsed });
+            dispatch({ type: "LOAD_GAME", state: parsed, now: Date.now() });
             dispatch({ type: "ADD_LOG", msg: "Game Imported successfully." });
             return true;
         } catch (e) {

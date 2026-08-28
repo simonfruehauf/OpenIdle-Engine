@@ -274,26 +274,27 @@ function run(): CheckResult {
   }
 
   // 5. Speed tier validation (Task 5 polishing)
-  // If SPEED_TIERS defined (non-empty), validate multipliers, costs, OFFLINE_RATE, duplicates, and prereqs.
+  // Anchor scan to SPEED_TIERS array bounds to avoid false positives from unrelated multiplier fields.
   {
     const speedTierFiles = files.filter(f => stripComments(fs.readFileSync(f, "utf-8")).includes("SPEED_TIERS"));
     const allMultipliers: number[] = [];
     let hasSpeedTiers = false;
     for (const f of speedTierFiles) {
       const content = stripComments(fs.readFileSync(f, "utf-8"));
-      // Robust tier parsing: slice by multiplier occurrences to avoid nested-brace regex pitfalls
+      const arrMatch = content.match(/export\s+const\s+SPEED_TIERS[\s\S]*?\[([\s\S]*?)\];/);
+      const arrayContent = arrMatch ? arrMatch[1] : null;
+      if (!arrayContent) continue;
+      // Robust tier parsing inside the SPEED_TIERS array: slice by multiplier occurrences
       const tierStartRe = /\{\s*multiplier\s*:\s*(\d+)/g;
       const starts: { index: number; mult: number }[] = [];
       let sm: RegExpExecArray | null;
-      while ((sm = tierStartRe.exec(content))) {
+      while ((sm = tierStartRe.exec(arrayContent))) {
         starts.push({ index: sm.index, mult: parseInt(sm[1], 10) });
       }
       for (let i = 0; i < starts.length; i++) {
         const start = starts[i].index;
-        const end = i + 1 < starts.length ? starts[i + 1].index : content.length;
-        const tierSlice = content.slice(start, end);
-        // Only consider slices that are inside SPEED_TIERS array (heuristic: they follow SPEED_TIERS)
-        // If file has other multiplier fields outside SPEED_TIERS, they'd be false positives — but spec says only speed tiers use multiplier
+        const end = i + 1 < starts.length ? starts[i + 1].index : arrayContent.length;
+        const tierSlice = arrayContent.slice(start, end);
         const costsMatch = tierSlice.match(/costs\s*:\s*\[([^\]]*)\]/);
         if (!costsMatch) continue;
         hasSpeedTiers = true;

@@ -2,6 +2,12 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useGame } from '../context/GameContext';
 
+const TICK_RATE_MS = 100;
+const TICKS_PER_SECOND = 1000 / TICK_RATE_MS; // matches engine TICK_RATE_MS
+const OFFLINE_CAP_SEC = 604800;
+const OFFLINE_THRESHOLD_SEC = 5;
+const LOW_ESSENCE_TICKS = 10;
+
 interface SpeedButtonConfig {
   multiplier: 1 | 2 | 4 | 8;
   costs: { resourceId: string; amount: number }[];
@@ -61,24 +67,21 @@ export const SpeedControl: React.FC = () => {
 
   // Inline drain indicator helpers
   const activeCostPerTick = activeTier?.costs?.length ? activeTier.costs.reduce((sum: number, c: any) => sum + c.amount, 0) : 0;
-  // Cost is per tick (100ms). Ticks per second = 10. So per second = costPerTick * 10
-  const costPerSecond = activeCostPerTick * 10;
+  const costPerSecond = activeCostPerTick * TICKS_PER_SECOND;
 
   // Remaining ticks / seconds calculation (primary cost resource)
   let remainingTicks: number | null = null;
   let remainingSecondsReal: number | null = null;
-  let remainingSecondsGame: number | null = null;
   if (activeTier && activeTier.costs.length > 0) {
     const primaryCost = activeTier.costs[0];
     const currentEssence = getResourceCurrent(primaryCost.resourceId);
     if (primaryCost.amount > 0) {
       remainingTicks = Math.floor(currentEssence / primaryCost.amount);
-      remainingSecondsReal = remainingTicks * 0.1;
-      remainingSecondsGame = remainingSecondsReal * activeMultiplier;
+      remainingSecondsReal = remainingTicks * (TICK_RATE_MS / 1000);
     }
   }
 
-  const isLowEssence = remainingTicks !== null && remainingTicks < 10 && activeMultiplier > 1;
+  const isLowEssence = remainingTicks !== null && remainingTicks < LOW_ESSENCE_TICKS && activeMultiplier > 1;
 
   // Warning container styling when low essence
   const containerWarningClass = isLowEssence
@@ -129,8 +132,8 @@ export const SpeedControl: React.FC = () => {
     // Remaining estimate for tooltip
     let tooltipRemaining = '';
     if (ticksAffordable !== null && isFinite(ticksAffordable)) {
-      const secReal = (ticksAffordable * 0.1).toFixed(1);
-      const secGame = (ticksAffordable * 0.1 * tier.multiplier).toFixed(1);
+      const secReal = (ticksAffordable * (TICK_RATE_MS / 1000)).toFixed(1);
+      const secGame = (ticksAffordable * (TICK_RATE_MS / 1000) * tier.multiplier).toFixed(1);
       tooltipRemaining = `${ticksAffordable} ticks (~${secReal}s real / ${secGame}s game)`;
     } else if (tier.costs.length === 0) {
       tooltipRemaining = 'Unlimited (no cost)';
@@ -173,7 +176,7 @@ export const SpeedControl: React.FC = () => {
             {tier.costs.map((c: any) => (
               <div key={c.resourceId} className="flex justify-between text-gray-800">
                 <span>{getResourceName(c.resourceId)}</span>
-                <span className="font-mono text-red-700">{c.amount} / tick ({c.amount * 10}/sec)</span>
+                <span className="font-mono text-red-700">{c.amount} / tick ({c.amount * TICKS_PER_SECOND}/sec)</span>
               </div>
             ))}
           </>
