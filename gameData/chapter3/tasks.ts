@@ -61,6 +61,8 @@ export const TASKS: TaskConfig[] = [
     name: "Braid Practice",
     description: "Weave two Aspects at once. Flooded Undercroft work — the prerequisite for braided casting and Farseer's lenses.",
     category: "chapter3",
+    progressRequired: 30,
+    autoRestart: true,
     costPerSecond: [{ resourceId: "focus", amount: 0.55 }],
     effectsPerSecond: [{ type: "add_resource", resourceId: "motes", amount: 1.0 }],
     xpPerSecond: 10,
