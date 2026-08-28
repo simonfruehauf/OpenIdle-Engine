@@ -8,7 +8,7 @@ export const RESOURCES: ResourceConfig[] = [
     baseMax: 40,
     initialAmount: 12,
     color: "bg-blue-500",
-    description: "Raw magical reserve. Spent per casting; regenerates slowly. Starts low — earn your capacity.",
+    description: "Raw magical reserve. Spent per casting; regenerates slowly. Starts low - earn your capacity.",
   },
   {
     id: "focus",

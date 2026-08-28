@@ -263,7 +263,7 @@ const createInitialState = (): GameState => {
         inventory: [],
         equipment: {},
         modifiers: [],
-        log: [makeLog("Millhollow, dusk. The Sundering's light hangs thin over the fields. You have not yet tried to hold it — but it is already gathering at your fingertips.", 'flavour')],
+        log: [makeLog("Millhollow, dusk. The Sundering's light hangs thin over the fields. You have not yet tried to hold it - but it is already gathering at your fingertips.", 'flavour')],
         totalTimePlayed: 0,
         activeTaskIds: [],
         maxConcurrentTasks: 1,
@@ -804,7 +804,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             const effMult = forms.reduce((m, f) => m * f.effectMultiplier, 1);
             const variance = forms.reduce((v, f) => Math.max(v, f.variance ?? 0), 0);
 
-            // Cost: Mana scaled by form multipliers — tier growth handled by upgrade actions
+            // Cost: Mana scaled by form multipliers - tier growth handled by upgrade actions
             const manaCost = Math.ceil(spell.baseManaCost * costMult);
 
             const manaRes = state.resources["mana"];
@@ -845,7 +845,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 const moteState = newResources["motes"];
                 if (moteState) moteState.current = Math.min(moteState.current + residue, moteMax);
                 newFailed = { ...newFailed, [aspectKey]: (newFailed[aspectKey] ?? 0) + 1 };
-                logUpdates.unshift(makeLog(`${spell.name} fails — ${spell.failureFlavor || aspect?.failureFlavor || ""}`, 'flavour'));
+                logUpdates.unshift(makeLog(`${spell.name} fails - ${spell.failureFlavor || aspect?.failureFlavor || ""}`, 'flavour'));
             } else {
                 let yieldAmount = spell.baseMotesYield * effMult;
                 if (variance > 0) {
@@ -1127,7 +1127,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                             newTasks[tid] = { ...tState, active: false };
                             newActiveTaskIds = newActiveTaskIds.filter(id => id !== tid);
 
-                            // Start Previous Task — resume same run, don't re-charge startCosts
+                            // Start Previous Task - resume same run, don't re-charge startCosts
                             const prevTaskState = newTasks[newPreviousTaskId];
                             newTasks[newPreviousTaskId] = { ...prevTaskState, active: true, paid: true };
                             newActiveTaskIds.push(newPreviousTaskId);
@@ -1264,7 +1264,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 }
             });
 
-            // 2. Process Sustained Spell Drain (inert until sustained spells exist — Chapter IV)
+            // 2. Process Sustained Spell Drain (inert until sustained spells exist - Chapter IV)
             let newSustained = state.sustainedSpells;
             if (newSustained.length > 0) {
                 const sustainedForms = CASTING_FORMS.filter(f => f.value === "sustained");
@@ -1276,7 +1276,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                         newSustained = newSustained.map(s => ({ ...s }));
                     } else {
                         newSustained = [];
-                        logUpdates.unshift(makeLog("Sustained workings gutter out — Mana exhausted.", 'other'));
+                        logUpdates.unshift(makeLog("Sustained workings gutter out - Mana exhausted.", 'other'));
                     }
                 }
             }

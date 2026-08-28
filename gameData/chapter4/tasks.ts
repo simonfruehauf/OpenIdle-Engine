@@ -4,7 +4,7 @@ export const TASKS: TaskConfig[] = [
   {
     id: "ritual_study",
     name: "Ritual Study",
-    description: "Slow forms — ritual discipline trades speed for certainty. Chapter IV practice for Method: Ritual.",
+    description: "Slow forms - ritual discipline trades speed for certainty. Chapter IV practice for Method: Ritual.",
     category: "chapter4",
     progressRequired: 25,
     autoRestart: true,
@@ -16,7 +16,7 @@ export const TASKS: TaskConfig[] = [
   {
     id: "wild_practice",
     name: "Wild Practice",
-    description: "Let the wild forms run — cheaper, erratic, alive. Chapter IV practice for Method: Wild.",
+    description: "Let the wild forms run - cheaper, erratic, alive. Chapter IV practice for Method: Wild.",
     category: "chapter4",
     progressRequired: 25,
     autoRestart: true,
@@ -28,7 +28,7 @@ export const TASKS: TaskConfig[] = [
   {
     id: "sustain_training",
     name: "Sustain Training",
-    description: "Hold a working past its instant — learn sustained drain. Unlocks Current-Tuner and mastery casts.",
+    description: "Hold a working past its instant - learn sustained drain. Unlocks Current-Tuner and mastery casts.",
     category: "chapter4",
     progressRequired: 25,
     autoRestart: true,
@@ -40,7 +40,7 @@ export const TASKS: TaskConfig[] = [
   {
     id: "mastery_ember_practice",
     name: "Mastery Ember Practice",
-    description: "Flame answers before the word is finished. Mastery-tier Ash — higher yield than Advanced Ember.",
+    description: "Flame answers before the word is finished. Mastery-tier Ash - higher yield than Advanced Ember.",
     category: "chapter4",
     costPerSecond: [{ resourceId: "focus", amount: 0.6 }],
     effectsPerSecond: [{ type: "add_resource", resourceId: "motes", amount: 1.5 }],
@@ -53,7 +53,7 @@ export const TASKS: TaskConfig[] = [
   {
     id: "mastery_hedge_practice",
     name: "Mastery Hedge Practice",
-    description: "Growth comes sharp and deliberate, then holds. Mastery-tier Root — richer residue.",
+    description: "Growth comes sharp and deliberate, then holds. Mastery-tier Root - richer residue.",
     category: "chapter4",
     costPerSecond: [{ resourceId: "focus", amount: 0.6 }],
     effectsPerSecond: [{ type: "add_resource", resourceId: "motes", amount: 1.5 }],
@@ -66,7 +66,7 @@ export const TASKS: TaskConfig[] = [
   {
     id: "mastery_stillness_practice",
     name: "Mastery Stillness Practice",
-    description: "Silence arrives before the bell is struck and stays. Mastery-tier Hush — stronger residue.",
+    description: "Silence arrives before the bell is struck and stays. Mastery-tier Hush - stronger residue.",
     category: "chapter4",
     costPerSecond: [{ resourceId: "focus", amount: 0.6 }],
     effectsPerSecond: [{ type: "add_resource", resourceId: "motes", amount: 1.5 }],
@@ -79,7 +79,7 @@ export const TASKS: TaskConfig[] = [
   {
     id: "mastery_stonewatch_practice",
     name: "Mastery Stonewatch Practice",
-    description: "Stone hardens at half the invitation and remembers. Mastery-tier Iron — improved residue.",
+    description: "Stone hardens at half the invitation and remembers. Mastery-tier Iron - improved residue.",
     category: "chapter4",
     costPerSecond: [{ resourceId: "focus", amount: 0.6 }],
     effectsPerSecond: [{ type: "add_resource", resourceId: "motes", amount: 1.5 }],

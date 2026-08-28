@@ -4,7 +4,7 @@ export const TASKS: TaskConfig[] = [
   {
     id: "advanced_ember_practice",
     name: "Advanced Ember Practice",
-    description: "The flame no longer needs coaxing — it answers at pace. Higher Mote yield than basic Ember Practice.",
+    description: "The flame no longer needs coaxing - it answers at pace. Higher Mote yield than basic Ember Practice.",
     category: "chapter3",
     costPerSecond: [{ resourceId: "focus", amount: 0.45 }],
     effectsPerSecond: [{ type: "add_resource", resourceId: "motes", amount: 0.9 }],
@@ -44,7 +44,7 @@ export const TASKS: TaskConfig[] = [
   {
     id: "advanced_mote_study",
     name: "Advanced Mote Study",
-    description: "Deeper cataloguing — the residue starts looking back. Higher yield than basic Mote Study.",
+    description: "Deeper cataloguing - the residue starts looking back. Higher yield than basic Mote Study.",
     category: "chapter3",
     progressRequired: 30,
     autoRestart: true,
@@ -59,7 +59,7 @@ export const TASKS: TaskConfig[] = [
   {
     id: "braid_practice",
     name: "Braid Practice",
-    description: "Weave two Aspects at once. Flooded Undercroft work — the prerequisite for braided casting and Farseer's lenses.",
+    description: "Weave two Aspects at once. Flooded Undercroft work - the prerequisite for braided casting and Farseer's lenses.",
     category: "chapter3",
     progressRequired: 30,
     autoRestart: true,

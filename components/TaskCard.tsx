@@ -384,7 +384,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, isLocked = false }) =>
     if (isLocked) {
         containerClass = "bg-gray-100 border-gray-200 opacity-60 cursor-not-allowed grayscale";
     }
-    // Unaffordable Start State — respect already-paid (paid tasks resume without re-paying)
+    // Unaffordable Start State - respect already-paid (paid tasks resume without re-paying)
     else if (!isActive && !canStart) {
         containerClass = "bg-slate-50 border-gray-200 text-gray-500 opacity-70 cursor-not-allowed";
     }

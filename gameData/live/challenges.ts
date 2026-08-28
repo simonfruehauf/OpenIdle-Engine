@@ -1,12 +1,12 @@
 /**
- * Live Content — Challenge Modes
+ * Live Content - Challenge Modes
  * Spec §9.4
  *
  * MVP is data-only: CHALLENGE_MODES captures design intent and
  * per-mode rules/modifiers. Challenge starter ACTIONS set flags
  * (challenge_mode + per-mode flag) so progress can be tracked and
  * gated. No reducer reset-preserve (SECOND_KINDLING) integration
- * required for MVP — noted as deferred (see header).
+ * required for MVP - noted as deferred (see header).
  *
  * Deferred engine work: SECOND_KINDLING reducer case that resets
  * GameState while preserving flags + equipment + Temper workings and
@@ -34,7 +34,7 @@ export const CHALLENGE_MODES: ChallengeMode[] = [
   {
     id: "second_kindling",
     name: "Second Kindling (NG+)",
-    description: "New game plus — equipment and Temper workings intact, higher start, immediate endgame access. The scar remembers you this time.",
+    description: "New game plus - equipment and Temper workings intact, higher start, immediate endgame access. The scar remembers you this time.",
     flagId: "challenge_second_kindling",
     groupFlagId: "challenge_mode",
     rules: [
@@ -50,19 +50,19 @@ export const CHALLENGE_MODES: ChallengeMode[] = [
   {
     id: "quiet_run",
     name: "Quiet Run",
-    description: "Speed challenge — reach Mender's Path within a fixed window. The Undercroft does not wait.",
+    description: "Speed challenge - reach Mender's Path within a fixed window. The Undercroft does not wait.",
     flagId: "challenge_quiet_run",
     groupFlagId: "challenge_mode",
     rules: [
       "Goal: Mender's Path (reconcile_journals + acquire_long_sight) within a fixed window after challenge start (MVP: self-timed; engine timer deferred).",
-      "Failing the window does not block completion — flag remains for record.",
+      "Failing the window does not block completion - flag remains for record.",
     ],
     modifiers: ["Nominal: Focus regen +0.05/s during window (deferred); Hush yields 1.15×."],
   },
   {
     id: "bare_handed",
     name: "Bare-Handed",
-    description: "Chapter I equipment only — no Temper. Iron answers; nothing else tempers it.",
+    description: "Chapter I equipment only - no Temper. Iron answers; nothing else tempers it.",
     flagId: "challenge_bare_handed",
     groupFlagId: "challenge_mode",
     rules: [
@@ -74,7 +74,7 @@ export const CHALLENGE_MODES: ChallengeMode[] = [
   {
     id: "single_thread",
     name: "Single Thread",
-    description: "One Aspect only — six tiers are a full build. The other three are left deliberately unkissed.",
+    description: "One Aspect only - six tiers are a full build. The other three are left deliberately unkissed.",
     flagId: "challenge_single_thread",
     groupFlagId: "challenge_mode",
     rules: [
@@ -86,7 +86,7 @@ export const CHALLENGE_MODES: ChallengeMode[] = [
   {
     id: "unwitnessed",
     name: "Unwitnessed",
-    description: "Hush challenge — minimize footprint. The world should not remember you were there.",
+    description: "Hush challenge - minimize footprint. The world should not remember you were there.",
     flagId: "challenge_unwitnessed",
     groupFlagId: "challenge_mode",
     rules: [
@@ -98,7 +98,7 @@ export const CHALLENGE_MODES: ChallengeMode[] = [
 ];
 
 /**
- * Challenge starter actions — all share category "endgame" (existing,
+ * Challenge starter actions - all share category "endgame" (existing,
  * so validate passes without new categories). Each sets its challenge
  * flag plus the group flag. Prerequisites proxy Chapter V entry
  * (unlock_deep_current) to keep challenges late-game without needing OR
@@ -108,7 +108,7 @@ export const ACTIONS: ActionConfig[] = [
   {
     id: "challenge_second_kindling",
     name: "Challenge: Second Kindling",
-    description: "Begin NG+ — retain equipment and Temper workings, higher start, immediate endgame. Resets progress (engine reset-preserve deferred; presently flag-only).",
+    description: "Begin NG+ - retain equipment and Temper workings, higher start, immediate endgame. Resets progress (engine reset-preserve deferred; presently flag-only).",
     category: "endgame",
     costs: [{ resourceId: "motes", amount: 0 }],
     effects: [
@@ -118,12 +118,12 @@ export const ACTIONS: ActionConfig[] = [
     firstCompletionEffects: [{ type: "set_flag", flagId: "second_kindling_started", amount: 1 }],
     maxExecutions: 1,
     prerequisites: [{ actionId: "unlock_deep_current", minExecutions: 1 }],
-    logMessage: "Second Kindling — the scar remembers your hands. Equipment and Temper hold.",
+    logMessage: "Second Kindling - the scar remembers your hands. Equipment and Temper hold.",
   },
   {
     id: "challenge_quiet_run",
     name: "Challenge: Quiet Run",
-    description: "Speed challenge — reach Mender's Path quickly. Flag-only start; timer deferred.",
+    description: "Speed challenge - reach Mender's Path quickly. Flag-only start; timer deferred.",
     category: "endgame",
     costs: [{ resourceId: "motes", amount: 0 }],
     effects: [
@@ -132,12 +132,12 @@ export const ACTIONS: ActionConfig[] = [
     ],
     maxExecutions: 1,
     prerequisites: [{ actionId: "unlock_deep_current", minExecutions: 1 }],
-    logMessage: "Quiet Run — the Undercroft clock starts (flagged).",
+    logMessage: "Quiet Run - the Undercroft clock starts (flagged).",
   },
   {
     id: "challenge_bare_handed",
     name: "Challenge: Bare-Handed",
-    description: "Chapter I gear only — eschew Temper and fine tools. Self-enforced until engine restriction lands.",
+    description: "Chapter I gear only - eschew Temper and fine tools. Self-enforced until engine restriction lands.",
     category: "endgame",
     costs: [{ resourceId: "motes", amount: 0 }],
     effects: [
@@ -146,7 +146,7 @@ export const ACTIONS: ActionConfig[] = [
     ],
     maxExecutions: 1,
     prerequisites: [{ actionId: "unlock_deep_current", minExecutions: 1 }],
-    logMessage: "Bare-Handed — only the first charm remains true.",
+    logMessage: "Bare-Handed - only the first charm remains true.",
   },
   {
     id: "challenge_single_thread",
@@ -160,12 +160,12 @@ export const ACTIONS: ActionConfig[] = [
     ],
     maxExecutions: 1,
     prerequisites: [{ actionId: "unlock_deep_current", minExecutions: 1 }],
-    logMessage: "Single Thread — one Aspect, six tiers. The others wait outside.",
+    logMessage: "Single Thread - one Aspect, six tiers. The others wait outside.",
   },
   {
     id: "challenge_unwitnessed",
     name: "Challenge: Unwitnessed",
-    description: "Minimize footprint — every cast counts. Hush remembers less (0.5×). Track via footprintCounter.",
+    description: "Minimize footprint - every cast counts. Hush remembers less (0.5×). Track via footprintCounter.",
     category: "endgame",
     costs: [{ resourceId: "motes", amount: 0 }],
     effects: [
@@ -174,6 +174,6 @@ export const ACTIONS: ActionConfig[] = [
     ],
     maxExecutions: 1,
     prerequisites: [{ actionId: "unlock_deep_current", minExecutions: 1 }],
-    logMessage: "Unwitnessed — move as Hush does. The footprint begins.",
+    logMessage: "Unwitnessed - move as Hush does. The footprint begins.",
   },
 ];

@@ -23,7 +23,7 @@ export const ITEMS: ItemConfig[] = [
   {
     id: "archivists_charm",
     name: "The Archivist's Charm",
-    description: "Warded charm from the Fourfold Rite. +10 Focus and shortens every cooldown by half a second — ritual steadiness made tangible.",
+    description: "Warded charm from the Fourfold Rite. +10 Focus and shortens every cooldown by half a second - ritual steadiness made tangible.",
     slot: "focus_gear",
     effects: [
       { type: "modify_max_resource_flat", resourceId: "focus", amount: 10 },
@@ -43,7 +43,7 @@ export const ITEMS: ItemConfig[] = [
   {
     id: "cathals_ashwork",
     name: "Cathal's Ashwork",
-    description: "Widow Cathal's final ashwork — unique, warm to the touch. Ash answers faster and with less failure while you wear it.",
+    description: "Widow Cathal's final ashwork - unique, warm to the touch. Ash answers faster and with less failure while you wear it.",
     slot: "focus_gear",
     effects: [
       { type: "modify_cooldown_flat", actionId: "cast_ash", amount: -400 },

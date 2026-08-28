@@ -24,7 +24,7 @@ export const ACTIONS: ActionConfig[] = [
       { actionId: "cast_hush", minExecutions: 10 },
       { actionId: "cast_iron", minExecutions: 10 },
     ],
-    logMessage: "Fourfold Rite complete — Ash, Root, Hush, Iron answer in order. Warden's first threshold holds.",
+    logMessage: "Fourfold Rite complete - Ash, Root, Hush, Iron answer in order. Warden's first threshold holds.",
   },
   {
     id: "seq_menders_working",
@@ -51,12 +51,12 @@ export const ACTIONS: ActionConfig[] = [
       { actionId: "reconcile_journals", minExecutions: 1 },
       { actionId: "mender_stabilize_fracture", minExecutions: 1 },
     ],
-    logMessage: "Mender's Working holds — ten braids, three kinds, one fracture steadied. The wound is tended.",
+    logMessage: "Mender's Working holds - ten braids, three kinds, one fracture steadied. The wound is tended.",
   },
   {
     id: "seq_wellspring_test",
     name: "Secret: Wellspring Test",
-    description: "Hold 5 simultaneous workings across 4 Aspects — the Wellspring threshold. +20 Focus, +30 Mana, Wellspring progress.",
+    description: "Hold 5 simultaneous workings across 4 Aspects - the Wellspring threshold. +20 Focus, +30 Mana, Wellspring progress.",
     category: "notebook",
     costs: [
       { resourceId: "motes", amount: 75 },
@@ -79,6 +79,6 @@ export const ACTIONS: ActionConfig[] = [
       { actionId: "cast_iron_mastery", minExecutions: 1 },
       { actionId: "unlock_deep_current", minExecutions: 1 },
     ],
-    logMessage: "Wellspring Test holds — five at once, four Aspects, one source that is none of them.",
+    logMessage: "Wellspring Test holds - five at once, four Aspects, one source that is none of them.",
   },
 ];

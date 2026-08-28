@@ -4,7 +4,7 @@ export const ITEMS: ItemConfig[] = [
   {
     id: "steady_hand",
     name: "The Steady Hand",
-    description: "+8 Focus. Reduces Wild variance — steadiness learned from five sessions of Wild Practice.",
+    description: "+8 Focus. Reduces Wild variance - steadiness learned from five sessions of Wild Practice.",
     slot: "focus_gear",
     effects: [
       { type: "modify_max_resource_flat", resourceId: "focus", amount: 8 },

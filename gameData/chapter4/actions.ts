@@ -1,11 +1,11 @@
 import { ActionConfig } from "../../types";
 
 export const ACTIONS: ActionConfig[] = [
-  // --- Mastery casts (max 8) for 4 Aspects — tier 3 spells ---
+  // --- Mastery casts (max 8) for 4 Aspects - tier 3 spells ---
   {
     id: "cast_ash_mastery",
     name: "Mastery: Spendthrift's Flare",
-    description: "Convert Mana into a short, powerful burst — mastery Ash (tier 3). Stronger Motes than Coax the Ember.",
+    description: "Convert Mana into a short, powerful burst - mastery Ash (tier 3). Stronger Motes than Coax the Ember.",
     category: "ash",
     spellId: "spendthrifths_flare",
     costs: [],
@@ -13,7 +13,7 @@ export const ACTIONS: ActionConfig[] = [
     maxExecutions: 8,
     cooldownMs: 8000,
     prerequisites: [{ taskId: "sustain_training", minExecutions: 1 }],
-    logMessage: "Spendthrift's Flare answers — bright, costly, entirely yours.",
+    logMessage: "Spendthrift's Flare answers - bright, costly, entirely yours.",
   },
   {
     id: "cast_root_mastery",
@@ -26,7 +26,7 @@ export const ACTIONS: ActionConfig[] = [
     maxExecutions: 8,
     cooldownMs: 10000,
     prerequisites: [{ taskId: "sustain_training", minExecutions: 1 }],
-    logMessage: "Bramble Snare takes — vines knot where you looked.",
+    logMessage: "Bramble Snare takes - vines knot where you looked.",
   },
   {
     id: "cast_hush_mastery",
@@ -39,7 +39,7 @@ export const ACTIONS: ActionConfig[] = [
     maxExecutions: 8,
     cooldownMs: 12000,
     prerequisites: [{ taskId: "sustain_training", minExecutions: 1 }],
-    logMessage: "Erase takes — the detail is simply not there anymore.",
+    logMessage: "Erase takes - the detail is simply not there anymore.",
   },
   {
     id: "cast_iron_mastery",
@@ -52,13 +52,13 @@ export const ACTIONS: ActionConfig[] = [
     maxExecutions: 8,
     cooldownMs: 9000,
     prerequisites: [{ taskId: "sustain_training", minExecutions: 1 }],
-    logMessage: "Leaden Word settles — the floor groans and holds.",
+    logMessage: "Leaden Word settles - the floor groans and holds.",
   },
   // --- Mastery casts for 4 Braids ---
   {
     id: "cast_smolder_mastery",
-    name: "Mastery: Smolder — Ashfall",
-    description: "Smolder at mastery — wider, weaker, area-wide. Braid Smolder mastery.",
+    name: "Mastery: Smolder - Ashfall",
+    description: "Smolder at mastery - wider, weaker, area-wide. Braid Smolder mastery.",
     category: "smolder",
     spellId: "cast_smolder",
     costs: [],
@@ -66,12 +66,12 @@ export const ACTIONS: ActionConfig[] = [
     maxExecutions: 8,
     cooldownMs: 6000,
     prerequisites: [{ taskId: "sustain_training", minExecutions: 1 }],
-    logMessage: "Smolder spreads thin and silent — ashfall without a sound.",
+    logMessage: "Smolder spreads thin and silent - ashfall without a sound.",
   },
   {
     id: "cast_dormancy_mastery",
-    name: "Mastery: Dormancy — Quiet Bed",
-    description: "Dormancy at mastery — extended variant for the wounded. Braid Dormancy mastery.",
+    name: "Mastery: Dormancy - Quiet Bed",
+    description: "Dormancy at mastery - extended variant for the wounded. Braid Dormancy mastery.",
     category: "dormancy",
     spellId: "cast_dormancy",
     costs: [],
@@ -79,12 +79,12 @@ export const ACTIONS: ActionConfig[] = [
     maxExecutions: 8,
     cooldownMs: 7000,
     prerequisites: [{ taskId: "sustain_training", minExecutions: 1 }],
-    logMessage: "Dormancy deepens — time holds its breath a little longer.",
+    logMessage: "Dormancy deepens - time holds its breath a little longer.",
   },
   {
     id: "cast_heartwood_mastery",
-    name: "Mastery: Heartwood — Livingwall",
-    description: "Heartwood at mastery — structural-scale fortification. Braid Heartwood mastery.",
+    name: "Mastery: Heartwood - Livingwall",
+    description: "Heartwood at mastery - structural-scale fortification. Braid Heartwood mastery.",
     category: "heartwood",
     spellId: "cast_heartwood",
     costs: [],
@@ -92,12 +92,12 @@ export const ACTIONS: ActionConfig[] = [
     maxExecutions: 8,
     cooldownMs: 8000,
     prerequisites: [{ taskId: "sustain_training", minExecutions: 1 }],
-    logMessage: "Heartwood sets — a wall that breathes and will not break.",
+    logMessage: "Heartwood sets - a wall that breathes and will not break.",
   },
   {
     id: "cast_temper_mastery",
-    name: "Mastery: Temper — Second Firing",
-    description: "Temper at mastery — refinement pass for equipment. Braid Temper mastery.",
+    name: "Mastery: Temper - Second Firing",
+    description: "Temper at mastery - refinement pass for equipment. Braid Temper mastery.",
     category: "temper",
     spellId: "cast_temper",
     costs: [],
@@ -105,7 +105,7 @@ export const ACTIONS: ActionConfig[] = [
     maxExecutions: 8,
     cooldownMs: 9000,
     prerequisites: [{ taskId: "sustain_training", minExecutions: 1 }],
-    logMessage: "Temper takes its second firing — the metal remembers better.",
+    logMessage: "Temper takes its second firing - the metal remembers better.",
   },
 
   // --- Tier-3 upgrades x8 (max 15, prereq 60 executions) ---
@@ -125,7 +125,7 @@ export const ACTIONS: ActionConfig[] = [
   {
     id: "upgrade_root_3",
     name: "Master Root III",
-    description: "Growth no longer asks — it is already there. Stronger yields, faster recovery.",
+    description: "Growth no longer asks - it is already there. Stronger yields, faster recovery.",
     category: "chapter4",
     costs: [{ resourceId: "motes", amount: 150, scaleFactor: 1.55 }],
     effects: [
@@ -218,7 +218,7 @@ export const ACTIONS: ActionConfig[] = [
   {
     id: "casting_forms_awakening",
     name: "Awaken Casting Forms",
-    description: "In the ritual hall the forms answer — Method: Ritual/Wild, Duration: Delayed/Sustained, Target: Inward unlock together.",
+    description: "In the ritual hall the forms answer - Method: Ritual/Wild, Duration: Delayed/Sustained, Target: Inward unlock together.",
     category: "forms",
     costs: [
       { resourceId: "motes", amount: 80 },
@@ -238,7 +238,7 @@ export const ACTIONS: ActionConfig[] = [
       { taskId: "ritual_study", minExecutions: 1 },
       { taskId: "wild_practice", minExecutions: 1 },
     ],
-    logMessage: "The forms unlock — Ritual, Wild, Delayed, Sustained, Inward — each a new way to shape intent.",
+    logMessage: "The forms unlock - Ritual, Wild, Delayed, Sustained, Inward - each a new way to shape intent.",
   },
 
   // --- Equipment acquisition helpers (Tuners + Steady Hand) ---
@@ -270,7 +270,7 @@ export const ACTIONS: ActionConfig[] = [
     firstCompletionEffects: [{ type: "add_item", itemId: "fine_current_tuner", amount: 1 }],
     maxExecutions: 1,
     prerequisites: [{ actionId: "acquire_basic_current_tuner", minExecutions: 1 }],
-    logMessage: "Fine tuning steadies — the current answers more cleanly.",
+    logMessage: "Fine tuning steadies - the current answers more cleanly.",
   },
   {
     id: "acquire_steady_hand",
@@ -282,6 +282,6 @@ export const ACTIONS: ActionConfig[] = [
     firstCompletionEffects: [{ type: "add_item", itemId: "steady_hand", amount: 1 }],
     maxExecutions: 1,
     prerequisites: [{ taskId: "wild_practice", minExecutions: 5 }],
-    logMessage: "Your hand steadies — wild casting feels less wild.",
+    logMessage: "Your hand steadies - wild casting feels less wild.",
   },
 ];

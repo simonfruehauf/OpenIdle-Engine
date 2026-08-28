@@ -13,7 +13,7 @@ export const FormSelector: React.FC = () => {
 
   const formsAwakened = state.flags["forms_awakened"] || hasAnyUnlockedBeyondInstant;
 
-  // Hide entirely until Chapter IV (Awaken Casting Forms) — prevents "unlock in chapter IV" spam at top.
+  // Hide entirely until Chapter IV (Awaken Casting Forms) - prevents "unlock in chapter IV" spam at top.
   if (!formsAwakened) return null;
 
   return (

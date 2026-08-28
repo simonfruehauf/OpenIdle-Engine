@@ -122,7 +122,7 @@ export const ACTIONS: ActionConfig[] = [
   {
     id: "skyglass_unlock",
     name: "Read the Residue",
-    description: "Five clean castings, three sessions of study — and the residue starts looking back.",
+    description: "Five clean castings, three sessions of study - and the residue starts looking back.",
     category: "endgame",
     costs: [{ resourceId: "motes", amount: 40 }],
     // Engine applies firstCompletionEffects BEFORE effects; capacity must exist

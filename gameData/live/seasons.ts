@@ -1,5 +1,5 @@
 /**
- * Live Content — Seasonal Calendar + Weekly Rotations
+ * Live Content - Seasonal Calendar + Weekly Rotations
  * Spec §9.1-9.3
  *
  * MVP is data-only: exports are consumed by UI / flag system.
@@ -37,7 +37,7 @@ export const MONTHLY_EVENTS: MonthlyEvent[] = [
     theme: "Ash",
     bonus: "Ash yields ×2",
     carryOver: "+10% Mana regen (lingering after Cinderfall)",
-    description: "The scar's heat spikes — Ash castings yield twice their Motes. After the month ends, a faint warmth lingers.",
+    description: "The scar's heat spikes - Ash castings yield twice their Motes. After the month ends, a faint warmth lingers.",
     effects: [
       { type: "modify_yield_pct", actionId: "cast_ash", amount: 1.0 },
       { type: "modify_yield_pct", actionId: "cast_ash_mastery", amount: 1.0 },
@@ -50,7 +50,7 @@ export const MONTHLY_EVENTS: MonthlyEvent[] = [
     theme: "Root",
     bonus: "Root braid cost -1 Mote per cast",
     carryOver: "Lasting braid discount (1.1× Root yield thereafter)",
-    description: "Growth overruns its season — Root workings and Heartwood braids cost less, and Root remembers the ease.",
+    description: "Growth overruns its season - Root workings and Heartwood braids cost less, and Root remembers the ease.",
     effects: [
       { type: "modify_yield_pct", actionId: "cast_root", amount: 0.1 },
       { type: "modify_yield_pct", actionId: "cast_heartwood", amount: 0.1 },
@@ -63,7 +63,7 @@ export const MONTHLY_EVENTS: MonthlyEvent[] = [
     theme: "Hush",
     bonus: "Hush timing gear available +5 Focus",
     carryOver: "+5 Focus (permanent if purchased during Quiet Week)",
-    description: "The world holds its breath — a week's market holds Hush timing gear not otherwise offered.",
+    description: "The world holds its breath - a week's market holds Hush timing gear not otherwise offered.",
     effects: [
       { type: "modify_max_resource_flat", resourceId: "focus", amount: 5 },
       { type: "modify_yield_pct", actionId: "cast_hush", amount: 0.15 },
@@ -76,7 +76,7 @@ export const MONTHLY_EVENTS: MonthlyEvent[] = [
     theme: "Iron",
     bonus: "Iron lowest yield gives largest gain",
     carryOver: "1.5× Iron yield (permanent)",
-    description: "Weight settles deepest when the yield is thinnest — the smallest Iron gain this month is the one that teaches most.",
+    description: "Weight settles deepest when the yield is thinnest - the smallest Iron gain this month is the one that teaches most.",
     effects: [
       { type: "modify_yield_pct", actionId: "cast_iron", amount: 0.5 },
       { type: "modify_yield_pct", actionId: "cast_iron_mastery", amount: 0.5 },
@@ -129,7 +129,7 @@ export const QUARTERLY_EVENTS: QuarterlyEvent[] = [
     id: "quarterly_steady_season",
     name: "The Steady Season",
     quarter: 0,
-    description: "Balance meter quarter — casting evenly across Aspects is rewarded. Perfect balance grants a bonus.",
+    description: "Balance meter quarter - casting evenly across Aspects is rewarded. Perfect balance grants a bonus.",
     mechanic: "Track clean castings per Aspect in quarter; variance < 15% → bonus +10% global yield, flawless balance → +15 Focus flat (one-time).",
     effects: [{ type: "modify_yield_pct", amount: 0.1 }],
   },
@@ -137,7 +137,7 @@ export const QUARTERLY_EVENTS: QuarterlyEvent[] = [
     id: "quarterly_widening",
     name: "The Widening",
     quarter: 2,
-    description: "The Sundering flares — failure rates rise, and rewards rise with them.",
+    description: "The Sundering flares - failure rates rise, and rewards rise with them.",
     mechanic: "Global failure chance +5pp, but success yields 1.4× and failure residue 2×. Widening weeks are learning weeks.",
     effects: [
       { type: "modify_failure_chance", amount: 0.05 },
@@ -170,7 +170,7 @@ export interface WeeklyGoal {
 const WEEKLY_TEMPLATES: Omit<WeeklyGoal, "weekNumber" | "weekStartISO" | "id">[] = [
   {
     title: "Ember Week",
-    description: "Cast Ash — feed the scar's first Aspect.",
+    description: "Cast Ash - feed the scar's first Aspect.",
     type: "cast_aspect",
     aspectId: "ash",
     target: 25,
@@ -178,7 +178,7 @@ const WEEKLY_TEMPLATES: Omit<WeeklyGoal, "weekNumber" | "weekStartISO" | "id">[]
   },
   {
     title: "Root Week",
-    description: "Cast Root — let something grow and hold it.",
+    description: "Cast Root - let something grow and hold it.",
     type: "cast_aspect",
     aspectId: "root",
     target: 25,
@@ -186,7 +186,7 @@ const WEEKLY_TEMPLATES: Omit<WeeklyGoal, "weekNumber" | "weekStartISO" | "id">[]
   },
   {
     title: "Hush Week",
-    description: "Cast Hush — practice the absence that remembers.",
+    description: "Cast Hush - practice the absence that remembers.",
     type: "cast_aspect",
     aspectId: "hush",
     target: 25,
@@ -194,7 +194,7 @@ const WEEKLY_TEMPLATES: Omit<WeeklyGoal, "weekNumber" | "weekStartISO" | "id">[]
   },
   {
     title: "Iron Week",
-    description: "Cast Iron — set something and mean it.",
+    description: "Cast Iron - set something and mean it.",
     type: "cast_aspect",
     aspectId: "iron",
     target: 25,
@@ -202,14 +202,14 @@ const WEEKLY_TEMPLATES: Omit<WeeklyGoal, "weekNumber" | "weekStartISO" | "id">[]
   },
   {
     title: "Sustained Week",
-    description: "Sustain workings — keep the current through duration.",
+    description: "Sustain workings - keep the current through duration.",
     type: "sustain",
     target: 6,
     reward: [{ type: "modify_max_resource_flat", resourceId: "focus", amount: 2 }],
   },
   {
     title: "Mote Harvest",
-    description: "Collect Motes — anything shaken loose counts.",
+    description: "Collect Motes - anything shaken loose counts.",
     type: "collect_motes",
     target: 120,
     reward: [{ type: "add_resource", resourceId: "skyglass", amount: 2 }],
@@ -232,7 +232,7 @@ function weekStartISOForWeekNumber(weekNumber: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-/** Mulberry32 — tiny seeded RNG for deterministic target variance. */
+/** Mulberry32 - tiny seeded RNG for deterministic target variance. */
 function mulberry32(seed: number): () => number {
   let a = seed | 0;
   return () => {

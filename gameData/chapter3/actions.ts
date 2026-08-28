@@ -1,7 +1,7 @@
 import { ActionConfig } from "../../types";
 
 export const ACTIONS: ActionConfig[] = [
-  // Undercroft seal / Braidstone Ring acquisition — gates braided casting outside Undercroft
+  // Undercroft seal / Braidstone Ring acquisition - gates braided casting outside Undercroft
   {
     id: "acquire_braidstone_ring",
     name: "Break the Undercroft Seal",
@@ -25,7 +25,7 @@ export const ACTIONS: ActionConfig[] = [
     logMessage: "The seal gives with a sigh. The ring is warm, threaded with two colors at once.",
   },
 
-  // Braid castings — gated behind acquire_braidstone_ring (itemId prereq unavailable, use actionId)
+  // Braid castings - gated behind acquire_braidstone_ring (itemId prereq unavailable, use actionId)
   {
     id: "cast_smolder",
     name: "Weave Smolder",
@@ -36,7 +36,7 @@ export const ACTIONS: ActionConfig[] = [
     effects: [],
     cooldownMs: 6000,
     prerequisites: [{ actionId: "acquire_braidstone_ring", minExecutions: 1 }],
-    logMessage: "Smolder takes — quietly, completely.",
+    logMessage: "Smolder takes - quietly, completely.",
   },
   {
     id: "cast_dormancy",
@@ -65,7 +65,7 @@ export const ACTIONS: ActionConfig[] = [
   {
     id: "cast_temper",
     name: "Work Temper",
-    description: "Weight plus consumption — blacksmithing. Iron + Ash braid (The First Forging).",
+    description: "Weight plus consumption - blacksmithing. Iron + Ash braid (The First Forging).",
     category: "temper",
     spellId: "cast_temper",
     costs: [],
@@ -75,7 +75,7 @@ export const ACTIONS: ActionConfig[] = [
     logMessage: "The metal takes its temper and holds it as promised.",
   },
 
-  // Tier-2 upgrades ×4 — max 10, prereq 30 aspect executions, yield + cooldown
+  // Tier-2 upgrades ×4 - max 10, prereq 30 aspect executions, yield + cooldown
   {
     id: "upgrade_ash_2",
     name: "Deepen Ash II",
@@ -129,7 +129,7 @@ export const ACTIONS: ActionConfig[] = [
     prerequisites: [{ actionId: "cast_iron", minExecutions: 30 }],
   },
 
-  // Journals — three read-actions setting flags journal_one/two/three
+  // Journals - three read-actions setting flags journal_one/two/three
   {
     id: "read_journal_one",
     name: "Read: Year 74 Journal I",
@@ -139,7 +139,7 @@ export const ACTIONS: ActionConfig[] = [
     effects: [{ type: "set_flag", flagId: "journal_one", amount: 1 }],
     maxExecutions: 1,
     prerequisites: [{ taskId: "braid_practice", minExecutions: 1 }],
-    logMessage: "Year 74 — 'We sealed it with braid alone so it would answer only to braid.'",
+    logMessage: "Year 74 - 'We sealed it with braid alone so it would answer only to braid.'",
   },
   {
     id: "read_journal_two",
@@ -150,18 +150,18 @@ export const ACTIONS: ActionConfig[] = [
     effects: [{ type: "set_flag", flagId: "journal_two", amount: 1 }],
     maxExecutions: 1,
     prerequisites: [{ actionId: "read_journal_one", minExecutions: 1 }],
-    logMessage: "Year 74 — 'Things held don't heal. That was the price we did not count.'",
+    logMessage: "Year 74 - 'Things held don't heal. That was the price we did not count.'",
   },
   {
     id: "read_journal_three",
     name: "Read: Year 74 Journal III",
-    description: "Third journal. Heartwood offered as answer — living permanence.",
+    description: "Third journal. Heartwood offered as answer - living permanence.",
     category: "chapter3",
     costs: [{ resourceId: "motes", amount: 15 }],
     effects: [{ type: "set_flag", flagId: "journal_three", amount: 1 }],
     maxExecutions: 1,
     prerequisites: [{ actionId: "read_journal_two", minExecutions: 1 }],
-    logMessage: "Year 74 — 'If it grows and does not break, it may yet hold the Wound.'",
+    logMessage: "Year 74 - 'If it grows and does not break, it may yet hold the Wound.'",
   },
   {
     id: "reconcile_journals",
@@ -177,7 +177,7 @@ export const ACTIONS: ActionConfig[] = [
       { actionId: "read_journal_two", minExecutions: 1 },
       { actionId: "read_journal_three", minExecutions: 1 },
     ],
-    logMessage: "You close the last page. The Undercroft's purpose steadies in your mind — and your focus with it.",
+    logMessage: "You close the last page. The Undercroft's purpose steadies in your mind - and your focus with it.",
   },
   {
     id: "acquire_basic_lens",
@@ -207,6 +207,6 @@ export const ACTIONS: ActionConfig[] = [
     firstCompletionEffects: [{ type: "add_item", itemId: "fine_lens", amount: 1 }],
     maxExecutions: 1,
     prerequisites: [{ actionId: "acquire_basic_lens", minExecutions: 1 }],
-    logMessage: "The fine lens catches no light that isn't there — and shows you what is.",
+    logMessage: "The fine lens catches no light that isn't there - and shows you what is.",
   },
 ];

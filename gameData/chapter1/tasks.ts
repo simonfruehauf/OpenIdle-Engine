@@ -4,7 +4,7 @@ export const TASKS: TaskConfig[] = [
   {
     id: "catch_your_breath",
     name: "Catch Your Breath",
-    description: "The spark still crackles under your skin. Calming down — not casting harder — is the way through. You did not mean to cast; now you must learn to steady.",
+    description: "The spark still crackles under your skin. Calming down - not casting harder - is the way through. You did not mean to cast; now you must learn to steady.",
     category: "chapter1",
     progressRequired: 10,
     maxExecutions: 1,
@@ -35,7 +35,7 @@ export const TASKS: TaskConfig[] = [
   {
     id: "hedge_practice",
     name: "Hedge Practice",
-    description: "Encourage a hedge to grow half an inch and stop. Introductory Root — you notice Ash answers first, Root answers slower. Widow Cathal told you to start with flame.",
+    description: "Encourage a hedge to grow half an inch and stop. Introductory Root - you notice Ash answers first, Root answers slower. Widow Cathal told you to start with flame.",
     category: "chapter1",
     progressRequired: 5,
     autoRestart: true,
@@ -47,7 +47,7 @@ export const TASKS: TaskConfig[] = [
   {
     id: "stillness_practice",
     name: "Stillness Practice",
-    description: "Silence a ringing bell early. Introductory Hush — hush answers only after you can grow something without rushing it.",
+    description: "Silence a ringing bell early. Introductory Hush - hush answers only after you can grow something without rushing it.",
     category: "chapter1",
     progressRequired: 5,
     autoRestart: true,

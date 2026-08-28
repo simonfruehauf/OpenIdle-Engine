@@ -4,7 +4,7 @@ export const ACTIONS: ActionConfig[] = [
   {
     id: "first_spark",
     name: "The First Spark",
-    description: "Millhollow dusk — the Sundering's light gathers without asking. A brief, bright, uncontrolled spark. Prologue: it leaves ash on your hands and emptiness in your reserve. Click to let it happen.",
+    description: "Millhollow dusk - the Sundering's light gathers without asking. A brief, bright, uncontrolled spark. Prologue: it leaves ash on your hands and emptiness in your reserve. Click to let it happen.",
     category: "chapter1",
     costs: [],
     effects: [],
@@ -28,7 +28,7 @@ export const ACTIONS: ActionConfig[] = [
   {
     id: "cast_root",
     name: "Cast: Nudge the Root",
-    description: "Grow a small plant, once. Introductory Root casting — unlocked after Ash answers a few times.",
+    description: "Grow a small plant, once. Introductory Root casting - unlocked after Ash answers a few times.",
     category: "root",
     spellId: "nudge_the_root",
     costs: [],
@@ -40,14 +40,14 @@ export const ACTIONS: ActionConfig[] = [
   {
     id: "cast_hush",
     name: "Cast: Quiet the Bell",
-    description: "Mute a small sound source briefly. Introductory Hush casting — unlocked after Root steadies.",
+    description: "Mute a small sound source briefly. Introductory Hush casting - unlocked after Root steadies.",
     category: "hush",
     spellId: "quiet_the_bell",
     costs: [],
     effects: [],
     cooldownMs: 1500,
     prerequisites: [{ actionId: "cast_root", minExecutions: 3 }],
-    logMessage: "The bell swings — silently. It looks almost offended.",
+    logMessage: "The bell swings - silently. It looks almost offended.",
   },
   {
     id: "mote_conversion_i",

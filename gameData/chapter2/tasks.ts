@@ -16,7 +16,7 @@ export const TASKS: TaskConfig[] = [
   {
     id: "focus_meditation",
     name: "Focus Meditation",
-    description: "Sit with the scar's light and steady your mind. Conclave discipline — taught only after Cathal sends you on.",
+    description: "Sit with the scar's light and steady your mind. Conclave discipline - taught only after Cathal sends you on.",
     category: "chapter2",
     type: "rest",
     costPerSecond: [],

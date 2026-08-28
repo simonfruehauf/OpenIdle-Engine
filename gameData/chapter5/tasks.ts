@@ -4,7 +4,7 @@ export const TASKS: TaskConfig[] = [
   {
     id: "deep_listening",
     name: "Deep Listening",
-    description: "Sit where the Sundering's undertow is audible beneath all four Aspects. Listening is practice, not idleness — it trains the ear for what has no sound.",
+    description: "Sit where the Sundering's undertow is audible beneath all four Aspects. Listening is practice, not idleness - it trains the ear for what has no sound.",
     category: "chapter5",
     progressRequired: 30,
     autoRestart: true,
@@ -31,7 +31,7 @@ export const TASKS: TaskConfig[] = [
   {
     id: "deep_current_meditation",
     name: "Deep Current Meditation",
-    description: "Tap the world's own undertow directly. Once the current is open, this generates Deep Current itself — slow, inexorable, the wound's other answer.",
+    description: "Tap the world's own undertow directly. Once the current is open, this generates Deep Current itself - slow, inexorable, the wound's other answer.",
     category: "chapter5",
     costPerSecond: [{ resourceId: "focus", amount: 0.65 }],
     effectsPerSecond: [{ type: "add_resource", resourceId: "deep_current", amount: 0.08 }],
