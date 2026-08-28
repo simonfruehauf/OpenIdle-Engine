@@ -6,8 +6,7 @@ export const SLOTS: SlotConfig[] = [
   {
     id: "farseer_lens",
     name: "Farseer's Lens",
-    // TODO(ch3): uncomment once braid_practice task exists
-    // prerequisitesAny: [{ taskId: "braid_practice", minExecutions: 1 }],
+    prerequisitesAny: [{ taskId: "braid_practice", minExecutions: 1 }],
   },
   {
     id: "current_tuner",
