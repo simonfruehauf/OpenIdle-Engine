@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { GameProvider, useGame } from './context/GameContext';
 import { ActionCard } from './components/ActionCard';
 import { TaskCard } from './components/TaskCard';
@@ -6,7 +7,7 @@ import { ResourceRow } from './components/ResourceRow';
 import { EquipmentView } from './components/EquipmentView';
 import { ConverterCard } from './components/ConverterCard';
 import { FormSelector } from './components/FormSelector';
-import { CategoryConfig, ResourceConfig, LogCategory, LogEntry } from './types';
+import { CategoryConfig, ResourceConfig, LogCategory, LogEntry, Cost } from './types';
 import { BESTIARY } from './gameData/side/bestiary';
 import { getSeasonForDate } from './gameData/live/seasons';
 
@@ -48,6 +49,14 @@ const GameLayout: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'activity' | 'equipment' | 'converters' | 'completed' | 'codex'>('activity');
     const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
     const [logFilters, setLogFilters] = useState<Record<LogCategory, boolean>>({ flavour: true, loot: true, unlock: true, other: true });
+    const [activeHoverId, setActiveHoverId] = useState<string | null>(null);
+    const [activeHoverRect, setActiveHoverRect] = useState<DOMRect | null>(null);
+    const getActiveHoverTask = () => {
+        if (!activeHoverId || !activeHoverRect) return null;
+        const task = config.tasks.find(t => t.id === activeHoverId);
+        if (!task) return null;
+        return { task, rect: activeHoverRect, tState: state.tasks[activeHoverId] };
+    };
 
     // --- Resource & Stat Grouping Logic (Fixed) ---
     const resourceGroups: { id: string; name: string; resources: ResourceConfig[] }[] = [];
@@ -557,7 +566,12 @@ const GameLayout: React.FC = () => {
                                     const isLoop = task.autoRestart;
                                     const completions = tState.completions || 0;
                                     return (
-                                        <div onClick={() => toggleTask(tid)} className="group flex flex-col gap-1 bg-white border border-orange-200 rounded-sm p-1.5 cursor-pointer hover:bg-red-50 transition-colors select-none">
+                                        <div
+                                            onClick={() => toggleTask(tid)}
+                                            onMouseEnter={(e) => { setActiveHoverId(tid); setActiveHoverRect(e.currentTarget.getBoundingClientRect()); }}
+                                            onMouseLeave={() => { setActiveHoverId(null); setActiveHoverRect(null); }}
+                                            className="group flex flex-col gap-1 bg-white border border-orange-200 rounded-sm p-1.5 cursor-pointer hover:bg-red-50 transition-colors select-none"
+                                        >
                                             <div className="flex items-center gap-2 w-full">
                                                 {isLoop && <svg className="w-3 h-3 text-orange-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>}
                                                 <span className="text-xs font-semibold text-gray-700 group-hover:text-red-700 truncate flex-grow">{task.name}</span>
@@ -579,6 +593,57 @@ const GameLayout: React.FC = () => {
                                     );
                                 })}
                             </div>
+                            {(() => {
+                                const hover = getActiveHoverTask();
+                                if (!hover) return null;
+                                const { task, rect, tState } = hover;
+                                const getName = (id: string) => config.resources.find(r => r.id === id)?.name || config.actions.find(a => a.id === id)?.name || config.tasks.find(t => t.id === id)?.name || config.items.find(i => i.id === id)?.name || id;
+                                const getScaled = (c: Cost) => {
+                                    if (!c.scaleFactor) return c.amount;
+                                    const exp = (c as any).scalesByCompletion ? (tState.completions || 0) : (tState.level - 1);
+                                    switch (c.scaleType) {
+                                        case 'fixed': return c.amount + (c.scaleFactor * exp);
+                                        case 'percentage': return c.amount * (1 + c.scaleFactor * exp);
+                                        default: return c.amount * Math.pow(c.scaleFactor, exp);
+                                    }
+                                };
+                                const style: React.CSSProperties = {
+                                    position: 'fixed',
+                                    top: rect.top + rect.height / 2 - 80,
+                                    left: rect.left - 268,
+                                    zIndex: 9999,
+                                };
+                                if ((style.left as number) < 8) style.left = rect.right + 8;
+                                if ((style.top as number) < 8) style.top = 8;
+                                return createPortal(
+                                    <div style={style} className="bg-gray-200 border border-gray-400 text-gray-800 p-3 rounded shadow-2xl w-64 text-xs pointer-events-none z-[9999]">
+                                        <div className="font-bold text-sm text-black leading-tight mb-1">{task.name}</div>
+                                        <p className="text-gray-700 mb-2 leading-snug">{task.description}</p>
+                                        {task.costPerSecond.length > 0 && (
+                                            <>
+                                                <div className="border-t border-gray-400 my-2"></div>
+                                                <div className="font-semibold text-gray-600 italic mb-1">Cost/s</div>
+                                                {task.costPerSecond.map(c => (
+                                                    <div key={c.resourceId} className="flex justify-between"><span>{getName(c.resourceId)}</span><span className="font-mono text-red-700">{getScaled(c).toFixed(2)}/s</span></div>
+                                                ))}
+                                            </>
+                                        )}
+                                        {task.effectsPerSecond.filter(e => !e.hidden).length > 0 && (
+                                            <>
+                                                <div className="border-t border-gray-400 my-2"></div>
+                                                <div className="font-semibold text-gray-600 italic mb-1">Gain/s</div>
+                                                {task.effectsPerSecond.filter(e => !e.hidden).map((e, i) => (
+                                                    <div key={i} className="flex justify-between"><span>{e.resourceId ? getName(e.resourceId) : 'Effect'}</span><span className="font-mono text-green-700">{e.amount}/s</span></div>
+                                                ))}
+                                            </>
+                                        )}
+                                        <div className="border-t border-gray-400 my-2"></div>
+                                        <div className="text-[11px] text-gray-600">Lv {tState.level} • {tState.xp}/{tState.level * 100} XP • {tState.completions || 0} completions{task.progressRequired ? ` • ${((tState.progress || 0)).toFixed(1)}/${task.progressRequired}s` : ''}</div>
+                                        <div className="text-[10px] text-gray-500 italic mt-1">Click to stop • Hover for details</div>
+                                    </div>,
+                                    document.body
+                                );
+                            })()}
                         </div>
                     )}
 

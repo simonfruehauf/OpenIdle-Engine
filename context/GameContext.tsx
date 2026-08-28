@@ -1488,6 +1488,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                 if (!newTasks[t.id].unlocked) {
                     if (checkPrereqsInternal(t.prerequisites)) {
                         newTasks[t.id] = { ...newTasks[t.id], unlocked: true };
+                        logUpdates.unshift(makeLog(`Unlocked: ${t.name}`, 'unlock'));
                     }
                 }
             });
@@ -1500,6 +1501,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                             actionsChanged = true;
                         }
                         newActions[a.id] = { ...newActions[a.id], unlocked: true };
+                        logUpdates.unshift(makeLog(`Unlocked: ${a.name}`, 'unlock'));
                     }
                 }
             });
@@ -1513,6 +1515,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
                             convertersChanged = true;
                         }
                         newConverters[c.id] = { ...newConverters[c.id], unlocked: true };
+                        logUpdates.unshift(makeLog(`Unlocked: ${c.name}`, 'unlock'));
                     }
                 }
             });
