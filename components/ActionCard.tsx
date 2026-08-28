@@ -403,7 +403,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({ action, isLocked = false
     } else if (isLocked) {
         // Updated styling for locked items: significantly darker/grayer
         styleClass += "bg-gray-200 border-gray-300 opacity-60 cursor-not-allowed grayscale";
-    } else if (!canAfford) {
+    } else if (!canAfford || !canPayMana || isOnCooldown) {
         styleClass += "bg-slate-50 border-gray-200 text-gray-500 opacity-70 cursor-not-allowed";
     } else {
         // Affordable & Available

@@ -353,4 +353,5 @@ export interface GameContextType {
   castSpell: (actionId: ActionID) => void;
   selectForm: (axis: 'method' | 'duration' | 'target', formId: string | null) => void;
   getFailureChance: (spellId: string) => number;
+  secondKindling: () => void;
 }

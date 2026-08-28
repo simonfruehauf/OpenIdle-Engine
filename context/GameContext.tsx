@@ -5,6 +5,7 @@ const TICK_RATE_SECONDS = TICK_RATE_MS / 1000;
 import { ACTIONS, CATEGORIES, RESOURCES, TASKS, SLOTS, ITEMS, CONVERTERS } from "../gameData/index";
 import { SPELLS, ASPECTS } from "../gameData/core/aspects";
 import { CASTING_FORMS } from "../gameData/core/castingForms";
+import { MONTHLY_EVENTS } from "../gameData/live/seasons";
 import { ActionConfig, GameContextType, GameState, Modifier, TaskConfig, ResourceID, Cost, ActionID, TaskID, Prerequisite, SlotID, ItemID, ItemConfig, SlotConfig, CategoryConfig, TaskState, Effect, ConverterID, ConverterConfig, LogEntry, LogCategory, AspectID, SpellConfig, CastingFormModifier } from "../types";
 
 // --- Helper: Encoding for Unicode Support (Emojis) ---
@@ -54,6 +55,29 @@ const getActiveModifiers = (state: GameState): Modifier[] => {
             });
         }
     });
+
+    // Live: seasonal modifiers (monthly event for current month)
+    try {
+        const currentMonth = new Date().getMonth();
+        const seasonalEvent = MONTHLY_EVENTS.find(e => e.month === currentMonth);
+        if (seasonalEvent) {
+            seasonalEvent.effects.forEach(e => {
+                if (e.type === 'modify_yield_pct') {
+                    mods.push({ sourceId: seasonalEvent.name, type: 'percent', value: e.amount, taskId: (e as any).taskId, actionId: (e as any).actionId, resourceId: (e as any).resourceId, property: 'yield' });
+                } else if (e.type === 'modify_yield_flat') {
+                    mods.push({ sourceId: seasonalEvent.name, type: 'flat', value: e.amount, taskId: (e as any).taskId, actionId: (e as any).actionId, resourceId: (e as any).resourceId, property: 'yield' });
+                } else if (e.type === 'modify_max_resource_flat' && (e as any).resourceId) {
+                    mods.push({ sourceId: seasonalEvent.name, type: 'flat', value: (e as any).amount, resourceId: (e as any).resourceId, property: 'max' });
+                } else if (e.type === 'modify_max_resource_pct' && (e as any).resourceId) {
+                    mods.push({ sourceId: seasonalEvent.name, type: 'percent', value: (e as any).amount, resourceId: (e as any).resourceId, property: 'max' });
+                } else if (e.type === 'modify_failure_chance') {
+                    mods.push({ sourceId: seasonalEvent.name, type: 'percent', value: (e as any).amount, property: 'failure_chance' });
+                } else if (e.type === 'modify_cooldown_flat') {
+                    mods.push({ sourceId: seasonalEvent.name, type: 'flat', value: (e as any).amount, actionId: (e as any).actionId, property: 'cooldown' });
+                }
+            });
+        }
+    } catch {}
 
     return mods;
 };
@@ -294,7 +318,8 @@ type Action =
     | { type: "RESET_GAME" }
     | { type: "SET_REST_TASK"; taskId: string | null }
     | { type: "CAST_SPELL"; actionId: string }
-    | { type: "SELECT_FORM"; axis: "method" | "duration" | "target"; formId: string };
+    | { type: "SELECT_FORM"; axis: "method" | "duration" | "target"; formId: string }
+    | { type: "SECOND_KINDLING" };
 
 // --- Helper: Clone Resources to prevent mutation ---
 const cloneResources = (resources: GameState["resources"]) => {
@@ -511,6 +536,45 @@ const gameReducer = (state: GameState, action: Action): GameState => {
 
         case "RESET_GAME":
             return createInitialState();
+
+        case "SECOND_KINDLING": {
+            const fresh = createInitialState();
+            const preservedEquipment = { ...state.equipment };
+            const preservedInventory = [...state.inventory];
+            const preservedFlags: Record<string, boolean> = {};
+            Object.entries(state.flags).forEach(([k, v]) => {
+                if (!k.startsWith("endgame_path_") && k !== "chapter5_complete") (preservedFlags as any)[k] = v;
+            });
+            preservedFlags["challenge_second_kindling"] = true;
+            preservedFlags["challenge_mode"] = true;
+            preservedFlags["second_kindling_started"] = true;
+            const preservedFluency = { ...state.aspectFluency };
+            const preservedFailed = { ...state.failedCastings };
+            const newResources = cloneResources(fresh.resources);
+            if (newResources["mana"]) newResources["mana"].current = Math.min(58, calculateMax("mana", [], RESOURCES.find(r => r.id === "mana")?.baseMax ?? 100));
+            if (newResources["focus"]) newResources["focus"].current = Math.min(20, calculateMax("focus", [], RESOURCES.find(r => r.id === "focus")?.baseMax ?? 30));
+            if (newResources["motes"]) newResources["motes"].current = 30;
+            if (newResources["skyglass"]) newResources["skyglass"].current = 4;
+            const newModifiers = [...fresh.modifiers];
+            newModifiers.push({ sourceId: "Second Kindling", resourceId: "deep_current", type: "set", value: 100, property: "max" as const });
+            if (newResources["deep_current"]) newResources["deep_current"].current = 40;
+            const newActions: typeof fresh.actions = { ...fresh.actions };
+            ["cast_temper", "cast_temper_mastery", "upgrade_temper_3", "acquire_braidstone_ring"].forEach(id => {
+                if ((state.actions as any)[id]) (newActions as any)[id] = { ...(state.actions as any)[id] };
+            });
+            return {
+                ...fresh,
+                resources: newResources,
+                actions: newActions,
+                inventory: preservedInventory,
+                equipment: preservedEquipment,
+                modifiers: newModifiers,
+                flags: { ...fresh.flags, ...preservedFlags },
+                aspectFluency: preservedFluency,
+                failedCastings: preservedFailed,
+                log: [makeLog("Second Kindling - the scar remembers your hands. Equipment and Temper hold.", 'unlock'), ...fresh.log].slice(0, 50),
+            };
+        }
 
         case "ADD_LOG":
             return { ...state, log: [makeLog(action.msg, action.category || 'other'), ...state.log].slice(0, 50) };
@@ -1596,6 +1660,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (!formId) return;
         dispatch({ type: "SELECT_FORM", axis, formId });
     };
+    const secondKindling = () => dispatch({ type: "SECOND_KINDLING" });
 
     const activeModifiers = getActiveModifiers(state);
 
@@ -1828,7 +1893,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 saveGame,
                 resetGame,
                 exportSave,
-                importSave
+                importSave,
+                secondKindling
             }}
         >
             {children}
