@@ -11,7 +11,7 @@ export const ACTIONS: ActionConfig[] = [
     effects: [{ type: "set_flag", flagId: "note_chimney_primer", amount: 1 }],
     firstCompletionEffects: [{ type: "modify_max_resource_flat", resourceId: "focus", amount: 2 }],
     maxExecutions: 1,
-    prerequisites: [{ taskId: "catch_your_breath", minExecutions: 1 }],
+    prerequisites: [{ taskId: "catch_your_breath", minExecutions: 3 }],
     logMessage: "Chimney Primer - 'The first flame is the one you already have.' +2 Focus.",
   },
   {

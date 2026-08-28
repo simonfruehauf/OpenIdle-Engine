@@ -22,7 +22,7 @@ export const ACTIONS: ActionConfig[] = [
     costs: [],
     effects: [],
     cooldownMs: 2000,
-    prerequisites: [{ taskId: "catch_your_breath", minExecutions: 1 }],
+    prerequisites: [{ taskId: "catch_your_breath", minExecutions: 3 }],
     logMessage: "The ember leans toward your intent, obedient for once.",
   },
   {
@@ -52,12 +52,12 @@ export const ACTIONS: ActionConfig[] = [
   {
     id: "mote_conversion_i",
     name: "Condense Motes to Mana",
-    description: "Press loose Motes back into your reserve. Crude, but it works. Visible as soon as you have Focus to notice the residue.",
+    description: "Press loose Motes back into your mana reserve. Crude, but it works. Visible as soon as you have Focus to notice the residue.",
     category: "chapter1",
     costs: [{ resourceId: "motes", amount: 8 }],
     effects: [{ type: "add_resource", resourceId: "mana", amount: 6 }],
     cooldownMs: 1000,
-    prerequisites: [{ taskId: "catch_your_breath", minExecutions: 1 }],
+    prerequisites: [{ taskId: "ember_practice", minExecutions: 2 }],
     logMessage: "The motes fold into blue light.",
   },
   {

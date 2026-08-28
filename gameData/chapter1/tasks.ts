@@ -6,14 +6,16 @@ export const TASKS: TaskConfig[] = [
     name: "Catch Your Breath",
     description: "The spark still crackles under your skin. Calming down - not casting harder - is the way through. You did not mean to cast; now you must learn to steady.",
     category: "chapter1",
-    progressRequired: 10,
-    maxExecutions: 1,
+    progressRequired: 3,
+    maxExecutions: 3,
     hideWhenComplete: false,
     costPerSecond: [],
     effectsPerSecond: [],
     completionEffects: [
-      { type: "add_resource", resourceId: "focus", amount: 5 },
-      { type: "modify_max_resource_flat", resourceId: "focus", amount: 5 },
+      { type: "modify_max_resource_flat", resourceId: "focus", amount: 2 },
+      { type: "add_resource", resourceId: "focus", amount: 2 },
+      { type: "modify_max_resource_flat", resourceId: "mana", amount: 5 },
+      { type: "add_resource", resourceId: "mana", amount: 2 }
     ],
     firstCompletionEffects: [
       { type: "add_item", itemId: "millers_charm", amount: 1 },
@@ -30,7 +32,7 @@ export const TASKS: TaskConfig[] = [
     costPerSecond: [{ resourceId: "focus", amount: 0.5 }],
     effectsPerSecond: [{ type: "add_resource", resourceId: "motes", amount: 0.6 }],
     xpPerSecond: 6,
-    prerequisites: [{ taskId: "catch_your_breath", minExecutions: 1 }],
+    prerequisites: [{ taskId: "catch_your_breath", minExecutions: 3 }],
   },
   {
     id: "hedge_practice",
@@ -65,6 +67,6 @@ export const TASKS: TaskConfig[] = [
     costPerSecond: [],
     effectsPerSecond: [{ type: "add_resource", resourceId: "focus", amount: 0.25 }],
     xpPerSecond: 1,
-    prerequisites: [{ taskId: "catch_your_breath", minExecutions: 1 }],
+    prerequisites: [{ taskId: "catch_your_breath", minExecutions: 3 }],
   },
 ];
